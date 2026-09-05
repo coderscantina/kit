@@ -1,0 +1,16 @@
+{
+  "name": "@kit/reactive-vue",
+  "version": "0.1.0",
+  "private": true,
+  "description": "useReactiveQuery / useReactiveMutation over the /rq transport, with mutation-id reconciliation.",
+  "type": "module",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "peerDependencies": {
+    "@tanstack/vue-query": "^5.0.0",
+    "vue": "^3.5.0"
+  }
+}
