@@ -17,10 +17,18 @@ class ImpersonationService
 {
     private const string KEY = 'auth.impersonator_id';
 
+    public function __construct(
+        private readonly SessionBinding $binding,
+    ) {}
+
     public function start(Session $session, User $impersonator, User $target): void
     {
         $session->put(self::KEY, $impersonator->id);
         Auth::guard('web')->login($target);
+        $this->binding->rebind($session, $target);
+        // The sanctum request guard caches the user it resolved for this
+        // request; the rest of the request must see the target instead.
+        Auth::forgetGuards();
         $session->regenerate();
     }
 
@@ -41,6 +49,8 @@ class ImpersonationService
         }
 
         Auth::guard('web')->login($impersonator);
+        $this->binding->rebind($session, $impersonator);
+        Auth::forgetGuards();
         $session->regenerate();
 
         return $impersonator;

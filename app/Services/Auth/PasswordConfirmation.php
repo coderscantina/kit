@@ -15,7 +15,7 @@ class PasswordConfirmation
 
     public function confirm(Session $session): void
     {
-        $session->put(self::KEY, time());
+        $session->put(self::KEY, now()->getTimestamp());
     }
 
     public function isFresh(Session $session): bool
@@ -26,7 +26,7 @@ class PasswordConfirmation
             return false;
         }
 
-        return (time() - $confirmedAt) < (int) config('kit.password_confirmation_minutes') * 60;
+        return (now()->getTimestamp() - $confirmedAt) < (int) config('kit.password_confirmation_minutes') * 60;
     }
 
     public function forget(Session $session): void

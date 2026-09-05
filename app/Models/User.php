@@ -45,6 +45,14 @@ class User extends Authenticatable implements MustVerifyEmail
     use Notifiable;
 
     /**
+     * @var array<string, mixed>
+     */
+    protected $attributes = [
+        'locale' => 'en',
+        'is_root' => false,
+    ];
+
+    /**
      * @return array<string, string>
      */
     protected function casts(): array

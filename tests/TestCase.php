@@ -7,6 +7,7 @@ namespace Tests;
 use App\Actions\Roles\SyncRoles;
 use App\Models\Role;
 use App\Models\User;
+use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Foundation\Testing\TestCase as BaseTestCase;
 use Illuminate\Support\Facades\File;
 
@@ -42,6 +43,23 @@ abstract class TestCase extends BaseTestCase
     private function clearSetupMarkers(): void
     {
         File::deleteDirectory(storage_path('app/testing'));
+    }
+
+    /**
+     * Switching users inside one test needs a clean slate: the sanctum request
+     * guard caches the resolved user for the life of the container, and the
+     * array session carries the previous user's password hash, which
+     * AuthenticateSession would treat as a hijacked session.
+     *
+     * @param  Authenticatable  $user
+     * @param  string|null  $guard
+     */
+    public function actingAs($user, $guard = null): static
+    {
+        $this->app['auth']->forgetGuards();
+        $this->flushSession();
+
+        return parent::actingAs($user, $guard);
     }
 
     protected function seedRoles(): void
