@@ -1,0 +1,51 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Features\{{ feature }}\Tests;
+
+use App\Features\{{ feature }}\Ai\{{ class }};
+use App\Services\Ai\Testing\FakeAiDriver;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\Test;
+use Tests\TestCase;
+
+/**
+ * Both halves of the contract: the action streams for someone allowed to run
+ * it, and is forbidden for someone who is not. The model is faked, so this
+ * costs nothing and can assert what was actually sent to it.
+ */
+#[CoversClass({{ class }}::class)]
+final class {{ class }}Test extends TestCase
+{
+    use RefreshDatabase;
+
+    #[Test]
+    public function it_streams_an_answer(): void
+    {
+        $this->createAndActAs(role: 'admin');
+        $driver = FakeAiDriver::swap('Two ', 'words');
+
+        $response = $this->post('/api/ai/stream', [
+            'action' => '{{ name }}',
+            'args' => ['subject' => 'the subject'],
+        ]);
+
+        $response->assertOk();
+        $this->assertStringContainsString('Two words', $response->streamedContent());
+        $this->assertStringContainsString('the subject', $driver->userPrompt());
+    }
+
+    #[Test]
+    public function streaming_without_the_ability_is_forbidden(): void
+    {
+        $this->createAndActAs(role: 'member');
+        FakeAiDriver::swap();
+
+        $this->postJson('/api/ai/stream', [
+            'action' => '{{ name }}',
+            'args' => ['subject' => 'the subject'],
+        ])->assertForbidden();
+    }
+}

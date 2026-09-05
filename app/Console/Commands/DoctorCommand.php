@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Console\Commands;
 
+use App\Services\Ai\Contracts\AiDriver;
+use App\Services\Ai\Registry\AiCatalog;
 use Illuminate\Console\Command;
 use Illuminate\Contracts\Redis\Factory as RedisFactory;
 use Illuminate\Support\Facades\File;
@@ -37,7 +39,7 @@ class DoctorCommand extends Command
 
     protected $signature = 'kit:doctor {--strict : Treat warnings as failures}';
 
-    protected $description = 'Check the reactive runtime, the registry, the Octane flush list and the message files';
+    protected $description = 'Check the reactive runtime, the registry, the AI layer, the Octane flush list and the message files';
 
     /** @var array<int, array{0: string, 1: string, 2: string}> */
     private array $results = [];
@@ -49,6 +51,7 @@ class DoctorCommand extends Command
         $this->checkReverb();
         $this->checkRegistry();
         $this->checkUnregisteredQueries();
+        $this->checkAi();
         $this->checkOctaneFlushList();
         $this->checkMessageParity();
 
@@ -191,6 +194,43 @@ class DoctorCommand extends Command
         $missing === []
             ? $this->pass('client query names', 'every name the client calls exists on the server')
             : $this->broke('client query names', 'not registered: '.implode(', ', array_unique($missing)));
+    }
+
+    /**
+     * The AI layer, in the same spirit as the query checks: a missing key is
+     * a configuration state and only a warning, while a name the client
+     * streams that no action answers is repository drift and a failure.
+     */
+    private function checkAi(): void
+    {
+        $catalog = app(AiCatalog::class);
+        $actions = array_keys($catalog->actions());
+
+        if (! app(AiDriver::class)->configured()) {
+            $this->flag('ai provider', 'no API key; AI actions are unavailable and the assistant is hidden');
+        } else {
+            $this->pass('ai provider', (string) config('ai.driver').' configured, default model '.(string) config('ai.model'));
+        }
+
+        $missing = [];
+
+        foreach (File::allFiles(resource_path('js')) as $file) {
+            if (! in_array($file->getExtension(), ['ts', 'vue'], true)) {
+                continue;
+            }
+
+            preg_match_all("/useAiStream\(\s*'([^']+)'/", $file->getContents(), $matches);
+
+            foreach ($matches[1] as $name) {
+                if (! in_array($name, $actions, true)) {
+                    $missing[] = $name.' ('.$this->relative($file->getPathname()).')';
+                }
+            }
+        }
+
+        $missing === []
+            ? $this->pass('ai actions', count($actions).' action(s) registered, every name the client streams exists')
+            : $this->broke('ai actions', 'not registered: '.implode(', ', array_unique($missing)));
     }
 
     /**

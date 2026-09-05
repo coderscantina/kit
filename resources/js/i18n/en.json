@@ -17,7 +17,8 @@
     "dashboard": "Dashboard",
     "users": "Users",
     "profile": "Profile",
-    "security": "Security"
+    "security": "Security",
+    "assistant": "Assistant"
   },
   "auth": {
     "logout": "Sign out",
@@ -131,5 +132,13 @@
       }
     }
   },
-  "mutations": {}
+  "mutations": {},
+  "ai": {
+    "title": "Assistant",
+    "label": "Question",
+    "placeholder": "Ask anything",
+    "ask": "Ask",
+    "stop": "Stop",
+    "empty": "The answer appears here as it is written."
+  }
 }

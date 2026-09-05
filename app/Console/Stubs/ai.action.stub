@@ -1,0 +1,64 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Features\{{ feature }}\Ai;
+
+use App\Features\{{ feature }}\Data\{{ args }};
+use App\Features\{{ feature }}\Models\{{ feature }};
+use App\Services\Ai\AiAction;
+use App\Services\Ai\Attributes\AiStream;
+use App\Services\Ai\Support\Prompt;
+use Illuminate\Contracts\Auth\Authenticatable;
+use Spatie\LaravelData\Data;
+
+/**
+ * @extends AiAction<{{ args }}>
+ */
+#[AiStream('{{ name }}')]
+final class {{ class }} extends AiAction
+{
+    public static function args(): string
+    {
+        return {{ args }}::class;
+    }
+
+    public function authorize(Authenticatable $user, Data $args): void
+    {
+        $this->gate($user)->authorize('viewAny', {{ feature }}::class);
+    }
+
+    /**
+     * Standing instruction: who the model is and what shape the answer takes.
+     * Keep per-request data out of it, so the provider can cache the prefix.
+     */
+    public function system(Data $args): string
+    {
+        return implode("\n", [
+            'You help with {{ title }} inside '.config('app.name').'.',
+            'Answer in plain prose. Say you do not know rather than guessing.',
+        ]);
+    }
+
+    /**
+     * Anything the user or the database supplied goes through with(), never
+     * into the instruction string: fenced data stays data, and inlined data
+     * is one polite sentence away from being an instruction.
+     */
+    public function prompt(Data $args): Prompt
+    {
+        return Prompt::make('Answer the request below.')
+            ->with('subject', $args->subject);
+    }
+
+    /**
+     * Override model() to pin a model, tools() to let it look things up, and
+     * options() for max_tokens, temperature or ['json' => true].
+     *
+     * @return array<string, mixed>
+     */
+    public function options(Data $args): array
+    {
+        return [];
+    }
+}

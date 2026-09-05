@@ -17,7 +17,8 @@
     "dashboard": "Übersicht",
     "users": "Benutzer",
     "profile": "Profil",
-    "security": "Sicherheit"
+    "security": "Sicherheit",
+    "assistant": "Assistent"
   },
   "auth": {
     "logout": "Abmelden",
@@ -131,5 +132,13 @@
       }
     }
   },
-  "mutations": {}
+  "mutations": {},
+  "ai": {
+    "title": "Assistent",
+    "label": "Frage",
+    "placeholder": "Frag etwas",
+    "ask": "Fragen",
+    "stop": "Stoppen",
+    "empty": "Die Antwort erscheint hier, während sie geschrieben wird."
+  }
 }

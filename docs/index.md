@@ -5,7 +5,8 @@ subscribes to server-side query functions, writes go through transactional
 mutations, and a result that changes is pushed to everyone watching it.
 
 Read [architecture](/architecture) for how the pieces fit, then
-[adding a feature](/adding-a-feature) for the generator walkthrough. When
+[adding a feature](/adding-a-feature) for the generator walkthrough. [AI](/ai)
+covers the streamed model calls. When
 something is broken in production, [runtime contract](/runtime-contract) says
 what runs where and [known limitations](/limitations) says what the design
 does not promise.
@@ -27,6 +28,9 @@ does not promise.
   which `column = value` predicate). An invalidation resolves to a set of
   computations, each recomputed once per 50 ms window; a result that changed is
   pushed to every subscriber whose `authorize()` still passes.
+- An **AI action** is the same shape pointed at a model: `args()`,
+  `authorize()`, a system message and a prompt. It streams to the client over
+  Server-Sent Events, and the client calls it with `useAiStream('posts.summarize')`.
 - The **client** calls `useReactiveQuery('posts.list')`. Names, arguments and
   results are typed from the PHP classes by `php artisan types:generate`.
 
@@ -43,13 +47,15 @@ owner and closes self-registration.
 
 ## Commands
 
-| Command                                  | Does                                                          |
-|------------------------------------------|---------------------------------------------------------------|
-| `bin/dev up`                             | build and start the local stack                               |
-| `bin/gate`                               | everything CI runs, locally, in CI's order                    |
-| `bin/release`                            | cut and push a CalVer release                                 |
-| `php artisan make:feature Post`          | scaffold a feature, its list query and a page that renders it |
-| `php artisan make:query posts.list`      | a query, its data class and its test                          |
-| `php artisan make:mutation posts.create` | a mutation, its args and data classes and its test            |
-| `php artisan types:generate`             | regenerate `resources/js/types/generated.d.ts`                |
-| `php artisan kit:doctor`                 | check the runtime, the registry and the message files         |
+| Command                                      | Does                                                          |
+| -------------------------------------------- | ------------------------------------------------------------- |
+| `bin/dev up`                                 | build and start the local stack                               |
+| `bin/gate`                                   | everything CI runs, locally, in CI's order                    |
+| `bin/release`                                | cut and push a CalVer release                                 |
+| `php artisan make:feature Post`              | scaffold a feature, its list query and a page that renders it |
+| `php artisan make:query posts.list`          | a query, its data class and its test                          |
+| `php artisan make:mutation posts.create`     | a mutation, its args and data classes and its test            |
+| `php artisan make:ai-action posts.summarize` | a streamed AI action, its args class and its test             |
+| `php artisan types:generate`                 | regenerate `resources/js/types/generated.d.ts`                |
+| `php artisan ai:models`                      | the provider's model catalogue, with context window and price |
+| `php artisan kit:doctor`                     | check the runtime, the registry and the message files         |

@@ -136,7 +136,20 @@ const create = useReactiveMutation('posts.create', {
 The name is a literal union off `Kit.ReactiveMap`, so a typo is a type error
 and the args and result infer. Never `fetch` `/rq/*` directly.
 
-## 5. Check it
+## 5. Ask a model about it
+
+A feature that wants a model does not get a controller either:
+
+```sh
+php artisan make:ai-action posts.summarize
+```
+
+That writes `app/Features/Post/Ai/SummarizePost.php`, its args class and a
+test that runs it against a faked model. The client streams it with
+`useAiStream('posts.summarize')`. The whole contract, including tools and the
+prompt-injection rules, is in [AI](/ai).
+
+## 6. Check it
 
 ```sh
 bin/gate

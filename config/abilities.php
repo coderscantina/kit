@@ -27,6 +27,7 @@ return [
         'invites.view',
         'invites.manage',
         'roles.manage',
+        'ai.use',
         // kit:abilities
     ],
 
@@ -41,6 +42,7 @@ return [
                 'invites.view',
                 'invites.manage',
                 'roles.manage',
+                'ai.use',
                 // kit:role:owner
             ],
         ],
@@ -53,6 +55,7 @@ return [
                 'users.manage',
                 'invites.view',
                 'invites.manage',
+                'ai.use',
                 // kit:role:admin
             ],
         ],

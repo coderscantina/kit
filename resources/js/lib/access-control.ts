@@ -32,6 +32,7 @@ export interface NavigationItem {
 export const navigationItems: NavigationItem[] = [
   { labelKey: 'nav.dashboard', icon: 'home', routeName: 'dashboard' },
   { labelKey: 'nav.users', icon: 'users', routeName: 'users' },
+  { labelKey: 'nav.assistant', icon: 'sparkles', routeName: 'assistant' },
   { labelKey: 'nav.profile', icon: 'user', routeName: 'account-profile' },
   { labelKey: 'nav.security', icon: 'shield', routeName: 'account-security' },
   // kit:nav
@@ -43,6 +44,12 @@ export const routeAccessRequirements: Record<AppRouteName, RouteAccessRequiremen
   users: { abilities: { anyOf: ['users.view', 'invites.view'] } },
   'account-profile': { abilities: 'app.access' },
   'account-security': { abilities: 'app.access' },
+  assistant: {
+    // Two gates: the ability, and whether the installation has a provider
+    // key at all. Without the second the item is a button that can only fail.
+    abilities: 'ai.use',
+    check: () => runtimeConfig.features.ai,
+  },
   impersonate: {
     check: ({ me }) => Boolean(me?.user.isRoot) && runtimeConfig.features.impersonation,
   },

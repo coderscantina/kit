@@ -4,7 +4,7 @@ Laravel 13 + Vue 3 with a reactive data layer. Full docs in `docs/`.
 
 ## 1. Where things go
 
-A feature is a folder: `app/Features/<Name>/{Models,Queries,Mutations,Data,Policies,Tests,Database}` plus `<Name>ServiceProvider.php`. Delete the folder, delete the feature. Its provider is discovered from the folder, so there is no list to update.
+A feature is a folder: `app/Features/<Name>/{Models,Queries,Mutations,Ai,Data,Policies,Tests,Database}` plus `<Name>ServiceProvider.php`. Delete the folder, delete the feature. Its provider is discovered from the folder, so there is no list to update.
 
 Do not put feature code in `app/Http` (only auth, profile and invites live there), do not add a controller for data, and do not put shared constants in a composable module. They go in `resources/js/lib/`.
 
@@ -32,19 +32,44 @@ Composables are imported explicitly. Only `vue` and `vue-router` APIs are auto-i
 
 Run `php artisan types:generate` after any change to a data class, query or mutation, and commit the result. CI fails on a stale `generated.d.ts`.
 
-## 4. Definition of done
+## 4. The AI contract
+
+An AI action is a class, not a controller: `php artisan make:ai-action <feature>.<verb>`
+writes it under `app/Features/<Name>/Ai/`, with the args class and a test.
+Actions belonging to no feature live in `app/Ai`. Never add a controller for a
+prompt; there is one endpoint, `/api/ai/stream`, and the action name selects
+the action.
+
+The shape mirrors a query: `args()` names a laravel-data class (checked
+against `@extends AiAction<XArgs>` by PHPStan), `authorize()` must do real
+work, `system()` is the standing instruction and carries no per-request data
+so the provider can cache the prefix, `prompt()` returns the request.
+
+Everything the user or the database supplied goes through `Prompt::with()`,
+which fences it under a nonced tag. Never concatenate user data into the
+instruction string. A tool runs server-side with nobody watching, so it
+authorizes every row it touches; an id the model produced is not proof.
+
+The client calls `useAiStream('<name>')` from `~/composables/useAiStream`,
+typed off `Kit.AiMap`. Never fetch `/api/ai/stream` directly. Run
+`types:generate` after touching an action or its args class.
+
+Test with `FakeAiDriver::swap(...)`: no network, no key, no bill. Full contract
+in `docs/ai.md`.
+
+## 5. Definition of done
 
 `bin/gate` green locally. One test per query and per mutation; the generators write them, keep them meaningful. Tests use `#[Test]`, never a `@test` docblock, which PHPUnit 13 ignores silently; `tests/Architecture/NoDocblockTestAnnotationsTest.php` is what catches it.
 
-## 5. Release
+## 6. Release
 
 `bin/release` cuts `vYYYY.M.D-<shortsha>` from `main`, writes the changelog block from the commit subjects and tags the changelog commit. Rollback is re-running the receiver with the previous tag. See `docs/release.md`.
 
-## 6. When kit:doctor fails
+## 7. When kit:doctor fails
 
 Redis, Horizon and Reverb warnings mean a service is down; restart it. A failure means the repository is wrong: an unregistered query name (run `types:generate`), an ambient binding missing from `config/octane.php` `flush` (add it to `config/kit.php` `ambient_bindings`), or an `en`/`de` key mismatch. See `docs/runtime-contract.md`.
 
-## 7. Accepted trade-offs
+## 8. Accepted trade-offs
 
 Decisions reviewers keep re-filing. They are deliberate.
 

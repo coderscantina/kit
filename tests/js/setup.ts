@@ -10,9 +10,8 @@ window.__APP_CONFIG__ = {
   version: 'test',
   apiBaseUrl: '',
   locale: 'en',
-  features: { realtime: false, registration: true, impersonation: true },
+  features: { realtime: false, registration: true, impersonation: true, ai: true },
   echo: null,
-  socialProviders: [],
   analytics: null,
 }
 

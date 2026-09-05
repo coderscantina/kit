@@ -82,6 +82,7 @@ before_hashes="$(cat "${patched_files[@]}" | shasum)"
 php artisan make:feature Fixture
 php artisan make:query fixture.list
 php artisan make:mutation fixture.create
+php artisan make:ai-action fixture.summarize
 php artisan types:generate
 
 php artisan test --filter=Fixture

@@ -18,6 +18,16 @@ final class FeatureGate
             ?? (filled(config('reverb.apps.apps.0.key')) && config('broadcasting.default') === 'reverb');
     }
 
+    /**
+     * Whether the SPA should offer AI at all. Derived from the provider key,
+     * so a checkout with no key simply has no assistant rather than a button
+     * that fails on click.
+     */
+    public static function aiEnabled(): bool
+    {
+        return self::override('ai') ?? filled(config('ai.drivers.'.config('ai.driver').'.api_key'));
+    }
+
     public static function impersonationEnabled(): bool
     {
         return self::override('impersonation') ?? true;
@@ -68,7 +78,7 @@ final class FeatureGate
     }
 
     /**
-     * @return array{realtime: bool, registration: bool, impersonation: bool}
+     * @return array{realtime: bool, registration: bool, impersonation: bool, ai: bool}
      */
     public static function features(): array
     {
@@ -76,6 +86,7 @@ final class FeatureGate
             'realtime' => self::realtimeEnabled(),
             'registration' => self::registrationOpen(),
             'impersonation' => self::impersonationEnabled(),
+            'ai' => self::aiEnabled(),
         ];
     }
 

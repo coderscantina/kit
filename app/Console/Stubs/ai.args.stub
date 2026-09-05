@@ -1,0 +1,27 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Features\{{ feature }}\Data;
+
+use App\Rules\BoundedString;
+use Spatie\LaravelData\Attributes\Validation\Rule;
+use Spatie\LaravelData\Data;
+use Spatie\TypeScriptTransformer\Attributes\TypeScript;
+
+/**
+ * The arguments `{{ name }}` takes. laravel-data validates the payload into
+ * this class before authorize() and the prompt see it, so an oversized
+ * request is a 422 rather than a bill. #[TypeScript] is what types it on the
+ * client; run `php artisan types:generate` after every change here.
+ */
+#[TypeScript]
+final class {{ class }} extends Data
+{
+    public function __construct(
+        // BoundedString rather than `required|string|max:`: Laravel skips
+        // non-implicit rules on a blank string, so "" would slip through.
+        #[Rule(new BoundedString(1, 2000))]
+        public string $subject,
+    ) {}
+}

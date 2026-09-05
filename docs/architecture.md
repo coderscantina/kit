@@ -6,9 +6,11 @@
 app/
   Features/<Name>/     Models/ Queries/ Mutations/ Data/ Policies/ Tests/
                        Database/{Factories,Migrations}/ <Name>ServiceProvider.php
-  Http/                the few REST controllers: auth, profile, invites
+  Ai/                  AI actions that belong to no feature
+  Http/                the few REST controllers: auth, profile, invites, ai
   Jobs/QueuedJob.php   base job
   Policies/            ResourcePolicy and the ones with real per-model rules
+  Services/Ai/         the AI layer: driver, actions, SSE transport
   Support/             FeatureGate, RuntimeConfigPayload, Ambient
 config/abilities.php   the ability registry
 packages/reactive/     PHP: base classes, registry, runner, worker, PHPStan rules

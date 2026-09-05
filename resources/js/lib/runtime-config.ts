@@ -17,6 +17,7 @@ export const runtimeConfig = {
     realtime: appConfig?.features.realtime ?? false,
     registration: appConfig?.features.registration ?? false,
     impersonation: appConfig?.features.impersonation ?? false,
+    ai: appConfig?.features.ai ?? false,
   },
   // An echo block without a key cannot connect; null keeps the client from
   // retry-looping against a socket that is not there.

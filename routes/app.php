@@ -5,6 +5,7 @@ declare(strict_types=1);
 use App\Http\Controllers\Account\InviteController;
 use App\Http\Controllers\Account\ProfileController;
 use App\Http\Controllers\Account\UserController;
+use App\Http\Controllers\Ai\AiStreamController;
 use Illuminate\Support\Facades\Route;
 
 // The REST remainder. Every authenticated group carries `app.access`, so a
@@ -21,6 +22,10 @@ Route::prefix('api')->name('api.')->middleware('web')->group(function (): void {
         Route::get('invites', [InviteController::class, 'index'])->name('invites.index');
         Route::post('invites', [InviteController::class, 'store'])->name('invites.store');
         Route::delete('invites/{invite}', [InviteController::class, 'destroy'])->name('invites.destroy');
+
+        // Its own limiter: an AI request costs money and seconds, so it is
+        // counted apart from the 300/minute the rest of the API allows.
+        Route::post('ai/stream', AiStreamController::class)->middleware('throttle:ai')->name('ai.stream');
 
         Route::get('users', [UserController::class, 'index'])->name('users.index');
         Route::get('roles', [UserController::class, 'roles'])->name('roles.index');

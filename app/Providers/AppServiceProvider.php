@@ -52,5 +52,6 @@ class AppServiceProvider extends ServiceProvider
         RateLimiter::for('sensitive', fn (Request $request) => Limit::perMinute(10)->by($request->user()?->getAuthIdentifier() ?? $request->ip()));
         RateLimiter::for('app', fn (Request $request) => Limit::perMinute(300)->by($request->user()?->getAuthIdentifier() ?? $request->ip()));
         RateLimiter::for('public', fn (Request $request) => Limit::perMinute(60)->by($request->ip()));
+        RateLimiter::for('ai', fn (Request $request) => Limit::perMinute((int) config('ai.limits.rate_limit', 20))->by($request->user()?->getAuthIdentifier() ?? $request->ip()));
     }
 }
