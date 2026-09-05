@@ -1,0 +1,135 @@
+{
+  "app": {
+    "loading": "Loading…",
+    "newVersion": "A new version is available.",
+    "reload": "Reload"
+  },
+  "actions": {
+    "cancel": "Cancel",
+    "confirm": "Confirm",
+    "save": "Save",
+    "remove": "Remove",
+    "revoke": "Revoke",
+    "previous": "Previous",
+    "next": "Next"
+  },
+  "nav": {
+    "dashboard": "Dashboard",
+    "users": "Users",
+    "profile": "Profile",
+    "security": "Security"
+  },
+  "auth": {
+    "logout": "Sign out",
+    "impersonating": "Impersonating",
+    "fields": {
+      "name": "Name",
+      "email": "Email",
+      "password": "Password",
+      "passwordConfirmation": "Confirm password",
+      "totp": "Authenticator code"
+    },
+    "login": {
+      "title": "Sign in",
+      "submit": "Sign in",
+      "forgot": "Forgot password?",
+      "register": "Create an account",
+      "verified": "Your email address is verified. You can sign in now."
+    },
+    "register": {
+      "title": "Create your account",
+      "submit": "Create account",
+      "login": "Back to sign in"
+    },
+    "forgot": {
+      "title": "Reset your password",
+      "submit": "Send reset link",
+      "sent": "If that address exists, a reset link is on its way."
+    },
+    "reset": {
+      "title": "Choose a new password",
+      "submit": "Reset password"
+    },
+    "verify": {
+      "title": "Verify your email",
+      "description": "We sent a verification link to your address. Open it to finish signing up.",
+      "resend": "Send the link again",
+      "sent": "A new link has been sent.",
+      "error": "Could not send the link: {error}"
+    },
+    "confirmPassword": {
+      "title": "Confirm your password",
+      "description": "This action needs your password again."
+    }
+  },
+  "invites": {
+    "accept": {
+      "title": "You have been invited",
+      "description": "{by} invited {email} to join as {role}.",
+      "submit": "Accept invitation",
+      "decline": "Decline",
+      "declined": "The invitation was declined.",
+      "invalid": "This invitation is not valid any more."
+    }
+  },
+  "dashboard": {
+    "title": "Hello, {name}",
+    "empty": "Nothing here yet. Run `php artisan make:feature` to add your first feature.",
+    "connection": "Realtime connection: {state}"
+  },
+  "accessDenied": {
+    "global": {
+      "title": "Access is restricted",
+      "description": "Your role does not allow you to open this page."
+    },
+    "back": "Go to the first page you can open"
+  },
+  "account": {
+    "profile": {
+      "title": "Profile",
+      "language": "Language",
+      "saved": "Profile saved.",
+      "changeEmail": "Change email",
+      "emailChanged": "Email changed. Check your inbox for the verification link.",
+      "unverified": "This address is not verified yet."
+    },
+    "security": {
+      "title": "Security",
+      "changePassword": "Change password",
+      "currentPassword": "Current password",
+      "newPassword": "New password",
+      "passwordChanged": "Password changed. Other sessions were signed out.",
+      "twoFactor": "Two-factor authentication",
+      "twoFactorOn": "Two-factor authentication is on.",
+      "twoFactorOff": "Add a second factor with an authenticator app.",
+      "twoFactorDisabled": "Two-factor authentication is off.",
+      "enable": "Enable",
+      "disable": "Disable",
+      "regenerateCodes": "New backup codes",
+      "backupCodes": "Store these backup codes somewhere safe. Each works once.",
+      "deleteAccount": "Delete account",
+      "deleteDescription": "Deletes your account and signs you out. This cannot be undone.",
+      "deleteConfirm": "Delete your account? This cannot be undone."
+    }
+  },
+  "users": {
+    "title": "Users",
+    "role": "Role",
+    "roleChanged": "Role updated.",
+    "removeConfirm": "Remove {name}?",
+    "error": "Something went wrong: {error}",
+    "invites": {
+      "title": "Invitations",
+      "send": "Invite",
+      "sent": "Invitation sent.",
+      "error": "Could not update the invitation: {error}",
+      "status": {
+        "pending": "pending",
+        "accepted": "accepted",
+        "declined": "declined",
+        "expired": "expired"
+      }
+    }
+  },
+  "mutations": {}
+}

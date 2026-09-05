@@ -1,0 +1,21 @@
+{
+  "$schema": "./node_modules/oxfmt/configuration_schema.json",
+  "experimentalSortImports": {},
+  "semi": false,
+  "singleQuote": true,
+  "singleAttributePerLine": true,
+  "trailingComma": "es5",
+  "printWidth": 100,
+  "ignorePatterns": [
+    "public/build",
+    "docs/.vitepress/cache",
+    "docs/.vitepress/dist",
+    "resources/js/types/*.d.ts",
+    "vendor",
+    "storage",
+    "CHANGELOG.md",
+    "composer.json",
+    "packages/reactive/composer.json",
+    "composer.lock"
+  ]
+}

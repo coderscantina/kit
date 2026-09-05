@@ -1,0 +1,135 @@
+{
+  "app": {
+    "loading": "Lädt…",
+    "newVersion": "Eine neue Version ist verfügbar.",
+    "reload": "Neu laden"
+  },
+  "actions": {
+    "cancel": "Abbrechen",
+    "confirm": "Bestätigen",
+    "save": "Speichern",
+    "remove": "Entfernen",
+    "revoke": "Zurückziehen",
+    "previous": "Zurück",
+    "next": "Weiter"
+  },
+  "nav": {
+    "dashboard": "Übersicht",
+    "users": "Benutzer",
+    "profile": "Profil",
+    "security": "Sicherheit"
+  },
+  "auth": {
+    "logout": "Abmelden",
+    "impersonating": "Impersonation aktiv",
+    "fields": {
+      "name": "Name",
+      "email": "E-Mail",
+      "password": "Passwort",
+      "passwordConfirmation": "Passwort bestätigen",
+      "totp": "Authenticator-Code"
+    },
+    "login": {
+      "title": "Anmelden",
+      "submit": "Anmelden",
+      "forgot": "Passwort vergessen?",
+      "register": "Konto erstellen",
+      "verified": "Deine E-Mail-Adresse ist bestätigt. Du kannst dich jetzt anmelden."
+    },
+    "register": {
+      "title": "Konto erstellen",
+      "submit": "Konto erstellen",
+      "login": "Zurück zur Anmeldung"
+    },
+    "forgot": {
+      "title": "Passwort zurücksetzen",
+      "submit": "Link senden",
+      "sent": "Falls die Adresse existiert, ist ein Link unterwegs."
+    },
+    "reset": {
+      "title": "Neues Passwort wählen",
+      "submit": "Passwort zurücksetzen"
+    },
+    "verify": {
+      "title": "E-Mail bestätigen",
+      "description": "Wir haben dir einen Bestätigungslink geschickt. Öffne ihn, um die Registrierung abzuschließen.",
+      "resend": "Link erneut senden",
+      "sent": "Ein neuer Link wurde gesendet.",
+      "error": "Der Link konnte nicht gesendet werden: {error}"
+    },
+    "confirmPassword": {
+      "title": "Passwort bestätigen",
+      "description": "Für diese Aktion brauchen wir dein Passwort noch einmal."
+    }
+  },
+  "invites": {
+    "accept": {
+      "title": "Du wurdest eingeladen",
+      "description": "{by} hat {email} als {role} eingeladen.",
+      "submit": "Einladung annehmen",
+      "decline": "Ablehnen",
+      "declined": "Die Einladung wurde abgelehnt.",
+      "invalid": "Diese Einladung ist nicht mehr gültig."
+    }
+  },
+  "dashboard": {
+    "title": "Hallo, {name}",
+    "empty": "Hier ist noch nichts. Starte mit `php artisan make:feature` dein erstes Feature.",
+    "connection": "Echtzeit-Verbindung: {state}"
+  },
+  "accessDenied": {
+    "global": {
+      "title": "Zugriff eingeschränkt",
+      "description": "Deine Rolle erlaubt es nicht, diese Seite zu öffnen."
+    },
+    "back": "Zur ersten Seite, die du öffnen kannst"
+  },
+  "account": {
+    "profile": {
+      "title": "Profil",
+      "language": "Sprache",
+      "saved": "Profil gespeichert.",
+      "changeEmail": "E-Mail ändern",
+      "emailChanged": "E-Mail geändert. Der Bestätigungslink ist unterwegs.",
+      "unverified": "Diese Adresse ist noch nicht bestätigt."
+    },
+    "security": {
+      "title": "Sicherheit",
+      "changePassword": "Passwort ändern",
+      "currentPassword": "Aktuelles Passwort",
+      "newPassword": "Neues Passwort",
+      "passwordChanged": "Passwort geändert. Andere Sitzungen wurden abgemeldet.",
+      "twoFactor": "Zwei-Faktor-Authentifizierung",
+      "twoFactorOn": "Die Zwei-Faktor-Authentifizierung ist aktiv.",
+      "twoFactorOff": "Füge mit einer Authenticator-App einen zweiten Faktor hinzu.",
+      "twoFactorDisabled": "Die Zwei-Faktor-Authentifizierung ist deaktiviert.",
+      "enable": "Aktivieren",
+      "disable": "Deaktivieren",
+      "regenerateCodes": "Neue Backup-Codes",
+      "backupCodes": "Bewahre diese Backup-Codes sicher auf. Jeder funktioniert einmal.",
+      "deleteAccount": "Konto löschen",
+      "deleteDescription": "Löscht dein Konto und meldet dich ab. Das kann nicht rückgängig gemacht werden.",
+      "deleteConfirm": "Konto löschen? Das kann nicht rückgängig gemacht werden."
+    }
+  },
+  "users": {
+    "title": "Benutzer",
+    "role": "Rolle",
+    "roleChanged": "Rolle aktualisiert.",
+    "removeConfirm": "{name} entfernen?",
+    "error": "Etwas ist schiefgelaufen: {error}",
+    "invites": {
+      "title": "Einladungen",
+      "send": "Einladen",
+      "sent": "Einladung gesendet.",
+      "error": "Die Einladung konnte nicht aktualisiert werden: {error}",
+      "status": {
+        "pending": "offen",
+        "accepted": "angenommen",
+        "declined": "abgelehnt",
+        "expired": "abgelaufen"
+      }
+    }
+  },
+  "mutations": {}
+}
