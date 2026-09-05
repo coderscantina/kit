@@ -12,9 +12,11 @@ use Kit\Reactive\Attributes\ReactiveMutation;
 use Kit\Reactive\Contracts\Registry;
 use Kit\Reactive\Facades\Reactive;
 use Kit\Reactive\Mutation;
+use Kit\Reactive\NoArgs;
 use Kit\Reactive\Runtime\MutationRunner;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
+use Spatie\LaravelData\Data;
 use Tests\Fixtures\Reactive\Note;
 use Tests\Fixtures\Reactive\ReactiveFixtures;
 
@@ -27,21 +29,22 @@ final class MutationTransactionTest extends ReactiveTestCase
         ReactiveFixtures::install();
         $user = User::factory()->create();
 
+        /** @extends Mutation<NoArgs> */
         $mutation = new #[ReactiveMutation('notes.deadlocky')] class extends Mutation
         {
             public int $attempts = 0;
 
-            public function rules(): array
+            public static function args(): string
             {
-                return [];
+                return NoArgs::class;
             }
 
-            public function authorize(Authenticatable $user, array $args): void
+            public function authorize(Authenticatable $user, Data $args): void
             {
                 abort_unless($user->getAuthIdentifier() !== null, 403);
             }
 
-            public function handle(array $args): mixed
+            public function handle(Data $args): mixed
             {
                 Note::query()->create(['owner_id' => 'u', 'title' => 'attempt '.++$this->attempts]);
 

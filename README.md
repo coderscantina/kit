@@ -34,27 +34,28 @@ php artisan serve & bun run dev
 
 ## Commands
 
-| Command | Does |
-|---|---|
-| `bin/dev up` | rebuild and start the local stack, waiting for health |
-| `bin/dev down --wipe` | stop it and drop the volumes |
-| `bin/dev artisan <cmd>` | run artisan inside the container |
-| `bin/gate` | everything CI runs, locally, in CI's order |
-| `bin/release` | cut and push a CalVer release; `--dry-run`, `--backfill` |
-| `php artisan make:feature Post` | scaffold a feature and wire it into the registry, router, nav and messages |
-| `php artisan make:query posts.list` | a query, its data class and a test asserting push-on-change and 403 |
-| `php artisan make:mutation posts.create` | a mutation, its data class and a test asserting the commit, the invalidation and 403 |
-| `php artisan make:data Post/Summary` | a laravel-data class with the TypeScript attribute |
-| `php artisan make:job RebuildIndex` | a `QueuedJob` subclass |
-| `php artisan types:generate [--check]` | regenerate `resources/js/types/generated.d.ts` |
-| `php artisan kit:setup` | idempotent first run and upgrade |
-| `php artisan kit:doctor` | check the runtime, the registry, the suite and the message files |
-| `bun run docs:dev` | the documentation site |
+| Command                                  | Does                                                                                                               |
+|------------------------------------------|--------------------------------------------------------------------------------------------------------------------|
+| `bin/dev up`                             | rebuild and start the local stack, waiting for health                                                              |
+| `bin/dev down --wipe`                    | stop it and drop the volumes                                                                                       |
+| `bin/dev artisan <cmd>`                  | run artisan inside the container                                                                                   |
+| `bin/gate`                               | everything CI runs, locally, in CI's order                                                                         |
+| `bin/release`                            | cut and push a CalVer release; `--dry-run`, `--backfill`                                                           |
+| `php artisan make:feature Post`          | scaffold a feature, its `list` query and a page that renders it, wired into the registry, router, nav and messages |
+| `php artisan make:query posts.list`      | a query, its data class and a test asserting push-on-change and 403                                                |
+| `php artisan make:mutation posts.create` | a mutation, its args and data classes and a test asserting the commit, the invalidation and 403                    |
+| `php artisan make:data Post/Summary`     | a laravel-data class with the TypeScript attribute                                                                 |
+| `php artisan make:job RebuildIndex`      | a `QueuedJob` subclass                                                                                             |
+| `php artisan types:generate [--check]`   | regenerate `resources/js/types/generated.d.ts`                                                                     |
+| `php artisan reactive:cache`             | cache the query and mutation name maps; `optimize` runs it                                                         |
+| `php artisan kit:setup`                  | idempotent first run and upgrade                                                                                   |
+| `php artisan kit:doctor`                 | check the runtime, the registry and the message files                                                              |
+| `bun run docs:dev`                       | the documentation site                                                                                             |
 
 ## Stack
 
 Laravel 13 on PHP 8.5 under FrankenPHP + Octane, MariaDB 11 or MySQL 8,
-Redis 7, Reverb, Horizon. Vue 3, TypeScript, Vite 8, TanStack Query v5,
+Redis 7, Reverb (optional; without it the client polls), Horizon. Vue 3, TypeScript, Vite 8, TanStack Query v5,
 Tailwind 4 with reka-ui, vue-i18n. PHPUnit 13 and Vitest, PHPStan level 6 with
 kit-specific rules, Pint and oxlint. Bun, never npm. Never prettier.
 

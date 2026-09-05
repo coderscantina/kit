@@ -9,15 +9,15 @@ use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Database\Connection;
 use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\ValidationException;
 use Kit\Reactive\Contracts\Registry;
 use Kit\Reactive\Invalidation\ChangeBuffer;
 use Kit\Reactive\Mutation;
+use Spatie\LaravelData\Data;
 use Throwable;
 
 /**
- * The mutation pipeline (§4.2): validate → authorize → REPEATABLE READ
+ * The mutation pipeline (§4.2): build the args class → authorize → REPEATABLE READ
  * transaction retried on deadlock/lock-wait with jittered backoff → on
  * commit the change buffer takes a mutation id and dispatches the
  * invalidation batch → {result, mutationId}.
@@ -35,14 +35,16 @@ final class MutationRunner
     ) {}
 
     /**
-     * @param  array<string, mixed>  $args
+     * @param  Mutation<Data>  $mutation
+     * @param  array<string, mixed>  $args  raw input
      *
      * @throws ValidationException
      * @throws AuthorizationException
      */
     public function run(Mutation $mutation, Authenticatable $user, array $args): MutationResult
     {
-        $validated = Validator::make($args, $mutation->rules())->validate();
+        $class = $mutation::args();
+        $validated = $class::validateAndCreate($args);
 
         $mutation->authorize($user, $validated);
 

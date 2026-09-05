@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tests\Reactive;
 
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Kit\Reactive\Contracts\Metrics;
 use Kit\Reactive\Contracts\Registry;
 use Tests\Fixtures\Reactive\Note;
 use Tests\TestCase;
@@ -34,6 +35,7 @@ abstract class ReactiveTestCase extends TestCase
 
         $this->booted = true;
         app(Registry::class)->flush();
+        app(Metrics::class)->flush();
     }
 
     /**
@@ -52,6 +54,7 @@ abstract class ReactiveTestCase extends TestCase
     {
         if ($this->booted) {
             app(Registry::class)->flush();
+            app(Metrics::class)->flush();
         }
 
         parent::tearDown();

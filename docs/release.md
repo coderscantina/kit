@@ -47,18 +47,25 @@ diverged from `origin/main`, and refuses on a dirty tree. Then it:
 6. Creates a GitHub deployment and POSTs the signed webhook:
 
    ```json
-   { "event": "deploy", "environment": "production", "image": "...",
-     "tag": "v2026.9.5-abc1234", "sha": "...", "changelogUrl": "...",
-     "statusUrl": "..." }
+   {
+     "event": "deploy",
+     "environment": "production",
+     "image": "...",
+     "tag": "v2026.9.5-abc1234",
+     "sha": "...",
+     "changelogUrl": "...",
+     "statusUrl": "..."
+   }
    ```
 
    signed as `X-Kit-Signature: sha256=HMAC(body, DEPLOY_WEBHOOK_SECRET)`.
+
 7. Waits up to 10 minutes for the receiver to post a deployment status. Without
    that wait the workflow goes green the moment the POST returns, whatever the
    host actually did.
 
 A `notify-blocked` job posts to `NOTIFY_WEBHOOK_URL` when the gate fails. It
-has to exist separately: the release job is *skipped*, not failed, when the
+has to exist separately: the release job is _skipped_, not failed, when the
 gate goes red, and a skipped job's own notification never fires.
 
 Pushes to `main` run the same shape against `:staging` and
@@ -66,12 +73,12 @@ Pushes to `main` run the same shape against `:staging` and
 
 ## Secrets
 
-| Secret | Used by |
-|---|---|
-| `DEPLOY_WEBHOOK_STAGING` | staging.yml |
-| `DEPLOY_WEBHOOK_PRODUCTION` | release.yml |
-| `DEPLOY_WEBHOOK_SECRET` | both, and the receiver |
-| `NOTIFY_WEBHOOK_URL` | release.yml, `notify-blocked` |
+| Secret                      | Used by                       |
+| --------------------------- | ----------------------------- |
+| `DEPLOY_WEBHOOK_STAGING`    | staging.yml                   |
+| `DEPLOY_WEBHOOK_PRODUCTION` | release.yml                   |
+| `DEPLOY_WEBHOOK_SECRET`     | both, and the receiver        |
+| `NOTIFY_WEBHOOK_URL`        | release.yml, `notify-blocked` |
 
 Each webhook step skips itself when its secret is unset, so a fresh clone does
 not fail its first push.

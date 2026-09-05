@@ -31,6 +31,8 @@ class DocsCommandsCommand extends Command
         'make:job',
         'types:generate',
         'reactive:gc',
+        'reactive:cache',
+        'reactive:clear',
     ];
 
     protected $signature = 'docs:commands';

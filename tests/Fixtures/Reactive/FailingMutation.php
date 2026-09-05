@@ -7,23 +7,29 @@ namespace Tests\Fixtures\Reactive;
 use Illuminate\Contracts\Auth\Authenticatable;
 use Kit\Reactive\Attributes\ReactiveMutation;
 use Kit\Reactive\Mutation;
+use Kit\Reactive\NoArgs;
 use RuntimeException;
+use Spatie\LaravelData\Data;
 
-/** Writes a row, then throws: the row must roll back and nothing may push. */
+/**
+ * Writes a row, then throws: the row must roll back and nothing may push.
+ *
+ * @extends Mutation<NoArgs>
+ */
 #[ReactiveMutation('notes.fail')]
 final class FailingMutation extends Mutation
 {
-    public function rules(): array
+    public static function args(): string
     {
-        return [];
+        return NoArgs::class;
     }
 
-    public function authorize(Authenticatable $user, array $args): void
+    public function authorize(Authenticatable $user, Data $args): void
     {
         $this->gate($user)->authorize('create-notes');
     }
 
-    public function handle(array $args): mixed
+    public function handle(Data $args): mixed
     {
         Note::query()->create(['owner_id' => (string) auth()->id(), 'title' => 'doomed']);
 

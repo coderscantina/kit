@@ -6,6 +6,7 @@ namespace App\Console\Commands\Concerns;
 
 use Illuminate\Filesystem\Filesystem;
 use RuntimeException;
+use stdClass;
 
 /**
  * Shared by the generators: render a stub with `{{ placeholders }}`, write it
@@ -133,31 +134,40 @@ trait WritesStubs
     /**
      * Set a dotted key in a JSON translation file, keeping key order and the
      * two-space style the rest of the file uses.
+     *
+     * Decoded as objects, not associative arrays. `{}` and `[]` both decode to
+     * `[]` with assoc on, so an empty message group such as `"mutations": {}`
+     * came back out as `"mutations": []` and vue-i18n stopped seeing a group.
      */
     protected function setJsonKey(string $file, string $dotted, string $value): void
     {
         $files = new Filesystem;
-        /** @var array<string, mixed> $data */
-        $data = json_decode($files->get($file), true, 512, JSON_THROW_ON_ERROR);
+        $data = json_decode($files->get($file), false, 512, JSON_THROW_ON_ERROR);
 
-        $node = &$data;
-        $parts = explode('.', $dotted);
-        foreach (array_slice($parts, 0, -1) as $part) {
-            if (! isset($node[$part]) || ! is_array($node[$part])) {
-                $node[$part] = [];
-            }
-            $node = &$node[$part];
+        if (! $data instanceof stdClass) {
+            throw new RuntimeException('Expected a JSON object in '.$this->relative($file).'.');
         }
+
+        $node = $data;
+        $parts = explode('.', $dotted);
+
+        foreach (array_slice($parts, 0, -1) as $part) {
+            if (! isset($node->{$part}) || ! $node->{$part} instanceof stdClass) {
+                $node->{$part} = new stdClass;
+            }
+            $node = $node->{$part};
+        }
+
         $leaf = $parts[count($parts) - 1];
-        if (isset($node[$leaf])) {
+
+        if (isset($node->{$leaf})) {
             return;
         }
-        $node[$leaf] = $value;
-        unset($node);
+
+        $node->{$leaf} = $value;
 
         $json = json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR);
         $json = preg_replace_callback('/^ +/m', fn (array $m) => str_repeat(' ', intdiv(strlen($m[0]), 2)), $json) ?? $json;
-        $json = str_replace('{}', '{}', $json);
         $files->put($file, $json."\n");
         $this->components->info('Updated '.$this->relative($file));
     }

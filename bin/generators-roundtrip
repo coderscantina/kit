@@ -4,28 +4,80 @@
 # and the checks it touches, removes it, and fails if anything is left behind.
 #
 # The same script backs the `generators` job in .github/workflows/tests.yml.
+#
+# Cleanup never runs `git checkout --`. The files the generators rewrite in
+# place are copied to a temp directory before the run and copied back after, so
+# uncommitted work in them survives even if the run dies half way.
+#
+# Pass --allow-dirty to run against a dirty tree. It is safe because of the
+# backup, but you lose the "nothing was left behind" signal for paths that were
+# already modified.
 set -euo pipefail
 
 cd "$(dirname "$0")/.."
 
+allow_dirty=0
+if [ "${1:-}" = "--allow-dirty" ]; then
+  allow_dirty=1
+fi
+
+# Files the generators rewrite in place. Backed up, then restored verbatim.
+patched_files=(
+  config/abilities.php
+  resources/js/i18n/en.json
+  resources/js/i18n/de.json
+  resources/js/lib/access-control.ts
+  resources/js/router/index.ts
+  resources/js/types/generated.d.ts
+)
+
+# Paths the generators create and cleanup deletes outright.
+created_paths=(
+  app/Features/Fixture
+  resources/js/pages/fixtures
+  tests/js/pages/fixtures
+)
+
+backup_dir="$(mktemp -d "${TMPDIR:-/tmp}/generators-roundtrip.XXXXXX")"
+
 cleanup() {
-  rm -rf app/Features/Fixture resources/js/pages/fixtures tests/js/pages/fixtures
-  git checkout -- \
-    config/abilities.php \
-    resources/js/i18n/en.json \
-    resources/js/i18n/de.json \
-    resources/js/lib/access-control.ts \
-    resources/js/router/index.ts \
-    resources/js/types/generated.d.ts 2>/dev/null || true
+  rm -rf "${created_paths[@]}"
+  for file in "${patched_files[@]}"; do
+    if [ -f "$backup_dir/$file" ]; then
+      cp "$backup_dir/$file" "$file"
+    fi
+  done
   # tests/js/pages only exists because of the fixture.
   rmdir tests/js/pages 2>/dev/null || true
+  rm -rf "$backup_dir"
 }
 trap cleanup EXIT
 
-if [ -n "$(git status --porcelain -- app/Features resources/js/pages/fixtures)" ]; then
-  echo "generators: app/Features is dirty; commit or stash first." >&2
+for path in "${created_paths[@]}"; do
+  if [ -e "$path" ]; then
+    echo "generators: $path already exists; the run would delete it. Remove it first." >&2
+    exit 1
+  fi
+done
+
+before="$(git status --porcelain)"
+
+if [ "$allow_dirty" -eq 0 ] && [ -n "$(git status --porcelain -- "${patched_files[@]}" "${created_paths[@]}")" ]; then
+  echo "generators: the paths this script rewrites are dirty; commit or stash first." >&2
+  git status --porcelain -- "${patched_files[@]}" "${created_paths[@]}" >&2
+  echo "generators: pass --allow-dirty to run anyway (your changes are restored from a backup)." >&2
   exit 1
 fi
+
+for file in "${patched_files[@]}"; do
+  mkdir -p "$backup_dir/$(dirname "$file")"
+  cp "$file" "$backup_dir/$file"
+done
+
+# git status only reports that a file is modified, not what is in it, so hash
+# the patched files too. Otherwise a restore that put back the wrong bytes
+# would still look clean.
+before_hashes="$(cat "${patched_files[@]}" | shasum)"
 
 php artisan make:feature Fixture
 php artisan make:query fixture.list
@@ -38,13 +90,21 @@ bun run test -- tests/js/pages/fixtures
 vendor/bin/pint --test
 vendor/bin/phpstan analyse --no-progress
 bun run lint:ci
+bun run format:check
 
 cleanup
 trap - EXIT
 
-if [ -n "$(git status --porcelain)" ]; then
-  echo "generators: the working tree is not clean after removing the fixture:" >&2
-  git status --porcelain >&2
+after="$(git status --porcelain)"
+
+if [ "$before" != "$after" ]; then
+  echo "generators: the working tree changed after removing the fixture:" >&2
+  diff <(printf '%s\n' "$before") <(printf '%s\n' "$after") >&2 || true
+  exit 1
+fi
+
+if [ "$before_hashes" != "$(cat "${patched_files[@]}" | shasum)" ]; then
+  echo "generators: a file the generators rewrite was not restored to its original contents." >&2
   exit 1
 fi
 

@@ -5,12 +5,12 @@
 `Dockerfile` builds a single image; `docker/etc/supervisord.conf` runs four
 things in it.
 
-| Process | Port | Job |
-|---|---|---|
-| `web` | 8000 | FrankenPHP + Octane worker mode |
-| `horizon` | | queues: `default` and `reactive`, each its own supervisor |
-| `reverb` | 8001 | the websocket server |
-| `scheduler` | | `schedule:work` |
+| Process     | Port | Job                                                       |
+| ----------- | ---- | --------------------------------------------------------- |
+| `web`       | 8000 | FrankenPHP + Octane worker mode                           |
+| `horizon`   |      | queues: `default` and `reactive`, each its own supervisor |
+| `reverb`    | 8001 | the websocket server                                      |
+| `scheduler` |      | `schedule:work`                                           |
 
 Services: MariaDB 11 or MySQL 8, Redis 7.
 
@@ -50,14 +50,32 @@ Rules the image keeps, each for a reason:
    the same database at the same time.
 5. `exec supervisord`.
 
+`php artisan optimize` runs `reactive:cache`, which writes
+`bootstrap/cache/reactive.php` with the query and mutation name maps. Without
+it every boot outside Octane walks `app/Features` looking for the attributes.
+`optimize:clear` runs `reactive:clear` and the next boot rediscovers them. The
+image does not run `optimize` today, because Octane holds the scan for the
+life of the process; run it on a host that serves without Octane.
+
 <!--@include: ./generated/kit-setup.md-->
 
 ## Health
 
-| Endpoint | Reports |
-|---|---|
-| `/up` | the framework is serving; carries `X-App-Version` |
-| `/rq/health` | registry counts and worker metrics, with `version` |
+| Endpoint     | Auth                            | Reports                                            |
+| ------------ | ------------------------------- | -------------------------------------------------- |
+| `/up`        | public                          | the framework is serving; carries `X-App-Version`  |
+| `/rq/health` | the `reactive.middleware` group | registry counts and worker metrics, with `version` |
+
+`/rq/health` sits behind the same authenticated group as the rest of `/rq/*`.
+The counts and the p95 describe the registry's internals, so an uptime probe
+uses `/up` instead.
+
+Its counts come from the Redis index sets, one SCARD each rather than an
+EXISTS per member, so they are an upper bound between garbage collections: a
+subscription whose key has expired still counts until `reactive:gc` drops it.
+`worker.lock_timeout` counts recomputes that gave up waiting for the
+per-computation lock; a number that is not near zero means the `reactive`
+queue is contending on one hot computation.
 
 The compose healthcheck probes `http://$(hostname):8000/up`, not loopback: a
 loopback probe passes on a stack whose published port reaches nothing, so the
@@ -99,8 +117,7 @@ php artisan kit:doctor
 Reachability problems (Redis, Horizon, Reverb) are warnings, because a laptop
 with services stopped is not a broken repository. Everything the repository
 controls — an unregistered query name, an ambient binding missing from the
-Octane flush list, a `@test` docblock, an `en`/`de` key mismatch — is a
-failure. `--strict` promotes the warnings, which is what a deployed host wants.
+Octane flush list, an `en`/`de` key mismatch — is a failure. `--strict` promotes the warnings, which is what a deployed host wants.
 
 A failing check and what it usually means:
 

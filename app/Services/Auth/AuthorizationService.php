@@ -8,6 +8,7 @@ use App\Models\Role;
 use App\Models\User;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
+use Kit\Reactive\Contracts\Registry;
 
 /**
  * Answers "can this user do X" from a per-user ability list cached for an
@@ -45,9 +46,18 @@ class AuthorizationService
         return $abilities;
     }
 
+    /**
+     * Busting the ability cache is also the moment a live subscription may
+     * have become one the user is no longer allowed to see. A recompute
+     * re-authorizes, but only when the result changes, so the subscriptions
+     * are dropped here instead of waiting for a write that may never come.
+     */
     public function invalidateUser(User|string $user): void
     {
-        Cache::forget($this->cacheKey($user instanceof User ? $user->id : $user));
+        $id = $user instanceof User ? $user->id : $user;
+
+        Cache::forget($this->cacheKey($id));
+        app(Registry::class)->purgeUser($id);
     }
 
     public function invalidateRole(Role $role): void

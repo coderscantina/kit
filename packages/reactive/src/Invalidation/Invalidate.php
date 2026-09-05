@@ -8,13 +8,14 @@ use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
+use Kit\Reactive\Contracts\Metrics;
 use Kit\Reactive\Contracts\Registry;
-use Kit\Reactive\Jobs\RecomputeSubscription;
+use Kit\Reactive\Jobs\RecomputeComputation;
 
 /**
- * One committed batch of changes. Resolves the affected subscriptions and
- * queues a recompute per subscription, coalescing bursts through the
- * per-subscription debounce marker.
+ * One committed batch of changes. Resolves the affected computations and
+ * queues a recompute per computation, coalescing bursts through the
+ * per-computation debounce marker.
  */
 final class Invalidate implements ShouldQueue
 {
@@ -47,21 +48,21 @@ final class Invalidate implements ShouldQueue
             ->onQueue((string) config('reactive.queue', 'reactive'));
     }
 
-    public function handle(Registry $registry, InvalidationResolver $resolver): void
+    public function handle(Registry $registry, Metrics $metrics, InvalidationResolver $resolver): void
     {
         $changes = array_map(fn (array $change) => Change::fromArray($change), $this->changes);
-        $ids = $resolver->resolve($changes);
+        $keys = $resolver->resolve($changes);
 
-        $registry->incrementMetric('invalidations');
+        $metrics->increment('invalidations');
 
-        foreach ($ids as $id) {
-            if (! $registry->debounce($id, (int) config('reactive.debounce_ms', 50))) {
-                $registry->incrementMetric('coalesced');
+        foreach ($keys as $key) {
+            if (! $registry->debounce($key, (int) config('reactive.debounce_ms', 50))) {
+                $metrics->increment('coalesced');
 
                 continue;
             }
 
-            RecomputeSubscription::dispatch($id, $this->mutationId)
+            RecomputeComputation::dispatch($key, $this->mutationId)
                 ->onQueue((string) config('reactive.queue', 'reactive'));
         }
     }

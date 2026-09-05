@@ -65,12 +65,7 @@ declare namespace App {
         impersonation: boolean,
       },
       echo: App.Support.EchoConfigPayload | null,
-      socialProviders: App.Support.SocialProviderPayload[],
       analytics: App.Support.AnalyticsPayload | null,
-    };
-    export type SocialProviderPayload = {
-      key: string,
-      url: string,
     };
   }
 }

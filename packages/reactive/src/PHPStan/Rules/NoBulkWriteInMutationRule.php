@@ -65,7 +65,7 @@ final class NoBulkWriteInMutationRule implements Rule
     private function error(string $call): IdentifierRuleError
     {
         return RuleErrorBuilder::message(
-            "{$call} inside a Mutation is invisible to reactive invalidation. Write through models, or use withoutReactiveEvents() and Invalidate::table(). See docs/reactive.md#bulk-writes."
+            "{$call} inside a Mutation is invisible to reactive invalidation. Write through models, or use withoutReactiveEvents() and Invalidate::table(). See docs/limitations.md#non-eloquent-writes-are-invisible."
         )->identifier('kit.mutation.bulkWrite')->build();
     }
 }

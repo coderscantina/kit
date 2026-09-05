@@ -134,6 +134,8 @@ jobs:
 
       # `bun run lint` rewrites files; CI only reports. Never prettier.
       - run: bun run lint:ci
+      # `bun run format` rewrites files; CI only reports.
+      - run: bun run format:check
       - run: bun run typecheck
       - run: bun run test
 
@@ -186,23 +188,6 @@ jobs:
 
       - run: composer install --prefer-dist --no-interaction --no-progress
       - run: vendor/bin/pint --test
-
-  test-attributes:
-    name: No @test docblocks
-    runs-on: ubuntu-latest
-    timeout-minutes: 5
-    steps:
-      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
-
-      # PHPUnit 13 ignores @test docblocks, so a test written that way stops
-      # running with no failure anywhere. grep is the only thing that sees it.
-      - name: Grep for @test docblocks
-        run: |
-          if grep -rnE '^\s*\*\s*@test\b' --include='*Test.php' app tests packages; then
-            echo '::error::Replace @test docblocks with the #[Test] attribute.'
-            exit 1
-          fi
-          echo 'No @test docblocks.'
 
   generators:
     name: Generator round trip

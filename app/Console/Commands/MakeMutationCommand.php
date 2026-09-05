@@ -11,9 +11,9 @@ use Illuminate\Support\Str;
 use RuntimeException;
 
 /**
- * Creates a transactional mutation, the data class it returns, and a feature
- * test asserting the commit, the single invalidation batch and the 403 for a
- * user without the ability.
+ * Creates a transactional mutation, the args class it validates through, the
+ * data class it returns, and a feature test asserting the commit, the single
+ * invalidation batch and the 403 for a user without the ability.
  */
 class MakeMutationCommand extends Command
 {
@@ -22,7 +22,7 @@ class MakeMutationCommand extends Command
 
     protected $signature = 'make:mutation {name : The client-facing name, e.g. posts.create}';
 
-    protected $description = 'Create a reactive mutation, its data class and its feature test';
+    protected $description = 'Create a reactive mutation, its args and data classes and its feature test';
 
     public function handle(): int
     {
@@ -46,10 +46,14 @@ class MakeMutationCommand extends Command
             'name' => $name,
             'class' => $class,
             'data' => "{$feature}Data",
+            'args' => "{$class}Args",
             'namespace' => "App\\Features\\{$feature}\\Data",
         ];
 
         $this->writeStub($this->stub('data'), "{$base}/Data/{$feature}Data.php", [...$replacements, 'class' => "{$feature}Data"]);
+        // One args class per mutation, not one per feature: two mutations on
+        // the same model rarely take the same arguments.
+        $this->writeStub($this->stub('args'), "{$base}/Data/{$class}Args.php", [...$replacements, 'class' => "{$class}Args"]);
         $this->writeStub($this->stub('mutation'), "{$base}/Mutations/{$class}.php", $replacements);
         $this->writeStub($this->stub('mutation.test'), "{$base}/Tests/{$class}Test.php", $replacements);
 

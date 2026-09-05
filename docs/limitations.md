@@ -28,11 +28,25 @@ write use `Model::withoutReactiveEvents()` plus one explicit
 `Invalidate::table('posts')`; never `Model::withoutEvents()`, which also kills
 the ULID hooks.
 
+## Revocation waits for a changed result
+
+A recompute re-authorizes each subscriber only when the result actually
+changed, because the common case is a recompute that hashes the same and pushes
+nothing, and paying for one `authorize()` per subscriber there would undo the
+sharing. Nothing stale is ever delivered: a push happens only after the pushing
+subscriber's `authorize()` passed. What lags is the tear-down, so a user who
+lost access keeps the last result they were allowed to see until the next
+change. `AuthorizationService::invalidateUser()` purges their subscriptions
+immediately on any role or ability change, and logout purges them too, so the
+lag only shows for access that changed by some other route.
+
 ## Results over 8 KB cost an extra round trip
 
 Reverb drops frames over 10 KB. A serialized result above 8 KB is pushed as a
-hash only and the client fetches it through `/rq/query`. Correct, and one more
-round trip. Page or narrow the query if it matters.
+hash only and the client fetches it through `/rq/query`. That fetch is answered
+from the computation's stored result rather than by re-running the query, so it
+costs a round trip and a Redis read, not a second query. Page or narrow the
+query if the round trip itself matters.
 
 ## Single Reverb node
 
@@ -51,8 +65,24 @@ wants fewer, wider queries.
 ## No offline support
 
 There is no write queue. A mutation attempted without a connection fails and
-rolls its optimistic patch back. While the socket is down, subscriptions fall
-back to polling `/rq/query` every 30 seconds.
+rolls its optimistic patch back. Reads degrade to polling: a mounted query
+refetches `/rq/query` every 30 seconds whenever the socket is down or missing.
+
+That covers two cases. A dropped socket keeps its server subscriptions and only
+polls until Reverb comes back. An install with no Reverb at all never opens a
+subscription in the first place, because nothing can push on it; every fetch
+goes to `/rq/query` and the 30 second poll is the only freshness the client
+gets.
+
+## No social login
+
+Email and password only. An earlier draft carried a `socialProviders` block in
+`__APP_CONFIG__` with no route, controller or `services.social` config behind
+it, so the switch did nothing; it is gone rather than half-built. Adding OAuth
+means `laravel/socialite`, a redirect and callback route, and a decision about
+whether a provider email may claim an existing account. That decision is an
+account-takeover vector when it is made carelessly, so it belongs in a feature
+with its own tests, not in the baseline.
 
 ## No multi-tenancy
 

@@ -7,13 +7,14 @@ namespace Tests\Feature\Reactive;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
+use Kit\Reactive\Contracts\Metrics;
 use Kit\Reactive\Contracts\Pusher;
 use Kit\Reactive\Contracts\Registry;
 use Kit\Reactive\Facades\Reactive;
 use Kit\Reactive\Invalidation\ChangeBuffer;
 use Kit\Reactive\Invalidation\HasReactiveInvalidation;
 use Kit\Reactive\Invalidation\Invalidate;
-use Kit\Reactive\Jobs\RecomputeSubscription;
+use Kit\Reactive\Jobs\RecomputeComputation;
 use Kit\Reactive\Registry\Catalog;
 use Kit\Reactive\Runtime\QueryRunner;
 use PHPUnit\Framework\Attributes\CoversClass;
@@ -25,7 +26,7 @@ use Tests\TestCase;
 #[CoversClass(ChangeBuffer::class)]
 #[CoversClass(HasReactiveInvalidation::class)]
 #[CoversClass(Invalidate::class)]
-#[CoversClass(RecomputeSubscription::class)]
+#[CoversClass(RecomputeComputation::class)]
 final class InvalidationTest extends TestCase
 {
     use RefreshDatabase;
@@ -124,14 +125,16 @@ final class InvalidationTest extends TestCase
         $registry = app(Registry::class);
 
         // Simulate a recompute still queued: the debounce marker is held.
-        $this->assertTrue($registry->debounce($subscription->id, 60_000));
+        // It is keyed on the computation, so every tab watching the same
+        // question coalesces onto the one marker.
+        $this->assertTrue($registry->debounce($subscription->computationKey, 60_000));
         Note::query()->create(['owner_id' => $this->user->id, 'title' => 'while-held']);
 
         Reactive::assertNotPushed();
-        $this->assertSame(1, $registry->stats()['metrics']['coalesced']);
+        $this->assertSame(1, app(Metrics::class)->snapshot()['metrics']['coalesced']);
 
         // The recompute runs, releases the marker first, and pushes.
-        (new RecomputeSubscription($subscription->id, 1))->handle($registry, app(Catalog::class), app(QueryRunner::class), app(Pusher::class));
+        (new RecomputeComputation($subscription->computationKey, 1))->handle($registry, app(Metrics::class), app(Catalog::class), app(QueryRunner::class), app(Pusher::class));
         Reactive::assertPushed('notes.list');
 
         Note::query()->create(['owner_id' => $this->user->id, 'title' => 'after']);
@@ -144,11 +147,11 @@ final class InvalidationTest extends TestCase
     {
         $subscription = Reactive::fake()->subscribe($this->user, 'notes.list', ['ownerId' => $this->user->id]);
         $registry = app(Registry::class);
-        $registry->updateResult($subscription->id, 'stale', 10);
+        $registry->updateComputation($subscription->computationKey, 'stale', 'null', 10);
 
-        (new RecomputeSubscription($subscription->id, 3))->handle($registry, app(Catalog::class), app(QueryRunner::class), app(Pusher::class));
+        (new RecomputeComputation($subscription->computationKey, 3))->handle($registry, app(Metrics::class), app(Catalog::class), app(QueryRunner::class), app(Pusher::class));
 
         Reactive::assertNotPushed();
-        $this->assertSame(1, $registry->stats()['metrics']['discarded']);
+        $this->assertSame(1, app(Metrics::class)->snapshot()['metrics']['discarded']);
     }
 }

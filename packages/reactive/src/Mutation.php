@@ -8,33 +8,39 @@ use Illuminate\Contracts\Auth\Access\Gate;
 use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Gate as GateFacade;
+use Spatie\LaravelData\Data;
 
 /**
  * A transactional write.
  *
- * The runner validates, authorizes, opens a REPEATABLE READ transaction with
- * deadlock retry, runs handle(), and on commit takes a mutation id and
- * dispatches the invalidations the models recorded. Authors never call
- * DB::transaction, afterCommit or dispatch here; a PHPStan rule enforces it.
+ * The runner builds the args through `Data::validateAndCreate()`, authorizes,
+ * opens a REPEATABLE READ transaction with deadlock retry, runs handle(), and
+ * on commit takes a mutation id and dispatches the invalidations the models
+ * recorded. Authors never call DB::transaction, afterCommit or dispatch here;
+ * a PHPStan rule enforces it.
+ *
+ * @template TArgs of Data
  */
 abstract class Mutation
 {
     /**
-     * @return array<string, array<int, mixed>|string>
+     * The Data class the args are validated into.
+     *
+     * @return class-string<TArgs>
      */
-    abstract public function rules(): array;
+    abstract public static function args(): string;
 
     /**
-     * @param  array<string, mixed>  $args
+     * @param  TArgs  $args
      */
-    abstract public function authorize(Authenticatable $user, array $args): void;
+    abstract public function authorize(Authenticatable $user, Data $args): void;
 
     /**
      * Runs inside the transaction.
      *
-     * @param  array<string, mixed>  $args
+     * @param  TArgs  $args
      */
-    abstract public function handle(array $args): mixed;
+    abstract public function handle(Data $args): mixed;
 
     protected function gate(Authenticatable $user): Gate
     {

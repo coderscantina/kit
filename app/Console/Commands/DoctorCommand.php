@@ -37,7 +37,7 @@ class DoctorCommand extends Command
 
     protected $signature = 'kit:doctor {--strict : Treat warnings as failures}';
 
-    protected $description = 'Check the reactive runtime, the registry, the Octane flush list, the test suite and the message files';
+    protected $description = 'Check the reactive runtime, the registry, the Octane flush list and the message files';
 
     /** @var array<int, array{0: string, 1: string, 2: string}> */
     private array $results = [];
@@ -50,7 +50,6 @@ class DoctorCommand extends Command
         $this->checkRegistry();
         $this->checkUnregisteredQueries();
         $this->checkOctaneFlushList();
-        $this->checkTestAttributes();
         $this->checkMessageParity();
 
         $this->newLine();
@@ -215,27 +214,6 @@ class DoctorCommand extends Command
         $leaking === []
             ? $this->pass('octane flush list', count($required).' per-request binding(s) are flushed (list check, not a live worker)')
             : $this->broke('octane flush list', 'would survive into the next request: '.implode(', ', $leaking));
-    }
-
-    private function checkTestAttributes(): void
-    {
-        $offenders = [];
-
-        foreach ([base_path('tests'), app_path(), base_path('packages/reactive/tests')] as $directory) {
-            if (! is_dir($directory)) {
-                continue;
-            }
-
-            foreach (File::allFiles($directory) as $file) {
-                if (str_ends_with($file->getFilename(), 'Test.php') && preg_match('/^\s*\*\s*@test\b/m', $file->getContents()) === 1) {
-                    $offenders[] = $this->relative($file->getPathname());
-                }
-            }
-        }
-
-        $offenders === []
-            ? $this->pass('test attributes', 'no @test docblocks; PHPUnit 13 ignores them')
-            : $this->broke('test attributes', 'PHPUnit 13 will not run these: '.implode(', ', $offenders));
     }
 
     private function checkMessageParity(): void

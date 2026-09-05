@@ -46,6 +46,7 @@ class MakeQueryCommand extends Command
             'name' => $name,
             'class' => $class,
             'data' => "{$feature}Data",
+            'args' => "{$class}Args",
             'namespace' => "App\\Features\\{$feature}\\Data",
         ];
 

@@ -68,7 +68,7 @@ final class NoTransactionOrDispatchInMutationRule implements Rule
     private function error(string $call): IdentifierRuleError
     {
         return RuleErrorBuilder::message(
-            "{$call} inside a Mutation: the base class owns the transaction and dispatches invalidations on commit. See docs/reactive.md#mutations."
+            "{$call} inside a Mutation: the base class owns the transaction and dispatches invalidations on commit. See docs/architecture.md#the-request-pipeline."
         )->identifier('kit.mutation.transaction')->build();
     }
 }

@@ -21,6 +21,5 @@ export const runtimeConfig = {
   // An echo block without a key cannot connect; null keeps the client from
   // retry-looping against a socket that is not there.
   echo: appConfig?.echo?.key ? appConfig.echo : null,
-  socialProviders: appConfig?.socialProviders ?? [],
   analytics: appConfig?.analytics ?? null,
 }

@@ -6,6 +6,14 @@ import en from '~/i18n/en.json'
 
 export type MessageSchema = typeof en
 
+/** Dot-separated paths to the string leaves of a message tree; nested objects are not keys. */
+type Paths<T> = {
+  [K in keyof T & string]: T[K] extends string ? K : `${K}.${Paths<T[K]>}`
+}[keyof T & string]
+
+/** Every key `en.json` actually defines, e.g. `'auth.login.title'`. */
+export type MessageKey = Paths<MessageSchema>
+
 export const locales = [
   { code: 'en', name: 'English' },
   { code: 'de', name: 'Deutsch' },
@@ -59,11 +67,30 @@ export function installI18n(app: App): void {
   setLocale(composer.locale.value as LocaleCode)
 }
 
+/**
+ * A literal key has to exist in the schema; a key the compiler only knows as
+ * `string`, such as `mutations.${name}.error`, passes through unchecked.
+ * A union of composed keys passes when any member exists, which is what
+ * `te()` on an optional `mutations.<name>.success` key needs.
+ */
+type Checked<K extends string> = string extends K
+  ? unknown
+  : K extends MessageKey
+    ? unknown
+    : MessageKey
+
+function t<K extends string>(key: K & Checked<K>, named?: Record<string, unknown>): string {
+  return named ? composer.t(key, named) : composer.t(key)
+}
+
+function te<K extends string>(key: K & Checked<K>): boolean {
+  return composer.te(key)
+}
+
 export function useI18n() {
-  const t = composer.t.bind(composer) as (key: string, named?: Record<string, unknown>) => string
   return {
     t,
-    te: (key: string) => composer.te(key),
+    te,
     locale: composer.locale,
     locales,
     setLocale,

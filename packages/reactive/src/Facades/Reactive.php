@@ -11,6 +11,7 @@ use Kit\Reactive\Testing\ReactiveFake;
 
 /**
  * @method static \Kit\Reactive\Registry\Subscription subscribe(\Illuminate\Contracts\Auth\Authenticatable $user, string $query, array<string, mixed> $args = [])
+ * @method static \Kit\Reactive\Registry\Computation computation(\Kit\Reactive\Registry\Subscription $subscription)
  * @method static void assertPushed(string $query, ?callable $callback = null)
  * @method static void assertNotPushed(?string $query = null)
  * @method static void assertRevoked(string $subscriptionId)

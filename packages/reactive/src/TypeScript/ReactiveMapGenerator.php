@@ -6,6 +6,9 @@ namespace Kit\Reactive\TypeScript;
 
 use Kit\Reactive\Attributes\ReactiveMutation;
 use Kit\Reactive\Attributes\ReactiveQuery;
+use Kit\Reactive\Mutation;
+use Kit\Reactive\NoArgs;
+use Kit\Reactive\Query;
 use Kit\Reactive\Registry\Catalog;
 use ReflectionClass;
 use ReflectionNamedType;
@@ -13,8 +16,11 @@ use Spatie\LaravelData\Data;
 
 /**
  * Emits the `Kit.ReactiveMap` declaration: for every registered query and
- * mutation, an `args` type from rules() and a `result` type from the
+ * mutation, an `args` type from its args class and a `result` type from the
  * attribute or the return type of handle().
+ *
+ * The args class carries #[TypeScript], so the transformer has already
+ * written it as a global `App.*` type and this only has to name it.
  */
 final class ReactiveMapGenerator
 {
@@ -47,19 +53,17 @@ final class ReactiveMapGenerator
     }
 
     /**
-     * @param  class-string  $class
+     * @param  class-string<Mutation<Data>>|class-string<Query<Data>>  $class
      * @param  class-string<ReactiveQuery|ReactiveMutation>  $attribute
      * @return array{string, string}
      */
     private function entry(string $class, string $attribute): array
     {
         $reflection = new ReflectionClass($class);
-        $instance = app($class);
 
-        /** @var array<string, array<int, mixed>|string> $rules */
-        $rules = $instance->rules();
-        // The object type is rendered at depth 1; the map nests it three levels deep.
-        $args = str_replace("\n", "\n      ", RulesToTypeScript::objectType($rules));
+        /** @var class-string<Data> $argsClass */
+        $argsClass = $class::args();
+        $args = $argsClass === NoArgs::class ? 'Record<string, never>' : $this->typeName($argsClass);
 
         $meta = $reflection->getAttributes($attribute)[0]->newInstance();
         $result = 'unknown';

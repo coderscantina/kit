@@ -1,13 +1,28 @@
-import { mount } from '@vue/test-utils'
 import { describe, expect, it } from 'vitest'
 
 import Index from '~/pages/{{ page }}/Index.vue'
 
+import { mountWithQuery } from '../../support/harness'
+
 describe('{{ title }} page', () => {
-  it('renders the translated title', () => {
-    const wrapper = mount(Index)
+  it('renders the rows the list query returned', () => {
+    // Seeded by key, not by stubbing useReactiveQuery: if the query key
+    // drifts the page renders the empty state and this fails.
+    const { wrapper } = mountWithQuery(Index, {
+      seed: [[['rq', '{{ resource }}.list', {}], [{ id: '1', name: 'First {{ feature }}' }]]],
+    })
 
     expect(wrapper.text()).toContain('{{ title }}')
+    expect(wrapper.text()).toContain('First {{ feature }}')
+    wrapper.unmount()
+  })
+
+  it('shows the empty message when the list is empty', () => {
+    const { wrapper } = mountWithQuery(Index, {
+      seed: [[['rq', '{{ resource }}.list', {}], []]],
+    })
+
+    expect(wrapper.text()).toContain('Nothing here yet.')
     wrapper.unmount()
   })
 })

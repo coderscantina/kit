@@ -13,3 +13,6 @@ services:
     -
         class: Kit\Reactive\PHPStan\Rules\NoForceFillOutsidePackagesRule
         tags: [phpstan.rules.rule]
+    -
+        class: Kit\Reactive\PHPStan\Rules\NoAmbientUserInQueryHandleRule
+        tags: [phpstan.rules.rule]

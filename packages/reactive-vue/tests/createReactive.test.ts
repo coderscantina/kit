@@ -175,6 +175,20 @@ describe('useReactiveQuery', () => {
     expect(calls.filter((call) => call.startsWith('subscribe'))).toHaveLength(2)
   })
 
+  it('polls through /rq/query without subscribing when realtime is off', async () => {
+    const { transport, calls } = createFakeTransport()
+    const reactive = createReactive<TestMap>({ transport, echo: null })
+
+    const { result } = mountWith(reactive, () =>
+      reactive.useReactiveQuery('notes.list', { ownerId: 'u' })
+    )
+    await flushPromises()
+
+    expect(result.data.value).toEqual(['a'])
+    expect(transport.subscribe).not.toHaveBeenCalled()
+    expect(calls).toEqual(['query'])
+  })
+
   it('unsubscribes on unmount and puts a revoked subscription into a forbidden error state', async () => {
     const { echo, push, left } = createFakeEcho()
     const { transport, calls } = createFakeTransport()

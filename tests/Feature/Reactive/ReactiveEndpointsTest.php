@@ -5,8 +5,10 @@ declare(strict_types=1);
 namespace Tests\Feature\Reactive;
 
 use App\Models\User;
+use App\Services\Auth\AuthorizationService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Broadcast;
+use Kit\Reactive\Contracts\Metrics;
 use Kit\Reactive\Contracts\Registry;
 use Kit\Reactive\Facades\Reactive;
 use Kit\Reactive\Http\Controllers\ReactiveController;
@@ -50,12 +52,13 @@ final class ReactiveEndpointsTest extends TestCase
             ->assertJsonPath('mutationId', $base);
 
         $subscription = app(Registry::class)->get($response->json('subscriptionId'));
-
         $this->assertNotNull($subscription);
         $this->assertSame($this->user->id, $subscription->userId);
-        $this->assertSame(['notes'], $subscription->tables);
-        $this->assertSame('owner_id', $subscription->deps[0]->column);
-        $this->assertSame([], app(Registry::class)->idsForTable('notes'), 'a predicate keeps it out of the table-level set');
+
+        $computation = Reactive::fake()->computation($subscription);
+        $this->assertSame(['notes'], $computation->tables);
+        $this->assertSame('owner_id', $computation->deps[0]->column);
+        $this->assertSame([], app(Registry::class)->keysForTable('notes'), 'a predicate keeps it out of the table-level set');
     }
 
     #[Test]
@@ -97,7 +100,12 @@ final class ReactiveEndpointsTest extends TestCase
         $this->assertDatabaseHas('notes', ['title' => 'hello']);
 
         Reactive::assertPushed('notes.list', fn (mixed $result, int $mutationId) => $result[0]['title'] === 'hello' && $mutationId === $expected);
-        $this->assertSame($expected, app(Registry::class)->get($subscription->id)?->lastMutationId);
+
+        $computation = Reactive::fake()->computation($subscription);
+        $this->assertSame($expected, $computation->lastMutationId);
+        // The result is stored, not just its hash, so the next subscriber and
+        // the large-result fallback do not re-run the query.
+        $this->assertSame('hello', $computation->decodedResult()[0]['title']);
     }
 
     #[Test]
@@ -119,7 +127,7 @@ final class ReactiveEndpointsTest extends TestCase
         $this->mutate('notes.rename', ['id' => $note->id, 'title' => 'same'])->assertOk();
 
         Reactive::assertNotPushed();
-        $this->assertSame(1, app(Registry::class)->stats()['metrics']['unchanged']);
+        $this->assertSame(1, app(Metrics::class)->snapshot()['metrics']['unchanged']);
     }
 
     #[Test]
@@ -215,7 +223,6 @@ final class ReactiveEndpointsTest extends TestCase
 
         $this->assertSame(0, app(Registry::class)->stats()['subscriptions']);
 
-        $this->post('/auth/logout');
         $health = $this->getJson('/rq/health')
             ->assertOk()
             ->assertJsonPath('registry.driver', 'array')
@@ -224,6 +231,105 @@ final class ReactiveEndpointsTest extends TestCase
 
         // At least the two fixture queries; a generated feature adds its own.
         $this->assertGreaterThanOrEqual(2, $health->json('registry.queries'));
+    }
+
+    #[Test]
+    public function health_is_not_public(): void
+    {
+        $this->post('/auth/logout');
+
+        $this->getJson('/rq/health')->assertUnauthorized();
+    }
+
+    #[Test]
+    public function two_users_asking_the_same_question_share_one_computation_and_one_recompute(): void
+    {
+        $first = User::factory()->root()->create();
+        $second = User::factory()->root()->create();
+
+        $a = Reactive::fake()->subscribe($first, 'notes.all');
+        $b = Reactive::fake()->subscribe($second, 'notes.all');
+
+        $registry = app(Registry::class);
+        $metrics = app(Metrics::class)->snapshot()['metrics'];
+
+        $this->assertSame($a->computationKey, $b->computationKey, 'same query, same args, same computation');
+        $this->assertSame(1, $metrics['computed'], 'the query ran once');
+        $this->assertSame(1, $metrics['shared'], 'the second subscriber read the stored result');
+        $this->assertSame(2, $registry->stats()['subscriptions']);
+        $this->assertSame(1, $registry->stats()['computations']);
+
+        Note::query()->create(['owner_id' => 'x', 'title' => 'shared']);
+
+        // One recompute, two pushes: the cost of a change is per question,
+        // the delivery is per subscriber.
+        $this->assertSame(1, app(Metrics::class)->snapshot()['metrics']['recomputes']);
+        $this->assertCount(2, Reactive::pushed('notes.all'));
+        Reactive::assertPushed('notes.all', fn (mixed $result) => $result[0]['title'] === 'shared');
+    }
+
+    #[Test]
+    public function a_revoked_subscriber_is_dropped_while_the_others_keep_their_push(): void
+    {
+        $staying = User::factory()->root()->create();
+        $leaving = User::factory()->root()->create();
+
+        $kept = Reactive::fake()->subscribe($staying, 'notes.all');
+        $dropped = Reactive::fake()->subscribe($leaving, 'notes.all');
+
+        $leaving->is_root = false;
+        $leaving->save();
+
+        Note::query()->create(['owner_id' => 'x', 'title' => 'trigger']);
+
+        Reactive::assertRevoked($dropped->id);
+        $this->assertNull(app(Registry::class)->get($dropped->id));
+
+        $pushes = Reactive::pushed('notes.all');
+        $this->assertCount(1, $pushes);
+        $this->assertSame($kept->id, $pushes[0]['subscription']->id);
+    }
+
+    #[Test]
+    public function the_one_shot_query_answers_from_the_stored_result(): void
+    {
+        Note::query()->create(['owner_id' => $this->user->id, 'title' => 'stored']);
+        $subscription = $this->actingAsSubscriber($this->user, 'notes.list', ['ownerId' => $this->user->id]);
+        $computation = Reactive::fake()->computation($subscription);
+
+        // This is the path a client takes when a push arrived without an
+        // inline result. It must not re-run the query per client.
+        $this->postJson('/rq/query', ['query' => 'notes.list', 'args' => ['ownerId' => $this->user->id]])
+            ->assertOk()
+            ->assertJsonPath('result.0.title', 'stored')
+            ->assertJsonPath('mutationId', $computation->lastMutationId);
+
+        $snapshot = app(Metrics::class)->snapshot()['metrics'];
+        $this->assertSame(1, $snapshot['cached']);
+        $this->assertSame(1, $snapshot['computed'], 'the subscribe was the only run');
+    }
+
+    #[Test]
+    public function the_one_shot_query_still_authorizes_before_serving_a_stored_result(): void
+    {
+        $owner = User::factory()->root()->create();
+        Reactive::fake()->subscribe($owner, 'notes.all');
+
+        // A stored result is not a bypass: the caller's own authorize() runs.
+        $this->postJson('/rq/query', ['query' => 'notes.all'])->assertForbidden();
+    }
+
+    #[Test]
+    public function losing_an_ability_drops_the_live_subscriptions_at_once(): void
+    {
+        $subscription = $this->actingAsSubscriber($this->user, 'notes.list', ['ownerId' => $this->user->id]);
+
+        // Waiting for the next changed result would leave a subscription the
+        // user may no longer read; busting the ability cache drops it now.
+        app(AuthorizationService::class)->invalidateUser($this->user);
+
+        $this->assertNull(app(Registry::class)->get($subscription->id));
+        $this->assertSame(0, app(Registry::class)->countForUser($this->user->id));
     }
 
     #[Test]

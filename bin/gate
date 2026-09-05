@@ -22,13 +22,30 @@ step() {
   fi
 }
 
+# tests/Reactive needs MySQL and Redis and skips itself without
+# REACTIVE_TEST_DB, so a green run here does not cover it. Say so loudly
+# rather than letting the suite look like it passed.
+reactive_suite() {
+  if [ -n "${REACTIVE_TEST_DB:-}" ]; then
+    step 'phpunit (reactive)' vendor/bin/phpunit --testsuite=reactive --fail-on-skipped
+    return
+  fi
+
+  printf '\n\033[33m! reactive suite skipped: REACTIVE_TEST_DB is unset, so tests/Reactive did not run here. CI runs it against MySQL and Redis.\033[0m\n'
+}
+
 step 'pint'        vendor/bin/pint --test
 step 'phpstan'     vendor/bin/phpstan analyse --no-progress
 step 'phpunit'     php artisan test
+reactive_suite
 step 'lint'        bun run lint:ci
+step 'format'      bun run format:check
 step 'typecheck'   bun run typecheck
 step 'vitest'      bun run test
 step 'types'       php artisan types:generate --check
-step 'generators'  ./bin/generators-roundtrip
+# --allow-dirty: the round trip restores what it touches from a backup, so it
+# is safe here, and a local gate run is almost always on a dirty tree. CI calls
+# the script bare, on a clean checkout, and keeps the strict check.
+step 'generators'  ./bin/generators-roundtrip --allow-dirty
 
 printf '\n\033[32m✓ gate green\033[0m\n'

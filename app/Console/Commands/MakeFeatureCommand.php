@@ -15,6 +15,9 @@ use Illuminate\Filesystem\Filesystem;
  * and both message files. The service provider is discovered from the folder
  * by AppServiceProvider, so there is no list to keep in sync.
  *
+ * It finishes by running make:query for `<resource>.list` and types:generate,
+ * so what you get is a page that renders real rows, not a placeholder.
+ *
  * Nothing is overwritten. Run it twice and the second run reports what it
  * left alone, so it is safe to re-run after adding a marker back.
  */
@@ -25,7 +28,7 @@ class MakeFeatureCommand extends Command
 
     protected $signature = 'make:feature {name : Singular feature name, e.g. Post}';
 
-    protected $description = 'Create a feature folder with its model, policy, provider, page, tests and registry entries';
+    protected $description = 'Create a feature folder with its model, policy, provider, list query, page, tests and registry entries';
 
     public function handle(Filesystem $files): int
     {
@@ -49,8 +52,8 @@ class MakeFeatureCommand extends Command
 
         $base = app_path("Features/{$feature}");
 
-        // Queries/ and Mutations/ stay empty until make:query and make:mutation
-        // run; the directories exist so the shape of a feature is visible.
+        // Mutations/ stays empty until make:mutation runs; the directory
+        // exists so the shape of a feature is visible.
         foreach (['Queries', 'Mutations'] as $directory) {
             $files->ensureDirectoryExists("{$base}/{$directory}");
         }
@@ -71,8 +74,17 @@ class MakeFeatureCommand extends Command
 
         $this->register($names);
 
+        // The list query the page renders, so a fresh feature is a working
+        // page rather than a placeholder. make:query is still usable on its
+        // own; a second run reports the files it left alone.
+        $this->call('make:query', ['name' => "{$resource}.list"]);
+
+        // The page reads Kit.ReactiveMap, so it only typechecks once the
+        // generated types know about the query that was just written.
+        $this->call('types:generate');
+
         $this->newLine();
-        $this->components->info("Feature {$feature} is wired up. Next: php artisan make:query {$resource}.list");
+        $this->components->info("Feature {$feature} is wired up and {$resource}.list renders on /{$page}. Next: php artisan make:mutation {$resource}.create");
 
         return self::SUCCESS;
     }
@@ -105,8 +117,13 @@ class MakeFeatureCommand extends Command
             "{ labelKey: 'nav.{$page}', icon: 'box', routeName: '{$page}' },",
         ]);
 
+        // oxfmt drops the quotes on a key that is already a valid identifier,
+        // so quote only the kebab-cased ones or format:check fails on the
+        // line the generator just wrote.
+        $key = preg_match('/^[A-Za-z_$][A-Za-z0-9_$]*$/', $page) === 1 ? $page : "'{$page}'";
+
         $this->insertAtMarker(resource_path('js/lib/access-control.ts'), 'access', [
-            "'{$page}': { abilities: '{$resource}.view' },",
+            "{$key}: { abilities: '{$resource}.view' },",
         ]);
 
         foreach (['en', 'de'] as $locale) {

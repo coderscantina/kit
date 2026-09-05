@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Kit\Reactive\Console;
 
 use Illuminate\Console\Command;
+use Kit\Reactive\Contracts\Metrics;
 use Kit\Reactive\Contracts\Registry;
 
 class GcCommand extends Command
@@ -13,10 +14,11 @@ class GcCommand extends Command
 
     protected $description = 'Sweep dependency sets for subscriptions whose hash has expired';
 
-    public function handle(Registry $registry): int
+    public function handle(Registry $registry, Metrics $metrics): int
     {
         if ($this->option('flush')) {
             $registry->flush();
+            $metrics->flush();
             $this->components->info('Registry flushed.');
 
             return self::SUCCESS;

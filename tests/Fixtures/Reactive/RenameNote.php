@@ -7,24 +7,28 @@ namespace Tests\Fixtures\Reactive;
 use Illuminate\Contracts\Auth\Authenticatable;
 use Kit\Reactive\Attributes\ReactiveMutation;
 use Kit\Reactive\Mutation;
+use Spatie\LaravelData\Data;
 
+/**
+ * @extends Mutation<RenameNoteArgs>
+ */
 #[ReactiveMutation('notes.rename', result: NoteData::class)]
 final class RenameNote extends Mutation
 {
-    public function rules(): array
+    public static function args(): string
     {
-        return ['id' => ['required', 'ulid'], 'title' => ['required', 'string', 'max:100']];
+        return RenameNoteArgs::class;
     }
 
-    public function authorize(Authenticatable $user, array $args): void
+    public function authorize(Authenticatable $user, Data $args): void
     {
         $this->gate($user)->authorize('create-notes');
     }
 
-    public function handle(array $args): NoteData
+    public function handle(Data $args): NoteData
     {
-        $note = $this->lock(Note::query()->findOrFail($args['id']));
-        $note->title = $args['title'];
+        $note = $this->lock(Note::query()->findOrFail($args->id));
+        $note->title = $args->title;
         $note->save();
 
         return NoteData::fromModel($note);

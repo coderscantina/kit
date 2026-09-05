@@ -17,7 +17,6 @@ class RuntimeConfigPayload extends Data
 {
     /**
      * @param  array{realtime: bool, registration: bool, impersonation: bool}  $features
-     * @param  array<int, SocialProviderPayload>  $socialProviders
      */
     public function __construct(
         public string $version,
@@ -25,7 +24,6 @@ class RuntimeConfigPayload extends Data
         public string $locale,
         public array $features,
         public ?EchoConfigPayload $echo,
-        public array $socialProviders,
         public ?AnalyticsPayload $analytics,
     ) {}
 
@@ -37,7 +35,6 @@ class RuntimeConfigPayload extends Data
             locale: app()->getLocale(),
             features: FeatureGate::features(),
             echo: self::echo(),
-            socialProviders: self::socialProviders(),
             analytics: self::analytics(),
         );
     }
@@ -61,27 +58,6 @@ class RuntimeConfigPayload extends Data
             wssPort: $port,
             forceTLS: config('reverb.apps.apps.0.options.scheme') === 'https',
         );
-    }
-
-    /**
-     * A provider appears only when both its client id and secret are set.
-     *
-     * @return array<int, SocialProviderPayload>
-     */
-    private static function socialProviders(): array
-    {
-        /** @var array<string, array{client_id?: string|null, client_secret?: string|null}> $providers */
-        $providers = config('services.social', []);
-
-        $result = [];
-
-        foreach ($providers as $key => $provider) {
-            if (filled($provider['client_id'] ?? null) && filled($provider['client_secret'] ?? null)) {
-                $result[] = new SocialProviderPayload(key: $key, url: "/auth/social/{$key}/redirect");
-            }
-        }
-
-        return $result;
     }
 
     private static function analytics(): ?AnalyticsPayload

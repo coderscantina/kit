@@ -17,13 +17,18 @@ use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\ServiceProvider;
+use Kit\Reactive\Console\CacheCommand;
+use Kit\Reactive\Console\ClearCommand;
 use Kit\Reactive\Console\GcCommand;
+use Kit\Reactive\Contracts\Metrics;
 use Kit\Reactive\Contracts\Pusher;
 use Kit\Reactive\Contracts\Registry;
 use Kit\Reactive\Http\Controllers\ReactiveController;
 use Kit\Reactive\Invalidation\ChangeBuffer;
 use Kit\Reactive\Listeners\CleanupOnChannelRemoved;
 use Kit\Reactive\Listeners\PurgeUserSubscriptionsOnLogout;
+use Kit\Reactive\Metrics\ArrayMetrics;
+use Kit\Reactive\Metrics\RedisMetrics;
 use Kit\Reactive\Push\BroadcastPusher;
 use Kit\Reactive\Registry\ArrayRegistry;
 use Kit\Reactive\Registry\Catalog;
@@ -43,7 +48,21 @@ class ReactiveServiceProvider extends ServiceProvider
 
             return $config['registry'] === 'array'
                 ? new ArrayRegistry
-                : new RedisRegistry($app->make(RedisFactory::class), (string) $config['redis_connection'], (int) $config['ttl_seconds']);
+                : new RedisRegistry(
+                    $app->make(RedisFactory::class),
+                    (string) $config['redis_connection'],
+                    (int) $config['ttl_seconds'],
+                    (int) ($config['lock_wait_ms'] ?? 5000),
+                );
+        });
+
+        $this->app->singleton(Metrics::class, function ($app) {
+            /** @var array<string, mixed> $config */
+            $config = $app['config']->get('reactive');
+
+            return $config['registry'] === 'array'
+                ? new ArrayMetrics
+                : new RedisMetrics($app->make(RedisFactory::class), (string) $config['redis_connection']);
         });
 
         $this->app->singleton(Catalog::class, function ($app) {
@@ -51,8 +70,10 @@ class ReactiveServiceProvider extends ServiceProvider
             $discovery = $app['config']->get('reactive.discovery', []);
             /** @var array<int, class-string> $classes */
             $classes = $app['config']->get('reactive.classes', []);
+            /** @var string|null $cachePath */
+            $cachePath = $app['config']->get('reactive.cache_path');
 
-            return new Catalog($discovery, $classes);
+            return new Catalog($discovery, $classes, $cachePath);
         });
 
         // Per-request state under Octane: both are flushed before every
@@ -88,8 +109,11 @@ class ReactiveServiceProvider extends ServiceProvider
         $this->registerRoutes();
         $this->registerChannel();
 
+        // A boot outside Octane otherwise walks every feature directory.
+        $this->optimizes(optimize: 'reactive:cache', clear: 'reactive:clear', key: 'reactive');
+
         if ($this->app->runningInConsole()) {
-            $this->commands([GcCommand::class]);
+            $this->commands([CacheCommand::class, ClearCommand::class, GcCommand::class]);
         }
     }
 
@@ -117,7 +141,11 @@ class ReactiveServiceProvider extends ServiceProvider
                 ->post('query', [ReactiveController::class, 'query'])
                 ->name('query');
 
-            Route::middleware(['throttle:public'])->get('health', [ReactiveController::class, 'health'])->name('health');
+            // Authenticated: the counts and the p95 describe the registry's
+            // internals and are nobody's business from the outside.
+            Route::middleware([...$middleware, 'throttle:reactive'])
+                ->get('health', [ReactiveController::class, 'health'])
+                ->name('health');
         });
     }
 

@@ -52,6 +52,10 @@ const PENDING_SWEEP_MS = 2_000
 /** Polling cadence for a query whose socket is down. */
 const OFFLINE_REFETCH_MS = 30_000
 
+/** No usable socket: either realtime is off (`none`) or the connection dropped. */
+const isOffline = (state: ConnectionState): boolean =>
+  state === 'none' || state === 'disconnected' || state === 'unavailable'
+
 export interface ReactiveOptions {
   transport: ReactiveTransport
   echo: EchoLike | null
@@ -242,8 +246,9 @@ export function createReactive<M extends ReactiveMapLike>(options: ReactiveOptio
         const key = keyHash.value
         const argsValue = resolvedArgs.value
 
-        // With the socket down a poll must not pile up server subscriptions.
-        if (connection.state.value === 'disconnected' && manager.has(key)) {
+        // Without a socket a subscription can never be pushed to, and a poll
+        // while one is down must not pile up server subscriptions either.
+        if (echo === null || (isOffline(connection.state.value) && manager.has(key))) {
           const response = await transport.query(name, argsValue)
           return applyPush(state, key, response.result, response.mutationId) as M[K]['result']
         }
@@ -267,8 +272,7 @@ export function createReactive<M extends ReactiveMapLike>(options: ReactiveOptio
       },
       enabled: computed(() => toValue(queryOptions.enabled) ?? true),
       placeholderData: queryOptions.list ? keepPreviousData : undefined,
-      refetchInterval: () =>
-        connection.state.value === 'disconnected' ? OFFLINE_REFETCH_MS : false,
+      refetchInterval: () => (isOffline(connection.state.value) ? OFFLINE_REFETCH_MS : false),
     })
 
     return Object.assign(query, { connectionState: connection.state })

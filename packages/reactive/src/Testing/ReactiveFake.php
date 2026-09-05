@@ -6,12 +6,12 @@ namespace Kit\Reactive\Testing;
 
 use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Support\Facades\Queue;
-use Illuminate\Support\Str;
 use Kit\Reactive\Contracts\Registry;
 use Kit\Reactive\Invalidation\Invalidate;
 use Kit\Reactive\Registry\Catalog;
+use Kit\Reactive\Registry\Computation;
 use Kit\Reactive\Registry\Subscription;
-use Kit\Reactive\Runtime\QueryRunner;
+use Kit\Reactive\Runtime\Subscriber;
 use PHPUnit\Framework\Assert;
 
 /**
@@ -26,11 +26,14 @@ final class ReactiveFake
         private readonly FakePusher $pusher,
         private readonly Registry $registry,
         private readonly Catalog $catalog,
-        private readonly QueryRunner $runner,
+        private readonly Subscriber $subscriber,
     ) {}
 
     /**
      * Subscribe a user to a query directly through the pipeline, without HTTP.
+     * Goes through the same Subscriber the controller uses, so a second
+     * subscriber to the same question shares the first one's computation here
+     * exactly as it would in the app.
      *
      * @param  array<string, mixed>  $args
      */
@@ -40,23 +43,20 @@ final class ReactiveFake
 
         Assert::assertNotNull($class, "Unknown reactive query '{$query}'.");
 
-        $outcome = $this->runner->run(app($class), $user, $args);
+        return $this->subscriber->subscribe(app($class), $query, $user, $args)->subscription;
+    }
 
-        $subscription = new Subscription(
-            id: (string) Str::ulid(),
-            query: $query,
-            args: $outcome->args,
-            userId: (string) $user->getAuthIdentifier(),
-            resultHash: $outcome->hash,
-            lastMutationId: $this->registry->currentMutationId(),
-            createdAt: time(),
-            tables: $outcome->tables,
-            deps: $outcome->deps,
-        );
+    /**
+     * The shared computation behind a subscription: its stored result and the
+     * watermark the last push carried.
+     */
+    public function computation(Subscription $subscription): Computation
+    {
+        $computation = $this->registry->computation($subscription->computationKey);
 
-        $this->registry->put($subscription);
+        Assert::assertNotNull($computation, "Subscription {$subscription->id} has no computation.");
 
-        return $subscription;
+        return $computation;
     }
 
     /**

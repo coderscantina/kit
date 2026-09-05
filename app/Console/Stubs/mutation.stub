@@ -4,22 +4,26 @@ declare(strict_types=1);
 
 namespace App\Features\{{ feature }}\Mutations;
 
+use App\Features\{{ feature }}\Data\{{ args }};
 use App\Features\{{ feature }}\Data\{{ data }};
 use App\Features\{{ feature }}\Models\{{ feature }};
-use App\Rules\BoundedString;
 use Illuminate\Contracts\Auth\Authenticatable;
 use Kit\Reactive\Attributes\ReactiveMutation;
 use Kit\Reactive\Mutation;
+use Spatie\LaravelData\Data;
 
+/**
+ * @extends Mutation<{{ args }}>
+ */
 #[ReactiveMutation('{{ name }}', result: {{ data }}::class)]
 final class {{ class }} extends Mutation
 {
-    public function rules(): array
+    public static function args(): string
     {
-        return ['name' => [new BoundedString(1, 255)]];
+        return {{ args }}::class;
     }
 
-    public function authorize(Authenticatable $user, array $args): void
+    public function authorize(Authenticatable $user, Data $args): void
     {
         $this->gate($user)->authorize('create', {{ feature }}::class);
     }
@@ -30,8 +34,8 @@ final class {{ class }} extends Mutation
      * PHPStan rule fails the build if you do. Use $this->lock($model) to
      * read a row you are about to branch on.
      */
-    public function handle(array $args): {{ data }}
+    public function handle(Data $args): {{ data }}
     {
-        return {{ data }}::from({{ feature }}::query()->create(['name' => $args['name']]));
+        return {{ data }}::from({{ feature }}::query()->create(['name' => $args->name]));
     }
 }

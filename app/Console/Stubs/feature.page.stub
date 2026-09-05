@@ -1,17 +1,58 @@
 <script setup lang="ts">
 import { Card } from '~/components/ui/card'
+import { TableSkeletonRow } from '~/components/ui/table'
+import { useReactiveQuery } from '~/lib/reactive'
 import { useI18n } from '~/plugins/i18n'
 
-// Wire data with `useReactiveQuery('{{ resource }}.list')` from '~/lib/reactive'
-// once `php artisan make:query {{ resource }}.list` has run.
 const { t } = useI18n()
+
+/**
+ * `list: true` keeps the previous rows on screen while the next args load.
+ * The name is a literal off `Kit.ReactiveMap`, so `rows.data` is typed from
+ * the query's result. Never fetch `/rq/*` directly.
+ */
+const rows = useReactiveQuery('{{ resource }}.list', undefined, { list: true })
+
+const items = computed(() => rows.data.value ?? [])
 </script>
 
 <template>
   <div class="space-y-6">
     <h1 class="text-2xl font-semibold">{{ t('{{ resource }}.title') }}</h1>
-    <Card class="p-6">
-      <p class="text-sm text-muted-foreground">{{ t('{{ resource }}.empty') }}</p>
+
+    <Card class="overflow-x-auto">
+      <table class="w-full text-sm">
+        <thead class="border-b text-left text-muted-foreground">
+          <tr>
+            <th class="px-3 py-2 font-medium">{{ t('auth.fields.name') }}</th>
+          </tr>
+        </thead>
+        <tbody
+          :class="['transition-opacity', rows.isFetching.value && items.length ? 'opacity-50' : '']"
+        >
+          <template v-if="rows.isPending.value">
+            <TableSkeletonRow
+              v-for="index in 3"
+              :key="index"
+              :columns="1"
+            />
+          </template>
+          <tr
+            v-for="item in items"
+            :key="item.id"
+            class="border-b last:border-0"
+          >
+            <td class="px-3 py-2">{{ item.name }}</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <p
+        v-if="!rows.isPending.value && items.length === 0"
+        class="px-3 py-6 text-sm text-muted-foreground"
+      >
+        {{ t('{{ resource }}.empty') }}
+      </p>
     </Card>
   </div>
 </template>

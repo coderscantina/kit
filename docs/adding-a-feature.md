@@ -13,8 +13,10 @@ php artisan make:feature Post
 
 That writes `app/Features/Post/` with the model, factory, migration, data
 class, policy, service provider and a policy test, plus
-`resources/js/pages/posts/Index.vue` and its Vitest file. It also inserts, at
-the `// kit:` marker lines:
+`resources/js/pages/posts/Index.vue` and its Vitest file. It then runs
+`make:query posts.list` and `types:generate`, so the page renders real rows
+from the moment it exists rather than a placeholder. It also inserts, at the
+`// kit:` marker lines:
 
 - `posts.view` and `posts.manage` into `config/abilities.php`, and into the
   owner and admin role lists. Member is left alone on purpose; "everyone can
@@ -31,22 +33,52 @@ provider, so `php artisan migrate` picks them up with no further wiring.
 
 ## 2. A query
 
+`make:feature` already wrote `posts.list`. Run the generator directly for any
+further query:
+
 ```sh
-php artisan make:query posts.list
+php artisan make:query posts.comments
 ```
 
 <!--@include: ./generated/make-query.md-->
 
-You get `Queries/ListPost.php` and `Tests/ListPostTest.php`. Fill in `rules()`
-with the arguments the client sends, and `handle()` with the read. `authorize()`
-already points at the feature policy.
+You get `Queries/ListPost.php` and `Tests/ListPostTest.php`. Fill in `handle()`
+with the read; `authorize()` already points at the feature policy. Re-running
+the generator on a query that exists reports what it left alone.
+
+A generated query starts on `NoArgs`. To give it arguments, write a Data class
+and name it in two places, which PHPStan checks against each other:
+
+```php
+#[TypeScript]
+final class ListPostArgs extends Data
+{
+    public function __construct(public string $authorId) {}
+}
+
+/**
+ * @extends Query<ListPostArgs>
+ */
+#[ReactiveQuery('posts.list', result: PostData::class, list: true)]
+final class ListPost extends Query
+{
+    public static function args(): string
+    {
+        return ListPostArgs::class;
+    }
+}
+```
+
+The parameters stay `Data $args`, because PHP does not allow a subclass to
+narrow a parameter type. PHPStan reads the concrete type off the `@extends`, so
+`$args->authorId` is typed and a typo is an error.
 
 Declare `reads()` once the table is large or busy:
 
 ```php
-public function reads(array $args): array
+public function reads(Data $args): array
 {
-    return [Dep::eq('posts', 'author_id', $args['authorId'])];
+    return [Dep::eq('posts', 'author_id', $args->authorId)];
 }
 ```
 
@@ -64,7 +96,8 @@ php artisan make:mutation posts.create
 
 <!--@include: ./generated/make-mutation.md-->
 
-`Mutations/CreatePost.php` runs inside a transaction the runner opened, with
+`Mutations/CreatePost.php` and `Data/CreatePostArgs.php` come out together.
+The mutation runs inside a transaction the runner opened, with
 deadlock retry and after-commit invalidation. Do not call `DB::transaction`,
 `afterCommit` or dispatch an invalidation inside it; a PHPStan rule fails the
 build if you do. To branch on a row you are about to change, take it under
@@ -84,7 +117,10 @@ would echo back at the user.
 php artisan types:generate
 ```
 
-Now the client is typed. In `resources/js/pages/posts/Index.vue`:
+`make:feature` ran this once already; run it again after every change to a
+data class, an args class, a query or a mutation, and commit the result.
+
+`resources/js/pages/posts/Index.vue` already lists `posts.list`. Extend it:
 
 ```ts
 import { useReactiveMutation, useReactiveQuery } from '~/lib/reactive'
@@ -106,6 +142,11 @@ and the args and result infer. Never `fetch` `/rq/*` directly.
 bin/gate
 ```
 
-Pint, PHPStan, PHPUnit, oxlint, `vue-tsc`, Vitest, the generated-types diff and
-the generator round trip, in that order, stopping at the first failure. Green
-here is green in CI.
+Pint, PHPStan, PHPUnit, oxlint, oxfmt, `vue-tsc`, Vitest, the generated-types
+diff and the generator round trip, in that order, stopping at the first
+failure.
+
+One gap: `tests/Reactive` needs MySQL and Redis, and skips itself when
+`REACTIVE_TEST_DB` is unset. `bin/gate` prints a yellow line when that happens,
+and CI runs the suite for real. Set the `REACTIVE_TEST_DB*` and
+`REACTIVE_TEST_REDIS*` variables to cover it locally too.

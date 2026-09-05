@@ -8,27 +8,31 @@ use Illuminate\Contracts\Auth\Authenticatable;
 use Kit\Reactive\Attributes\ReactiveQuery;
 use Kit\Reactive\Dep;
 use Kit\Reactive\Query;
+use Spatie\LaravelData\Data;
 
+/**
+ * @extends Query<ListNotesArgs>
+ */
 #[ReactiveQuery('notes.list', result: NoteData::class, list: true)]
 final class ListNotes extends Query
 {
-    public function rules(): array
+    public static function args(): string
     {
-        return ['ownerId' => ['required', 'string']];
+        return ListNotesArgs::class;
     }
 
-    public function authorize(Authenticatable $user, array $args): void
+    public function authorize(Authenticatable $user, Data $args): void
     {
-        $this->gate($user)->authorize('view-notes', [$args['ownerId']]);
+        $this->gate($user)->authorize('view-notes', [$args->ownerId]);
     }
 
-    public function reads(array $args): array
+    public function reads(Data $args): array
     {
-        return [Dep::eq('notes', 'owner_id', $args['ownerId'])];
+        return [Dep::eq('notes', 'owner_id', $args->ownerId)];
     }
 
-    public function handle(array $args): mixed
+    public function handle(Data $args): mixed
     {
-        return NoteData::collect(Note::query()->where('owner_id', $args['ownerId'])->orderBy('id')->get());
+        return NoteData::collect(Note::query()->where('owner_id', $args->ownerId)->orderBy('id')->get());
     }
 }

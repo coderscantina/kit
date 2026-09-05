@@ -1,7 +1,6 @@
 <?php
 
 declare(strict_types=1);
-use App\Models\User;
 
 return [
 
@@ -19,6 +18,10 @@ return [
 
     // Bursts within this window coalesce into one recompute.
     'debounce_ms' => 50,
+
+    // How long a recompute waits for the per-computation lock before it
+    // gives up and lets the worker that holds it do the push.
+    'lock_wait_ms' => 5000,
 
     // Reverb drops frames over 10 KB; results above this ride as hash-only
     // pushes and the client fetches through /rq/query.
@@ -38,7 +41,12 @@ return [
     // app.access gate here.
     'middleware' => ['web', 'auth:sanctum', 'app.access'],
 
-    'user_model' => User::class,
+    // A class-string, not User::class: the config is cached and the package
+    // must not depend on the app's namespace.
+    'user_model' => env('REACTIVE_USER_MODEL', 'App\\Models\\User'),
+
+    // Where `reactive:cache` writes the name maps; `optimize` runs it.
+    'cache_path' => base_path('bootstrap/cache/reactive.php'),
 
     // namespace prefix => directory scanned for Queries/ and Mutations/.
     'discovery' => [

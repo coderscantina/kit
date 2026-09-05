@@ -11,32 +11,42 @@ use Kit\Reactive\Mutation;
 use Kit\Reactive\Query;
 use ReflectionClass;
 use RuntimeException;
+use Spatie\LaravelData\Data;
 
 /**
  * Name → class map, discovered from the #[ReactiveQuery] / #[ReactiveMutation]
  * attributes under the configured feature directories. Memoised for the
  * life of the process; the class list is static data, so that is safe under
  * Octane.
+ *
+ * Scanning every feature file on boot costs a directory walk per request
+ * outside Octane, so `php artisan reactive:cache` writes the two maps to a
+ * file and this reads it when it is there. `optimize` and `optimize:clear`
+ * run it.
  */
 final class Catalog
 {
-    /** @var array<string, class-string<Query>>|null */
+    /** @var array<string, class-string<Query<Data>>>|null */
     private ?array $queries = null;
 
-    /** @var array<string, class-string<Mutation>>|null */
+    /** @var array<string, class-string<Mutation<Data>>>|null */
     private ?array $mutations = null;
+
+    private bool $useCache = true;
 
     /**
      * @param  array<string, string>  $discovery  namespace prefix => directory
      * @param  array<int, class-string>  $classes  explicitly registered classes
+     * @param  string|null  $cachePath  the file reactive:cache writes, if any
      */
     public function __construct(
         private readonly array $discovery,
         private readonly array $classes = [],
+        private readonly ?string $cachePath = null,
     ) {}
 
     /**
-     * @return class-string<Query>|null
+     * @return class-string<Query<Data>>|null
      */
     public function query(string $name): ?string
     {
@@ -44,7 +54,7 @@ final class Catalog
     }
 
     /**
-     * @return class-string<Mutation>|null
+     * @return class-string<Mutation<Data>>|null
      */
     public function mutation(string $name): ?string
     {
@@ -52,35 +62,60 @@ final class Catalog
     }
 
     /**
-     * @return array<string, class-string<Query>>
+     * @return array<string, class-string<Query<Data>>>
      */
     public function queries(): array
     {
         $this->load();
 
-        /** @var array<string, class-string<Query>> $queries */
+        /** @var array<string, class-string<Query<Data>>> $queries */
         $queries = $this->queries;
 
         return $queries;
     }
 
     /**
-     * @return array<string, class-string<Mutation>>
+     * @return array<string, class-string<Mutation<Data>>>
      */
     public function mutations(): array
     {
         $this->load();
 
-        /** @var array<string, class-string<Mutation>> $mutations */
+        /** @var array<string, class-string<Mutation<Data>>> $mutations */
         $mutations = $this->mutations;
 
         return $mutations;
     }
 
+    /**
+     * Rescan. Callers reach for this after registering classes at runtime
+     * (tests, the generators), so the cached map is stale from here on.
+     */
     public function reset(): void
+    {
+        $this->useCache = false;
+        $this->queries = null;
+        $this->mutations = null;
+    }
+
+    /**
+     * The maps as a plain array, always freshly scanned. What reactive:cache
+     * writes to disk.
+     *
+     * @return array{queries: array<string, class-string<Query<Data>>>, mutations: array<string, class-string<Mutation<Data>>>}
+     */
+    public function scan(): array
     {
         $this->queries = null;
         $this->mutations = null;
+        $this->build();
+
+        /** @var array<string, class-string<Query<Data>>> $queries */
+        $queries = $this->queries;
+        /** @var array<string, class-string<Mutation<Data>>> $mutations */
+        $mutations = $this->mutations;
+
+        return ['queries' => $queries, 'mutations' => $mutations];
     }
 
     private function load(): void
@@ -89,12 +124,36 @@ final class Catalog
             return;
         }
 
+        if ($this->useCache && $this->loadFromCache()) {
+            return;
+        }
+
+        $this->build();
+    }
+
+    private function build(): void
+    {
         $this->queries = [];
         $this->mutations = [];
 
         foreach ([...$this->discoveredClasses(), ...$this->classes] as $class) {
             $this->register($class);
         }
+    }
+
+    private function loadFromCache(): bool
+    {
+        if ($this->cachePath === null || ! is_file($this->cachePath)) {
+            return false;
+        }
+
+        /** @var array{queries?: array<string, class-string<Query<Data>>>, mutations?: array<string, class-string<Mutation<Data>>>} $cached */
+        $cached = require $this->cachePath;
+
+        $this->queries = $cached['queries'] ?? [];
+        $this->mutations = $cached['mutations'] ?? [];
+
+        return true;
     }
 
     /**
@@ -123,7 +182,7 @@ final class Catalog
                 throw new RuntimeException("Reactive query name '{$name}' is declared twice: {$this->queries[$name]} and {$class}");
             }
 
-            /** @var class-string<Query> $class */
+            /** @var class-string<Query<Data>> $class */
             $this->queries[$name] = $class;
         }
 
@@ -138,7 +197,7 @@ final class Catalog
                 throw new RuntimeException("Reactive mutation name '{$name}' is declared twice: {$this->mutations[$name]} and {$class}");
             }
 
-            /** @var class-string<Mutation> $class */
+            /** @var class-string<Mutation<Data>> $class */
             $this->mutations[$name] = $class;
         }
     }

@@ -10,11 +10,17 @@ Do not put feature code in `app/Http` (only auth, profile and invites live there
 
 ## 2. The reactive contract
 
-Always `php artisan make:query <feature>.<name>` and `make:mutation <feature>.<name>`. Never hand-roll a query or mutation class.
+Always `php artisan make:query <feature>.<name>` and `make:mutation <feature>.<name>`. Never hand-roll a query or mutation class. `make:feature` runs `make:query <resource>.list` for you, so a new feature ships a page that renders real rows.
+
+Arguments are a laravel-data class, not a `rules()` array. A query or mutation names it twice, in `@extends Query<ListPostArgs>` and in `args()`; PHPStan checks the two agree. The runner builds it with `Data::validateAndCreate()`, so a bad payload is a 422 before your code runs. `Kit\Reactive\NoArgs` is the args class for something that takes none. Give the args class `#[TypeScript]`: `types:generate` names it in `Kit.ReactiveMap`.
+
+`handle()`, `authorize()` and `reads()` are declared `Data $args` because PHP forbids narrowing a parameter type in an override. The concrete type reaches PHPStan through the `@extends`, so `$args->ownerId` still type-checks.
 
 Inside a mutation, never call `DB::transaction`, `afterCommit`, or dispatch an invalidation. The base class does all three, and a PHPStan rule fails the build otherwise. Take row locks with `$this->lock($model)` inside `handle()`.
 
 `authorize()` is abstract and must do real work. An empty body fails an architecture test.
+
+A query's `handle()` takes args only. Never read `auth()`, `request()` or the session in it: subscribers asking the same question share one computed result, and `handle()` also runs on a worker with no session. Scope through args, check the caller in `authorize()`. A PHPStan rule enforces it.
 
 Declare `reads()` with `Dep::eq(...)` on tables over 10k rows or with high write fan-out. Keep pushed results small: over 8 KB the push carries only a hash and the client pays an extra round trip.
 
@@ -28,7 +34,7 @@ Run `php artisan types:generate` after any change to a data class, query or muta
 
 ## 4. Definition of done
 
-`bin/gate` green locally. One test per query and per mutation; the generators write them, keep them meaningful. Tests use `#[Test]`, never a `@test` docblock, which PHPUnit 13 ignores silently.
+`bin/gate` green locally. One test per query and per mutation; the generators write them, keep them meaningful. Tests use `#[Test]`, never a `@test` docblock, which PHPUnit 13 ignores silently; `tests/Architecture/NoDocblockTestAnnotationsTest.php` is what catches it.
 
 ## 5. Release
 
@@ -36,7 +42,7 @@ Run `php artisan types:generate` after any change to a data class, query or muta
 
 ## 6. When kit:doctor fails
 
-Redis, Horizon and Reverb warnings mean a service is down; restart it. A failure means the repository is wrong: an unregistered query name (run `types:generate`), an ambient binding missing from `config/octane.php` `flush` (add it to `config/kit.php` `ambient_bindings`), a `@test` docblock, or an `en`/`de` key mismatch. See `docs/runtime-contract.md`.
+Redis, Horizon and Reverb warnings mean a service is down; restart it. A failure means the repository is wrong: an unregistered query name (run `types:generate`), an ambient binding missing from `config/octane.php` `flush` (add it to `config/kit.php` `ambient_bindings`), or an `en`/`de` key mismatch. See `docs/runtime-contract.md`.
 
 ## 7. Accepted trade-offs
 

@@ -4,30 +4,33 @@ declare(strict_types=1);
 
 namespace Tests\Fixtures\Reactive;
 
-use App\Rules\BoundedString;
 use Illuminate\Contracts\Auth\Authenticatable;
 use Kit\Reactive\Attributes\ReactiveMutation;
 use Kit\Reactive\Mutation;
+use Spatie\LaravelData\Data;
 
+/**
+ * @extends Mutation<CreateNoteArgs>
+ */
 #[ReactiveMutation('notes.create', result: NoteData::class)]
 final class CreateNote extends Mutation
 {
-    public function rules(): array
+    public static function args(): string
     {
-        return ['title' => [new BoundedString(1, 100)], 'body' => ['sometimes', 'string', 'max:20000']];
+        return CreateNoteArgs::class;
     }
 
-    public function authorize(Authenticatable $user, array $args): void
+    public function authorize(Authenticatable $user, Data $args): void
     {
         $this->gate($user)->authorize('create-notes');
     }
 
-    public function handle(array $args): NoteData
+    public function handle(Data $args): NoteData
     {
         $note = Note::query()->create([
             'owner_id' => (string) auth()->id(),
-            'title' => $args['title'],
-            'body' => $args['body'] ?? '',
+            'title' => $args->title,
+            'body' => $args->body,
         ]);
 
         return NoteData::fromModel($note);
