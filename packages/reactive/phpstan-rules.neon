@@ -1,2 +1,15 @@
-# Kit rules registered by phpstan.neon; implemented in the reactive package.
-services: []
+# Kit rules, included from the root phpstan.neon. Each fails CI on a pattern
+# the reactive layer cannot tolerate; see the class docblocks for the reason.
+services:
+    -
+        class: Kit\Reactive\PHPStan\Rules\NoTransactionOrDispatchInMutationRule
+        tags: [phpstan.rules.rule]
+    -
+        class: Kit\Reactive\PHPStan\Rules\NoBulkWriteInMutationRule
+        tags: [phpstan.rules.rule]
+    -
+        class: Kit\Reactive\PHPStan\Rules\NoSerializesModelsOnBroadcastEventRule
+        tags: [phpstan.rules.rule]
+    -
+        class: Kit\Reactive\PHPStan\Rules\NoForceFillOutsidePackagesRule
+        tags: [phpstan.rules.rule]

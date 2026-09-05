@@ -1,0 +1,134 @@
+<?php
+
+declare(strict_types=1);
+
+namespace Kit\Reactive\Testing;
+
+use Illuminate\Contracts\Auth\Authenticatable;
+use Illuminate\Support\Facades\Queue;
+use Illuminate\Support\Str;
+use Kit\Reactive\Contracts\Registry;
+use Kit\Reactive\Invalidation\Invalidate;
+use Kit\Reactive\Registry\Catalog;
+use Kit\Reactive\Registry\Subscription;
+use Kit\Reactive\Runtime\QueryRunner;
+use PHPUnit\Framework\Assert;
+
+/**
+ * Test double behind `Reactive::fake()`. Pushes are captured instead of
+ * broadcast; the queue stays whatever the test env set (sync), so a
+ * mutation runs its invalidation and recompute inline and the push is
+ * observable right after the request.
+ */
+final class ReactiveFake
+{
+    public function __construct(
+        private readonly FakePusher $pusher,
+        private readonly Registry $registry,
+        private readonly Catalog $catalog,
+        private readonly QueryRunner $runner,
+    ) {}
+
+    /**
+     * Subscribe a user to a query directly through the pipeline, without HTTP.
+     *
+     * @param  array<string, mixed>  $args
+     */
+    public function subscribe(Authenticatable $user, string $query, array $args = []): Subscription
+    {
+        $class = $this->catalog->query($query);
+
+        Assert::assertNotNull($class, "Unknown reactive query '{$query}'.");
+
+        $outcome = $this->runner->run(app($class), $user, $args);
+
+        $subscription = new Subscription(
+            id: (string) Str::ulid(),
+            query: $query,
+            args: $outcome->args,
+            userId: (string) $user->getAuthIdentifier(),
+            resultHash: $outcome->hash,
+            lastMutationId: $this->registry->currentMutationId(),
+            createdAt: time(),
+            tables: $outcome->tables,
+            deps: $outcome->deps,
+        );
+
+        $this->registry->put($subscription);
+
+        return $subscription;
+    }
+
+    /**
+     * @return array<int, array{subscription: Subscription, mutationId: int, hash: string, result: mixed}>
+     */
+    public function pushed(?string $query = null): array
+    {
+        return array_values(array_filter(
+            $this->pusher->pushes,
+            fn (array $push) => $query === null || $push['subscription']->query === $query,
+        ));
+    }
+
+    /**
+     * @param  (callable(mixed $result, int $mutationId, Subscription $subscription): bool)|null  $callback
+     */
+    public function assertPushed(string $query, ?callable $callback = null): void
+    {
+        $pushes = $this->pushed($query);
+
+        Assert::assertNotEmpty($pushes, "No push was sent for query '{$query}'.");
+
+        if ($callback !== null) {
+            $matching = array_filter($pushes, fn (array $push) => $callback($push['result'], $push['mutationId'], $push['subscription']));
+            Assert::assertNotEmpty($matching, "A push was sent for '{$query}' but none matched the callback.");
+        }
+    }
+
+    public function assertNotPushed(?string $query = null): void
+    {
+        Assert::assertSame([], $this->pushed($query), 'Unexpected push'.($query !== null ? " for '{$query}'" : '').'.');
+    }
+
+    public function assertRevoked(string $subscriptionId): void
+    {
+        $ids = array_map(fn (Subscription $s) => $s->id, $this->pusher->revoked);
+
+        Assert::assertContains($subscriptionId, $ids, "Subscription {$subscriptionId} was not revoked.");
+    }
+
+    /**
+     * Pushes are emitted in increasing mutationId order per subscription.
+     */
+    public function assertOrdered(): void
+    {
+        $last = [];
+
+        foreach ($this->pusher->pushes as $push) {
+            $id = $push['subscription']->id;
+            Assert::assertGreaterThan($last[$id] ?? -1, $push['mutationId'], "Out-of-order push for subscription {$id}.");
+            $last[$id] = $push['mutationId'];
+        }
+    }
+
+    /**
+     * Run the block with the queue faked, then return the invalidation
+     * batches it dispatched; for asserting what a mutation invalidated
+     * without running the recompute.
+     *
+     * @return array<int, Invalidate>
+     */
+    public function capturingInvalidations(callable $callback): array
+    {
+        $fake = Queue::fake([Invalidate::class]);
+
+        $callback();
+
+        $jobs = [];
+        foreach ($fake->pushed(Invalidate::class) as $job) {
+            $jobs[] = $job;
+        }
+
+        return $jobs;
+    }
+}

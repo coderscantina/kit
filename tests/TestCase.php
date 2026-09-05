@@ -15,6 +15,8 @@ abstract class TestCase extends BaseTestCase
 {
     protected User $user;
 
+    private bool $booted = false;
+
     /**
      * Setup markers are real files on the storage volume; the registration
      * latch in particular is written by any test that exercises the gate with
@@ -31,11 +33,15 @@ abstract class TestCase extends BaseTestCase
         ]);
 
         $this->clearSetupMarkers();
+        $this->booted = true;
     }
 
     protected function tearDown(): void
     {
-        $this->clearSetupMarkers();
+        // A test skipped in setUp() never booted the app.
+        if ($this->booted) {
+            $this->clearSetupMarkers();
+        }
 
         parent::tearDown();
     }
