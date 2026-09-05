@@ -1,0 +1,163 @@
+#!/usr/bin/env bash
+# Cuts a CalVer release: vYYYY.M.D-<shortsha>.
+#
+# No counter to compute, always unique, several a day is normal, and the sha in
+# the name is the audit trail back to the content commit. The tag goes on the
+# changelog commit, so the tagged tree contains its own release notes.
+#
+#   bin/release              cut and push
+#   bin/release --dry-run    print the tag and the changelog block
+#   bin/release --backfill   rebuild CHANGELOG.md from every existing tag
+set -euo pipefail
+
+cd "$(dirname "$0")/.."
+
+CHANGELOG_FILE="CHANGELOG.md"
+
+# Release commits sit between tags and are not content changes.
+LOG_OPTS=(--pretty=format:'- %s' --no-merges --invert-grep --grep='^🔖 Release')
+
+header() {
+  cat <<'TXT'
+# Changelog
+
+Every release, newest first. Commit subjects are the changelog lines, so write
+them that way. Subjects follow the [Gitmoji](https://gitmoji.dev/) convention.
+TXT
+}
+
+# changelog_block <tag> <previous-tag-or-empty>
+changelog_block() {
+  local tag="$1" prev="$2" date_str upper commits
+
+  if [[ "$tag" =~ ^v([0-9]{4})\.([0-9]+)\.([0-9]+) ]]; then
+    date_str="$(printf '%s-%02d-%02d' "${BASH_REMATCH[1]}" "${BASH_REMATCH[2]}" "${BASH_REMATCH[3]}")"
+  else
+    date_str="$(date +%Y-%m-%d)"
+  fi
+
+  # The tag ref when it exists (backfill), HEAD when it does not (a new release
+  # is not tagged yet).
+  if git rev-parse --verify --quiet "$tag" >/dev/null; then upper="$tag"; else upper='HEAD'; fi
+
+  if [[ -z "$prev" ]]; then
+    commits="$(git log "$upper" "${LOG_OPTS[@]}" 2>/dev/null || true)"
+  else
+    commits="$(git log "${prev}..${upper}" "${LOG_OPTS[@]}" 2>/dev/null || true)"
+  fi
+
+  [[ -n "$commits" ]] || commits='- No changes recorded'
+
+  printf '## [%s] - %s\n\n%s\n' "$tag" "$date_str" "$commits"
+}
+
+prepend_to_changelog() {
+  local block="$1" tmp first
+  tmp="$(mktemp)"
+
+  if [[ ! -f "$CHANGELOG_FILE" ]]; then
+    { header; printf '\n%s\n' "$block"; } > "$CHANGELOG_FILE"
+    return
+  fi
+
+  first="$(grep -n '^## ' "$CHANGELOG_FILE" | head -1 | cut -d: -f1)"
+
+  if [[ -n "$first" ]]; then
+    head -n $((first - 1)) "$CHANGELOG_FILE" > "$tmp"
+    printf '%s\n\n' "$block" >> "$tmp"
+    tail -n "+${first}" "$CHANGELOG_FILE" >> "$tmp"
+  else
+    cat "$CHANGELOG_FILE" > "$tmp"
+    printf '\n%s\n' "$block" >> "$tmp"
+  fi
+
+  mv "$tmp" "$CHANGELOG_FILE"
+}
+
+# ── Backfill ────────────────────────────────────────────────────────────────
+
+if [[ "${1:-}" == '--backfill' ]]; then
+  tag_list="$(git tag --sort=creatordate)"
+
+  if [[ -z "$tag_list" ]]; then
+    echo 'No tags to backfill.'
+    exit 0
+  fi
+
+  # Not mapfile, and only after the empty case is out of the way: macOS still
+  # ships bash 3.2, where both are a problem under `set -u`.
+  tags=()
+  while IFS= read -r tag; do tags+=("$tag"); done <<< "$tag_list"
+
+  { header; echo; } > "$CHANGELOG_FILE"
+
+  # Newest first in the file, so iterate the list backwards.
+  for ((i = ${#tags[@]} - 1; i >= 0; i--)); do
+    prev=''
+    ((i > 0)) && prev="${tags[i - 1]}"
+    echo "  -> ${tags[i]}"
+    printf '%s\n\n' "$(changelog_block "${tags[i]}" "$prev")" >> "$CHANGELOG_FILE"
+  done
+
+  echo "Wrote ${CHANGELOG_FILE} with ${#tags[@]} release(s)."
+  exit 0
+fi
+
+dry_run=false
+[[ "${1:-}" == '--dry-run' ]] && dry_run=true
+
+# ── Guards ──────────────────────────────────────────────────────────────────
+
+branch="$(git rev-parse --abbrev-ref HEAD)"
+if [[ "$branch" != 'main' ]]; then
+  echo "Error: on '${branch}'. Releases are cut from main." >&2
+  exit 1
+fi
+
+if git rev-parse --verify --quiet origin/main >/dev/null; then
+  $dry_run || git fetch --quiet origin main
+
+  local_commit="$(git rev-parse HEAD)"
+  remote_commit="$(git rev-parse origin/main)"
+  base_commit="$(git merge-base HEAD origin/main)"
+
+  if [[ "$local_commit" == "$base_commit" && "$local_commit" != "$remote_commit" ]]; then
+    echo 'Error: main is behind origin/main. Pull first.' >&2
+    exit 1
+  fi
+
+  if [[ "$remote_commit" != "$base_commit" && "$local_commit" != "$remote_commit" ]]; then
+    echo 'Error: main has diverged from origin/main. Reconcile first.' >&2
+    exit 1
+  fi
+fi
+
+if ! $dry_run && [[ -n "$(git status --porcelain)" ]]; then
+  echo 'Error: the working tree is dirty. Commit or stash first.' >&2
+  exit 1
+fi
+
+# ── Cut ─────────────────────────────────────────────────────────────────────
+
+# HEAD^, not HEAD: describing HEAD would return a tag sitting on it.
+previous_tag="$(git describe --tags --abbrev=0 HEAD^ 2>/dev/null || echo '')"
+new_tag="v$(date +%Y.%-m.%-d)-$(git rev-parse --short HEAD)"
+block="$(changelog_block "$new_tag" "$previous_tag")"
+
+if $dry_run; then
+  echo "$new_tag"
+  echo
+  echo "$block"
+  exit 0
+fi
+
+prepend_to_changelog "$block"
+
+git add "$CHANGELOG_FILE"
+git commit -q -m "🔖 Release ${new_tag}"
+git tag "$new_tag"
+
+git push origin main
+git push origin "$new_tag"
+
+echo "Released ${new_tag}."

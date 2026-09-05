@@ -1,0 +1,110 @@
+# Local development stack, same image as production.
+#   cp .env.example .env && bin/dev up
+# Then open http://localhost:8000.
+# The database name and user are fixed rather than read from .env: this file
+# and the application share one .env, and a DB_DATABASE meant for the host
+# (a sqlite path, say) must not reach the container.
+services:
+  app:
+    build:
+      context: .
+      args:
+        # Overridden by the image tag in production; locally the version only
+        # has to differ from the last one to trigger upgrade migrations.
+        APP_VERSION: dev
+    image: kit:dev
+    ports:
+      # Loopback only by default: the stack speaks plain HTTP, so anything
+      # reachable from other machines belongs behind a TLS reverse proxy.
+      # Set APP_BIND=0.0.0.0 to expose it directly.
+      - '${APP_BIND:-127.0.0.1}:${APP_PORT:-8000}:8000'
+      - '${APP_BIND:-127.0.0.1}:${REVERB_PORT:-8001}:8001'
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      APP_NAME: ${APP_NAME:-Kit}
+      APP_ENV: local
+      APP_DEBUG: 'true'
+      APP_KEY: ${APP_KEY:-}
+      APP_URL: ${APP_URL:-http://localhost:8000}
+      # APP_VERSION is deliberately absent: the image bakes in what it was
+      # built from, and overriding it here would both misreport the version and
+      # break the comparison that triggers upgrade migrations.
+      #
+      # Must be 0.0.0.0: docker forwards the published port to the container's
+      # IP, so a loopback bind inside the container is unreachable from the
+      # host. Host-side exposure is APP_BIND above, not this.
+      OCTANE_HOST: 0.0.0.0
+      OCTANE_SERVER: frankenphp
+      DB_CONNECTION: mysql
+      DB_HOST: db
+      DB_PORT: 3306
+      DB_DATABASE: kit
+      DB_USERNAME: root
+      DB_PASSWORD: ${DB_ROOT_PASSWORD:?set DB_ROOT_PASSWORD in .env - refusing to boot with a default password}
+      REDIS_CLIENT: predis
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      CACHE_STORE: redis
+      QUEUE_CONNECTION: redis
+      SESSION_DRIVER: redis
+      BROADCAST_CONNECTION: reverb
+      REACTIVE_REGISTRY: redis
+      REVERB_APP_ID: ${REVERB_APP_ID:-kit}
+      REVERB_APP_KEY: ${REVERB_APP_KEY:-kit-local-key}
+      REVERB_APP_SECRET: ${REVERB_APP_SECRET:-kit-local-secret}
+      REVERB_HOST: ${REVERB_HOST:-localhost}
+      REVERB_PORT: ${REVERB_PORT:-8001}
+      REVERB_SCHEME: http
+      MAIL_MAILER: log
+      MAIL_FROM_ADDRESS: ${MAIL_FROM_ADDRESS:-hello@example.com}
+    volumes:
+      - app-storage:/app/storage
+    healthcheck:
+      # Probes the container's routable address, not loopback: a 127.0.0.1
+      # probe passes even when the app is bound somewhere the published port
+      # can never reach, reporting "healthy" on a stack nobody can connect to.
+      test: ['CMD-SHELL', 'wget -qO- "http://$$(hostname):8000/up" >/dev/null']
+      interval: 15s
+      timeout: 10s
+      retries: 10
+      start_period: 60s
+
+  db:
+    image: mariadb:11.4
+    environment:
+      MARIADB_DATABASE: kit
+      MARIADB_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:?set DB_ROOT_PASSWORD in .env - refusing to boot with a default password}
+    volumes:
+      - db-data:/var/lib/mysql
+    healthcheck:
+      test: ['CMD-SHELL', 'mariadb-admin ping -h 127.0.0.1 -uroot -p"$$MARIADB_ROOT_PASSWORD" --silent']
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+
+  redis:
+    image: redis:7.4-alpine
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  # Only for `bin/dev mail`: a local inbox for the invite and reset mails.
+  mail:
+    image: axllent/mailpit:v1.21
+    profiles: ['mail']
+    ports:
+      - '${APP_BIND:-127.0.0.1}:8025:8025'
+
+volumes:
+  app-storage:
+  db-data:
+  redis-data:

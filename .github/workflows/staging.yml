@@ -1,0 +1,91 @@
+name: Staging
+
+# main is staging. Production only ever comes from a CalVer tag.
+on:
+  push:
+    branches:
+      - main
+
+concurrency:
+  group: staging
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+  packages: write
+
+env:
+  PHP_VERSION: '8.5'
+  BUN_VERSION: '1.4.1'
+  IMAGE: ghcr.io/${{ github.repository }}
+
+jobs:
+  test:
+    uses: ./.github/workflows/tests.yml
+
+  deploy:
+    needs: test
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+
+      - uses: shivammathur/setup-php@bf6b4fbd49ca58e4608c9c89fba0b8d90bd2a39f # v2.35.5
+        with:
+          php-version: ${{ env.PHP_VERSION }}
+          extensions: dom, curl, libxml, mbstring, zip, pcntl, pdo, pdo_mysql, bcmath, intl, redis
+          tools: composer:v2
+          coverage: none
+
+      - uses: oven-sh/setup-bun@735343b667d3e6f658f44d0eca948eb6282f2b76 # v2.0.2
+        with:
+          bun-version: ${{ env.BUN_VERSION }}
+
+      - run: composer install --prefer-dist --no-interaction --no-progress --no-dev --optimize-autoloader
+      - run: bun install --frozen-lockfile
+      - run: bun run build
+        env:
+          NODE_ENV: production
+
+      - uses: docker/setup-buildx-action@e468171a9de216ec08956ac3ada2f0791b6bd435 # v3.11.1
+
+      - uses: docker/login-action@74a5d142397b4f367a81961eba4e8cd7edddf772 # v3.4.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push
+        id: build
+        uses: docker/build-push-action@263435318d21b8e681c14492fe198d362a7d2c83 # v6.18.0
+        with:
+          context: .
+          push: true
+          tags: |
+            ${{ env.IMAGE }}:sha-${{ github.sha }}
+            ${{ env.IMAGE }}:staging
+          build-args: APP_VERSION=sha-${{ github.sha }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Notify the staging receiver
+        env:
+          WEBHOOK: ${{ secrets.DEPLOY_WEBHOOK_STAGING }}
+          SECRET: ${{ secrets.DEPLOY_WEBHOOK_SECRET }}
+        # Signed with the shared secret so the receiver can refuse anything it
+        # did not come from. Skipped when no webhook is configured, so a fresh
+        # clone of the kit does not fail its first push to main.
+        run: |
+          [ -n "$WEBHOOK" ] || { echo '::notice::DEPLOY_WEBHOOK_STAGING is unset; skipping'; exit 0; }
+          body=$(jq -nc \
+            --arg environment staging \
+            --arg image "${IMAGE}" \
+            --arg tag "sha-${GITHUB_SHA}" \
+            --arg sha "${GITHUB_SHA}" \
+            --arg changelogUrl "${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/commits/main" \
+            '{event:"deploy",environment:$environment,image:$image,tag:$tag,sha:$sha,changelogUrl:$changelogUrl}')
+          signature="sha256=$(printf '%s' "$body" | openssl dgst -sha256 -hmac "$SECRET" -r | cut -d' ' -f1)"
+          curl -fsS -X POST "$WEBHOOK" \
+            -H 'Content-Type: application/json' \
+            -H "X-Kit-Signature: ${signature}" \
+            --data-raw "$body"

@@ -1,0 +1,202 @@
+name: Release
+
+# CalVer tags, cut by bin/release: vYYYY.M.D-<shortsha>.
+on:
+  push:
+    tags:
+      - 'v[0-9]+.[0-9]+.[0-9]+-*'
+
+concurrency:
+  # Deliberately not keyed on the ref: several tags a day is normal, and two
+  # releases in parallel would race each other for the `production` tag.
+  group: release
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+  packages: write
+  # actions/attest-build-provenance
+  id-token: write
+  attestations: write
+  deployments: write
+
+env:
+  PHP_VERSION: '8.5'
+  BUN_VERSION: '1.4.1'
+  IMAGE: ghcr.io/${{ github.repository }}
+
+jobs:
+  # A CalVer tag can land on any commit, so publishing is gated on the same
+  # suite pull requests run. Reusing tests.yml keeps the gate from drifting.
+  test:
+    uses: ./.github/workflows/tests.yml
+
+  release:
+    needs: test
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        with:
+          # The whole tag list, to decide whether this release is the newest.
+          fetch-depth: 0
+
+      - name: Read the tag
+        id: version
+        run: echo "tag=${GITHUB_REF#refs/tags/}" >> "$GITHUB_OUTPUT"
+
+      - name: Is this the newest release?
+        id: latest
+        # `production` must never regress. Serialising the workflow is not
+        # enough: an old run re-tried from the Actions UI would republish its
+        # version over the current one. Tags are lightweight, so creatordate is
+        # the tagged commit's date, and tagging an older commit loses too.
+        run: |
+          newest="$(git for-each-ref --sort=-creatordate --format='%(refname:short)' 'refs/tags/v*' | head -n1)"
+          if [ "$newest" = "${{ steps.version.outputs.tag }}" ]; then
+            echo 'is_latest=true' >> "$GITHUB_OUTPUT"
+          else
+            echo 'is_latest=false' >> "$GITHUB_OUTPUT"
+            echo "::notice::${newest} is newer; publishing the version tag only and leaving production alone"
+          fi
+
+      - uses: shivammathur/setup-php@bf6b4fbd49ca58e4608c9c89fba0b8d90bd2a39f # v2.35.5
+        with:
+          php-version: ${{ env.PHP_VERSION }}
+          extensions: dom, curl, libxml, mbstring, zip, pcntl, pdo, pdo_mysql, bcmath, intl, redis
+          tools: composer:v2
+          coverage: none
+
+      - uses: oven-sh/setup-bun@735343b667d3e6f658f44d0eca948eb6282f2b76 # v2.0.2
+        with:
+          bun-version: ${{ env.BUN_VERSION }}
+
+      - run: composer install --prefer-dist --no-interaction --no-progress --no-dev --optimize-autoloader
+      - run: bun install --frozen-lockfile
+      - run: bun run build
+        env:
+          NODE_ENV: production
+
+      # A cached config.php in the artifact would ship this machine's resolved
+      # .env. The Dockerfile clears it too; belt and braces, it is one line.
+      - run: rm -f bootstrap/cache/*.php
+
+      - uses: docker/setup-buildx-action@e468171a9de216ec08956ac3ada2f0791b6bd435 # v3.11.1
+
+      - uses: docker/login-action@74a5d142397b4f367a81961eba4e8cd7edddf772 # v3.4.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Is the tag already published?
+        id: published
+        # Version tags are immutable. A re-run after a partial failure must not
+        # republish what the first attempt already pushed.
+        run: |
+          if docker manifest inspect "${IMAGE}:${{ steps.version.outputs.tag }}" >/dev/null 2>&1; then
+            echo '::notice::${{ steps.version.outputs.tag }} is already in GHCR; skipping the build'
+            echo 'exists=true' >> "$GITHUB_OUTPUT"
+          else
+            echo 'exists=false' >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Build and push
+        id: build
+        if: steps.published.outputs.exists != 'true'
+        uses: docker/build-push-action@263435318d21b8e681c14492fe198d362a7d2c83 # v6.18.0
+        with:
+          context: .
+          push: true
+          # Blank lines are dropped by the action, so `production` simply
+          # vanishes from the list when this is not the newest release.
+          tags: |
+            ${{ env.IMAGE }}:${{ steps.version.outputs.tag }}
+            ${{ steps.latest.outputs.is_latest == 'true' && format('{0}:production', env.IMAGE) || '' }}
+          build-args: APP_VERSION=${{ steps.version.outputs.tag }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          provenance: mode=max
+          sbom: true
+
+      - name: Attest provenance
+        if: steps.published.outputs.exists != 'true'
+        uses: actions/attest-build-provenance@977bb373ede98d70efdf65b84cb5f73e068dcc2a # v3.0.0
+        with:
+          subject-name: ${{ env.IMAGE }}
+          subject-digest: ${{ steps.build.outputs.digest }}
+          push-to-registry: true
+
+      - name: Create the GitHub deployment
+        id: deployment
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          id=$(gh api "repos/${GITHUB_REPOSITORY}/deployments" \
+            -f ref="${{ steps.version.outputs.tag }}" \
+            -f environment=production \
+            -f description="${{ steps.version.outputs.tag }}" \
+            -F auto_merge=false \
+            -F required_contexts='[]' --jq '.id')
+          echo "id=${id}" >> "$GITHUB_OUTPUT"
+
+      - name: Notify the production receiver
+        id: notify
+        env:
+          WEBHOOK: ${{ secrets.DEPLOY_WEBHOOK_PRODUCTION }}
+          SECRET: ${{ secrets.DEPLOY_WEBHOOK_SECRET }}
+          TAG: ${{ steps.version.outputs.tag }}
+          DEPLOYMENT_ID: ${{ steps.deployment.outputs.id }}
+        run: |
+          [ -n "$WEBHOOK" ] || { echo '::notice::DEPLOY_WEBHOOK_PRODUCTION is unset; skipping'; echo 'sent=false' >> "$GITHUB_OUTPUT"; exit 0; }
+          body=$(jq -nc \
+            --arg environment production \
+            --arg image "${IMAGE}" \
+            --arg tag "${TAG}" \
+            --arg sha "${GITHUB_SHA}" \
+            --arg changelogUrl "${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/blob/${TAG}/CHANGELOG.md" \
+            --arg statusUrl "${GITHUB_API_URL}/repos/${GITHUB_REPOSITORY}/deployments/${DEPLOYMENT_ID}/statuses" \
+            '{event:"deploy",environment:$environment,image:$image,tag:$tag,sha:$sha,changelogUrl:$changelogUrl,statusUrl:$statusUrl}')
+          signature="sha256=$(printf '%s' "$body" | openssl dgst -sha256 -hmac "$SECRET" -r | cut -d' ' -f1)"
+          curl -fsS -X POST "$WEBHOOK" \
+            -H 'Content-Type: application/json' \
+            -H "X-Kit-Signature: ${signature}" \
+            --data-raw "$body"
+          echo 'sent=true' >> "$GITHUB_OUTPUT"
+
+      - name: Wait for the receiver's callback
+        if: steps.notify.outputs.sent == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          DEPLOYMENT_ID: ${{ steps.deployment.outputs.id }}
+        # Without this the workflow goes green the moment the POST returns, and
+        # the GitHub deployment sits "in progress" forever whatever the host
+        # actually did.
+        run: |
+          for _ in $(seq 1 60); do
+            state=$(gh api "repos/${GITHUB_REPOSITORY}/deployments/${DEPLOYMENT_ID}/statuses" --jq '.[0].state // "pending"')
+            case "$state" in
+              success) echo 'Receiver reported success.'; exit 0 ;;
+              failure|error) echo "::error::Receiver reported ${state}."; exit 1 ;;
+            esac
+            sleep 10
+          done
+          echo '::error::No deployment status within 10 minutes.'
+          exit 1
+
+  notify-blocked:
+    needs: test
+    if: failure()
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    # The release job is skipped, not failed, when the gate goes red, and a
+    # skipped job's own notification never fires. This one has to exist.
+    steps:
+      - name: Post to the chat webhook
+        env:
+          WEBHOOK: ${{ secrets.NOTIFY_WEBHOOK_URL }}
+        run: |
+          [ -n "$WEBHOOK" ] || { echo '::notice::NOTIFY_WEBHOOK_URL is unset; skipping'; exit 0; }
+          curl -fsS -X POST "$WEBHOOK" \
+            -H 'Content-Type: application/json' \
+            -d "{\"text\":\"Release ${GITHUB_REF#refs/tags/} is blocked: the test gate failed. ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}\"}"

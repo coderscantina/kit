@@ -100,6 +100,9 @@ return [
 
     'waits' => [
         'redis:default' => 60,
+        // The push budget is 200 ms; a recompute waiting five seconds for a
+        // worker means the reactive supervisor is undersized.
+        'redis:reactive' => 5,
     ],
 
     /*
@@ -212,6 +215,24 @@ return [
             'timeout' => 60,
             'nice' => 0,
         ],
+
+        // Recomputes get their own supervisor so a slow default queue never
+        // sits between a commit and the push it should have produced. Short
+        // timeout on purpose: a recompute that takes 15 seconds is broken, and
+        // holding the worker only delays every other subscriber.
+        'reactive' => [
+            'connection' => 'redis',
+            'queue' => ['reactive'],
+            'balance' => 'auto',
+            'autoScalingStrategy' => 'size',
+            'maxProcesses' => 2,
+            'maxTime' => 0,
+            'maxJobs' => 0,
+            'memory' => 192,
+            'tries' => 3,
+            'timeout' => 15,
+            'nice' => 0,
+        ],
     ],
 
     'environments' => [
@@ -221,10 +242,18 @@ return [
                 'balanceMaxShift' => 1,
                 'balanceCooldown' => 3,
             ],
+            'reactive' => [
+                'maxProcesses' => 10,
+                'balanceMaxShift' => 2,
+                'balanceCooldown' => 1,
+            ],
         ],
 
         'local' => [
             'supervisor-1' => [
+                'maxProcesses' => 3,
+            ],
+            'reactive' => [
                 'maxProcesses' => 3,
             ],
         ],

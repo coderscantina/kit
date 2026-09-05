@@ -1,0 +1,269 @@
+name: Tests
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+  # Callable so the tag workflows gate on the same suite instead of
+  # duplicating these steps and drifting from them.
+  workflow_call:
+
+# github.workflow is the *caller's* name under workflow_call, so staging and
+# release land in separate groups when both call this on the same ref. Keyed on
+# the ref alone, whichever started second would cancel the other.
+concurrency:
+  group: tests-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+env:
+  PHP_VERSION: '8.5'
+  BUN_VERSION: '1.4.1'
+  PHP_EXTENSIONS: dom, curl, libxml, mbstring, zip, pcntl, pdo, sqlite, pdo_sqlite, pdo_mysql, bcmath, intl, redis
+
+jobs:
+  phpunit:
+    name: PHPUnit (sqlite)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+
+      - uses: shivammathur/setup-php@bf6b4fbd49ca58e4608c9c89fba0b8d90bd2a39f # v2.35.5
+        with:
+          php-version: ${{ env.PHP_VERSION }}
+          extensions: ${{ env.PHP_EXTENSIONS }}
+          tools: composer:v2
+          coverage: none
+
+      - uses: actions/cache@0400d5f644dc74513175e3cd8d07132dd4860809 # v4.2.4
+        with:
+          path: ~/.cache/composer
+          key: ${{ runner.os }}-composer-${{ hashFiles('composer.lock') }}
+          restore-keys: ${{ runner.os }}-composer-
+
+      - run: composer install --prefer-dist --no-interaction --no-progress
+
+      # phpunit.xml provides the test env (sqlite :memory:, array cache and
+      # session, sync queue, null broadcaster); only the key has to exist.
+      - name: Prepare environment
+        run: cp .env.example .env && php artisan key:generate
+
+      - run: php artisan test
+
+  phpunit-reactive:
+    name: PHPUnit (MySQL + Redis)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    # Deadlock retry and the Redis registry cannot be faked on sqlite, so this
+    # suite runs against the real thing. Both jobs are required.
+    services:
+      mysql:
+        image: mysql:8.4
+        env:
+          MYSQL_ALLOW_EMPTY_PASSWORD: 'yes'
+          MYSQL_DATABASE: kit_reactive
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h 127.0.0.1"
+          --health-interval=10s --health-timeout=5s --health-retries=10
+      redis:
+        image: redis:7.4
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd="redis-cli ping"
+          --health-interval=10s --health-timeout=5s --health-retries=10
+
+    steps:
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+
+      - uses: shivammathur/setup-php@bf6b4fbd49ca58e4608c9c89fba0b8d90bd2a39f # v2.35.5
+        with:
+          php-version: ${{ env.PHP_VERSION }}
+          extensions: ${{ env.PHP_EXTENSIONS }}
+          tools: composer:v2
+          coverage: none
+
+      - uses: actions/cache@0400d5f644dc74513175e3cd8d07132dd4860809 # v4.2.4
+        with:
+          path: ~/.cache/composer
+          key: ${{ runner.os }}-composer-${{ hashFiles('composer.lock') }}
+          restore-keys: ${{ runner.os }}-composer-
+
+      - run: composer install --prefer-dist --no-interaction --no-progress
+
+      - name: Prepare environment
+        run: cp .env.example .env && php artisan key:generate
+
+      - name: Run the reactive suite
+        # Unset, the suite skips itself; set, it must actually run.
+        env:
+          REACTIVE_TEST_DB: kit_reactive
+          REACTIVE_TEST_DB_HOST: 127.0.0.1
+          REACTIVE_TEST_DB_PORT: '3306'
+          REACTIVE_TEST_DB_USERNAME: root
+          REACTIVE_TEST_DB_PASSWORD: ''
+          REACTIVE_TEST_REDIS_HOST: 127.0.0.1
+          REACTIVE_TEST_REDIS_PORT: '6379'
+        run: vendor/bin/phpunit --testsuite=reactive --fail-on-skipped
+
+  frontend:
+    name: Lint, typecheck & vitest
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+
+      - uses: oven-sh/setup-bun@735343b667d3e6f658f44d0eca948eb6282f2b76 # v2.0.2
+        with:
+          bun-version: ${{ env.BUN_VERSION }}
+
+      - uses: actions/cache@0400d5f644dc74513175e3cd8d07132dd4860809 # v4.2.4
+        with:
+          path: ~/.bun/install/cache
+          key: ${{ runner.os }}-bun-${{ hashFiles('bun.lock') }}
+          restore-keys: ${{ runner.os }}-bun-
+
+      - run: bun install --frozen-lockfile
+
+      # `bun run lint` rewrites files; CI only reports. Never prettier.
+      - run: bun run lint:ci
+      - run: bun run typecheck
+      - run: bun run test
+
+  types-check:
+    name: Generated types are current
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+
+      - uses: shivammathur/setup-php@bf6b4fbd49ca58e4608c9c89fba0b8d90bd2a39f # v2.35.5
+        with:
+          php-version: ${{ env.PHP_VERSION }}
+          extensions: ${{ env.PHP_EXTENSIONS }}
+          tools: composer:v2
+          coverage: none
+
+      - run: composer install --prefer-dist --no-interaction --no-progress
+      - run: cp .env.example .env && php artisan key:generate
+      - run: php artisan types:generate --check
+
+  phpstan:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+
+      - uses: shivammathur/setup-php@bf6b4fbd49ca58e4608c9c89fba0b8d90bd2a39f # v2.35.5
+        with:
+          php-version: ${{ env.PHP_VERSION }}
+          extensions: ${{ env.PHP_EXTENSIONS }}
+          tools: composer:v2
+          coverage: none
+
+      - run: composer install --prefer-dist --no-interaction --no-progress
+      - run: vendor/bin/phpstan analyse --no-progress --error-format=github
+
+  pint:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+
+      - uses: shivammathur/setup-php@bf6b4fbd49ca58e4608c9c89fba0b8d90bd2a39f # v2.35.5
+        with:
+          php-version: ${{ env.PHP_VERSION }}
+          extensions: ${{ env.PHP_EXTENSIONS }}
+          tools: composer:v2
+          coverage: none
+
+      - run: composer install --prefer-dist --no-interaction --no-progress
+      - run: vendor/bin/pint --test
+
+  test-attributes:
+    name: No @test docblocks
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+
+      # PHPUnit 13 ignores @test docblocks, so a test written that way stops
+      # running with no failure anywhere. grep is the only thing that sees it.
+      - name: Grep for @test docblocks
+        run: |
+          if grep -rnE '^\s*\*\s*@test\b' --include='*Test.php' app tests packages; then
+            echo '::error::Replace @test docblocks with the #[Test] attribute.'
+            exit 1
+          fi
+          echo 'No @test docblocks.'
+
+  generators:
+    name: Generator round trip
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    # No example feature is committed, so this is what keeps the generators
+    # honest: scaffold one on a clean checkout, run its generated tests and
+    # every check it touches, remove it, and fail if anything is left behind.
+    steps:
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+
+      - uses: shivammathur/setup-php@bf6b4fbd49ca58e4608c9c89fba0b8d90bd2a39f # v2.35.5
+        with:
+          php-version: ${{ env.PHP_VERSION }}
+          extensions: ${{ env.PHP_EXTENSIONS }}
+          tools: composer:v2
+          coverage: none
+
+      - uses: oven-sh/setup-bun@735343b667d3e6f658f44d0eca948eb6282f2b76 # v2.0.2
+        with:
+          bun-version: ${{ env.BUN_VERSION }}
+
+      - run: composer install --prefer-dist --no-interaction --no-progress
+      - run: bun install --frozen-lockfile
+      - run: cp .env.example .env && php artisan key:generate
+
+      # .env is untracked and the round trip asserts a clean tree.
+      - run: ./bin/generators-roundtrip
+
+  docker:
+    name: Image builds
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+
+      - uses: shivammathur/setup-php@bf6b4fbd49ca58e4608c9c89fba0b8d90bd2a39f # v2.35.5
+        with:
+          php-version: ${{ env.PHP_VERSION }}
+          extensions: ${{ env.PHP_EXTENSIONS }}
+          tools: composer:v2
+          coverage: none
+
+      - uses: oven-sh/setup-bun@735343b667d3e6f658f44d0eca948eb6282f2b76 # v2.0.2
+        with:
+          bun-version: ${{ env.BUN_VERSION }}
+
+      # vendor/ and public/build are built here and copied into the image, so
+      # the only architecture-dependent work in it is apk plus extensions.
+      - run: composer install --prefer-dist --no-interaction --no-progress --no-dev --optimize-autoloader
+      - run: bun install --frozen-lockfile && bun run build
+
+      - uses: docker/setup-buildx-action@e468171a9de216ec08956ac3ada2f0791b6bd435 # v3.11.1
+
+      - uses: docker/build-push-action@263435318d21b8e681c14492fe198d362a7d2c83 # v6.18.0
+        with:
+          context: .
+          push: false
+          load: true
+          tags: kit:ci
+          build-args: APP_VERSION=ci-${{ github.sha }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max

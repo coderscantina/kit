@@ -1,0 +1,26 @@
+# vendor/ and public/build are deliberately NOT ignored: they are built on the
+# runner and copied in, so the image does no architecture-dependent work beyond
+# apk and the PHP extensions.
+.git
+.github
+.delta
+node_modules
+docs
+tests
+packages/reactive-vue
+bin
+deploy
+*.md
+.env
+.env.*
+!.env.example
+database/database.sqlite
+storage/logs/*
+storage/framework/cache/*
+storage/framework/sessions/*
+storage/framework/views/*
+storage/app/testing
+storage/app/setup
+bootstrap/cache/*.php
+.phpunit.cache
+.phpunit.result.cache

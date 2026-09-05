@@ -1,0 +1,75 @@
+#!/usr/bin/env bash
+# Compose wrapper for the local stack. `bin/dev up` on a fresh clone is the
+# whole setup: it builds the image, boots MariaDB and Redis, and runs
+# kit:setup on first boot.
+set -euo pipefail
+
+cd "$(dirname "$0")/.."
+
+compose() { docker compose "$@"; }
+
+# The stack refuses to boot without DB_ROOT_PASSWORD, so put a local one in
+# place rather than making the first run fail on a variable nobody has read
+# about yet.
+if [ ! -f .env ]; then
+  cp .env.example .env
+  echo 'bin/dev: wrote .env from .env.example'
+fi
+
+# Compose refuses to boot without it, so fill it in rather than making the
+# first run fail on a variable nobody has read about yet.
+if ! grep -qE '^DB_ROOT_PASSWORD=.+' .env; then
+  password="$(head -c 24 /dev/urandom | base64 | tr -d '/+=')"
+  if grep -q '^DB_ROOT_PASSWORD=' .env; then
+    # -i.bak, then remove: BSD and GNU sed disagree about bare -i.
+    sed -i.bak "s|^DB_ROOT_PASSWORD=.*|DB_ROOT_PASSWORD=${password}|" .env && rm -f .env.bak
+  else
+    printf '\nDB_ROOT_PASSWORD=%s\n' "$password" >> .env
+  fi
+  echo 'bin/dev: generated DB_ROOT_PASSWORD'
+fi
+
+usage() {
+  cat <<'TXT'
+bin/dev <command>
+
+  up             rebuild and start the stack, waiting for health
+  down [--wipe]  stop it; --wipe also drops the volumes
+  logs [service] follow logs (default: app)
+  shell          a shell in the app container
+  psql|db        a MariaDB client on the app database
+  mail           start Mailpit and open http://localhost:8025
+  artisan ...    run an artisan command in the app container
+  <anything>     passed straight to `docker compose`
+TXT
+}
+
+command="${1:-up}"
+[ $# -gt 0 ] && shift
+
+case "$command" in
+  up)
+    # Always --build: compose has no idea the source changed, and a cached
+    # layer rebuild costs seconds while a stale image costs an afternoon.
+    compose up -d --build --wait "$@"
+    echo
+    echo "Kit is up on ${APP_URL:-http://localhost:8000}"
+    ;;
+  down)
+    if [ "${1:-}" = "--wipe" ]; then
+      compose down -v
+    else
+      compose down
+    fi
+    ;;
+  logs) compose logs -f "${1:-app}" ;;
+  shell) compose exec app sh ;;
+  psql | db) compose exec db sh -c 'exec mariadb -uroot -p"$MARIADB_ROOT_PASSWORD" kit' ;;
+  mail)
+    compose --profile mail up -d mail
+    echo 'Mailpit on http://localhost:8025'
+    ;;
+  artisan) compose exec app php artisan "$@" ;;
+  -h | --help | help) usage ;;
+  *) compose "$command" "$@" ;;
+esac

@@ -1,0 +1,102 @@
+# Production stack on the client's host. Pulled and restarted by
+# deploy/receiver.sh; nothing here is host-specific beyond the .env next to it.
+#
+#   KIT_IMAGE=ghcr.io/<org>/<repo> KIT_IMAGE_TAG=production \
+#     docker compose -f compose.prod.yml up -d --wait
+services:
+  app:
+    image: ${KIT_IMAGE:?set KIT_IMAGE to the GHCR repository}:${KIT_IMAGE_TAG:-production}
+    restart: unless-stopped
+    ports:
+      # Loopback: TLS termination is the reverse proxy's job.
+      - '${APP_BIND:-127.0.0.1}:${APP_PORT:-8000}:8000'
+      - '${APP_BIND:-127.0.0.1}:${REVERB_PUBLIC_PORT:-8001}:8001'
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      APP_NAME: ${APP_NAME:?}
+      APP_ENV: production
+      APP_DEBUG: 'false'
+      APP_URL: ${APP_URL:?}
+      # APP_KEY may stay unset: the entrypoint generates one and persists it on
+      # the storage volume under an atomic lock. Set it here to hold the key
+      # outside the volume.
+      APP_KEY: ${APP_KEY:-}
+      # Never set APP_VERSION: the image carries it, and the entrypoint
+      # compares it against the recorded state to decide on migrations.
+      OCTANE_HOST: 0.0.0.0
+      OCTANE_SERVER: frankenphp
+      OCTANE_WORKERS: ${OCTANE_WORKERS:-4}
+      TRUSTED_PROXIES: ${TRUSTED_PROXIES:-*}
+      DB_CONNECTION: mysql
+      DB_HOST: db
+      DB_PORT: 3306
+      DB_DATABASE: ${DB_DATABASE:-kit}
+      DB_USERNAME: ${DB_USERNAME:-kit}
+      DB_PASSWORD: ${DB_PASSWORD:?set DB_PASSWORD - refusing to boot with a default password}
+      REDIS_CLIENT: predis
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      CACHE_STORE: redis
+      QUEUE_CONNECTION: redis
+      SESSION_DRIVER: redis
+      BROADCAST_CONNECTION: reverb
+      REACTIVE_REGISTRY: redis
+      REVERB_APP_ID: ${REVERB_APP_ID:?}
+      REVERB_APP_KEY: ${REVERB_APP_KEY:?}
+      REVERB_APP_SECRET: ${REVERB_APP_SECRET:?}
+      REVERB_HOST: ${REVERB_HOST:?}
+      REVERB_PORT: ${REVERB_PORT:-443}
+      REVERB_SCHEME: ${REVERB_SCHEME:-https}
+      MAIL_MAILER: ${MAIL_MAILER:?}
+      MAIL_HOST: ${MAIL_HOST:-}
+      MAIL_PORT: ${MAIL_PORT:-587}
+      MAIL_USERNAME: ${MAIL_USERNAME:-}
+      MAIL_PASSWORD: ${MAIL_PASSWORD:-}
+      MAIL_FROM_ADDRESS: ${MAIL_FROM_ADDRESS:?}
+    volumes:
+      - app-storage:/app/storage
+    healthcheck:
+      # The routable hostname, not loopback: a loopback probe reports healthy
+      # on a stack the published port can never reach.
+      test: ['CMD-SHELL', 'wget -qO- "http://$$(hostname):8000/up" >/dev/null']
+      interval: 30s
+      timeout: 10s
+      retries: 10
+      start_period: 60s
+
+  db:
+    image: mariadb:11.4
+    restart: unless-stopped
+    environment:
+      MARIADB_DATABASE: ${DB_DATABASE:-kit}
+      MARIADB_USER: ${DB_USERNAME:-kit}
+      MARIADB_PASSWORD: ${DB_PASSWORD:?}
+      MARIADB_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:?set DB_ROOT_PASSWORD - refusing to boot with a default password}
+    volumes:
+      - db-data:/var/lib/mysql
+    healthcheck:
+      test: ['CMD-SHELL', 'mariadb-admin ping -h 127.0.0.1 -uroot -p${DB_ROOT_PASSWORD} --silent']
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+
+  redis:
+    image: redis:7.4-alpine
+    restart: unless-stopped
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  app-storage:
+  db-data:
+  redis-data:

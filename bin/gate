@@ -1,0 +1,34 @@
+#!/usr/bin/env bash
+# Everything CI runs, in CI's order, locally. Stops at the first failure so the
+# output ends on the thing that broke.
+#
+# The order is cheapest-first among the checks that catch the most: formatting
+# before types, types before tests, the generator round trip last because it
+# writes to the working tree.
+set -uo pipefail
+
+cd "$(dirname "$0")/.."
+
+failed=""
+
+step() {
+  local name="$1"
+  shift
+  printf '\n\033[1m▶ %s\033[0m\n' "$name"
+  if ! "$@"; then
+    failed="$name"
+    printf '\n\033[31m✗ %s failed\033[0m\n' "$name"
+    exit 1
+  fi
+}
+
+step 'pint'        vendor/bin/pint --test
+step 'phpstan'     vendor/bin/phpstan analyse --no-progress
+step 'phpunit'     php artisan test
+step 'lint'        bun run lint:ci
+step 'typecheck'   bun run typecheck
+step 'vitest'      bun run test
+step 'types'       php artisan types:generate --check
+step 'generators'  ./bin/generators-roundtrip
+
+printf '\n\033[32m✓ gate green\033[0m\n'
