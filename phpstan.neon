@@ -1,0 +1,17 @@
+includes:
+    - vendor/larastan/larastan/extension.neon
+    - packages/reactive/phpstan-rules.neon
+
+parameters:
+    level: 6
+    paths:
+        - app
+        - config
+        - database
+        - packages/reactive/src
+        - routes
+        - tests
+    excludePaths:
+        - app/Features/*/Tests/*
+    tmpDir: storage/framework/cache/phpstan
+    reportUnmatchedIgnoredErrors: false

@@ -1,0 +1,89 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Support;
+
+use App\Models\User;
+use Throwable;
+
+/**
+ * The only reader of config/features.php.
+ */
+final class FeatureGate
+{
+    public static function realtimeEnabled(): bool
+    {
+        return self::override('realtime')
+            ?? (filled(config('reverb.apps.apps.0.key')) && config('broadcasting.default') === 'reverb');
+    }
+
+    public static function impersonationEnabled(): bool
+    {
+        return self::override('impersonation') ?? true;
+    }
+
+    /**
+     * Whether open self-registration (no invite) is accepted.
+     *
+     * Open until the first account exists, invite-only afterwards, so a fresh
+     * install on a public address cannot be claimed by a stranger later. The
+     * answer is latched into a marker file rather than taken from a live
+     * query every time, because the query has two ways of wrongly reopening a
+     * populated instance: a transient database error, and deleting the last
+     * account. APP_ALLOW_REGISTRATION overrides.
+     */
+    public static function registrationOpen(): bool
+    {
+        $override = self::override('registration');
+
+        if ($override !== null) {
+            return $override;
+        }
+
+        $state = app(InstallState::class);
+
+        if ($state->registrationClosed()) {
+            return false;
+        }
+
+        try {
+            $hasAccount = User::query()->exists();
+        } catch (Throwable $e) {
+            report($e);
+
+            // Unknown. On an installed instance refuse rather than hand out an
+            // owner account over a database blip; before setup the database
+            // may legitimately not exist yet.
+            return ! $state->exists();
+        }
+
+        if ($hasAccount) {
+            $state->closeRegistration();
+
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
+     * @return array{realtime: bool, registration: bool, impersonation: bool}
+     */
+    public static function features(): array
+    {
+        return [
+            'realtime' => self::realtimeEnabled(),
+            'registration' => self::registrationOpen(),
+            'impersonation' => self::impersonationEnabled(),
+        ];
+    }
+
+    private static function override(string $feature): ?bool
+    {
+        $value = config("features.{$feature}");
+
+        // An empty line in .env reads as '' and must mean "derive", not false.
+        return $value === null || $value === '' ? null : filter_var($value, FILTER_VALIDATE_BOOL);
+    }
+}

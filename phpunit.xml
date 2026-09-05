@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<phpunit xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:noNamespaceSchemaLocation="vendor/phpunit/phpunit/phpunit.xsd"
+         bootstrap="vendor/autoload.php"
+         colors="true"
+         cacheDirectory=".phpunit.cache"
+         defaultTestSuite="default"
+>
+    <testsuites>
+        <!-- `default` is what `php artisan test` runs: sqlite, no services. -->
+        <testsuite name="default">
+            <directory>tests/Unit</directory>
+            <directory>tests/Feature</directory>
+            <directory>tests/Architecture</directory>
+            <directory>packages/reactive/tests/Unit</directory>
+            <directory suffix="Test.php">app/Features</directory>
+        </testsuite>
+        <!-- Needs MySQL and Redis (REACTIVE_TEST_DB); skips itself otherwise. -->
+        <testsuite name="reactive">
+            <directory>tests/Reactive</directory>
+        </testsuite>
+    </testsuites>
+    <source>
+        <include>
+            <directory>app</directory>
+            <directory>packages/reactive/src</directory>
+        </include>
+    </source>
+    <php>
+        <env name="APP_ENV" value="testing"/>
+        <env name="APP_MAINTENANCE_DRIVER" value="file"/>
+        <env name="APP_URL" value="http://localhost"/>
+        <env name="BCRYPT_ROUNDS" value="4"/>
+        <env name="BROADCAST_CONNECTION" value="null"/>
+        <env name="CACHE_STORE" value="array"/>
+        <env name="DB_CONNECTION" value="sqlite"/>
+        <env name="DB_DATABASE" value=":memory:"/>
+        <env name="DB_URL" value=""/>
+        <env name="MAIL_MAILER" value="array"/>
+        <env name="QUEUE_CONNECTION" value="sync"/>
+        <env name="SESSION_DRIVER" value="array"/>
+        <env name="REACTIVE_REGISTRY" value="array"/>
+        <env name="APP_FEATURE_REALTIME" value="false"/>
+        <env name="TELESCOPE_ENABLED" value="false"/>
+    </php>
+</phpunit>

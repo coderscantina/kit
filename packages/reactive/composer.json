@@ -1,0 +1,27 @@
+{
+    "name": "kit/reactive",
+    "description": "Convex-style reactive queries and mutations for Laravel: subscribe, mutate, push on change.",
+    "type": "library",
+    "license": "MIT",
+    "require": {
+        "php": "^8.5",
+        "illuminate/contracts": "^13.0",
+        "illuminate/support": "^13.0",
+        "illuminate/database": "^13.0",
+        "spatie/laravel-data": "^4.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "Kit\\Reactive\\": "src/"
+        }
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "Kit\\Reactive\\ReactiveServiceProvider"
+            ]
+        }
+    },
+    "minimum-stability": "stable",
+    "prefer-stable": true
+}
