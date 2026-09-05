@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Home, LogOut, Shield, User, Users } from 'lucide-vue-next'
+import { Box, Home, LogOut, Shield, User, Users } from 'lucide-vue-next'
 
 import { Button } from '~/components/ui/button'
 import { useAuth } from '~/composables/useAuth'
@@ -12,7 +12,9 @@ const auth = useAuth()
 const router = useRouter()
 const { preloadRoute, cancelPreload } = useRoutePreload()
 
-const icons = { home: Home, users: Users, user: User, shield: Shield } as const
+// `box` is what make:feature gives a generated page; swap it for something
+// that says what the feature is.
+const icons = { home: Home, users: Users, user: User, shield: Shield, box: Box } as const
 
 // The nav never shows a page the user cannot open.
 const items = computed(() => filterNavigationItems(navigationItems, { me: auth.me.value }))

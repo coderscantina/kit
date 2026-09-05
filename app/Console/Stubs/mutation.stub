@@ -1,0 +1,37 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Features\{{ feature }}\Mutations;
+
+use App\Features\{{ feature }}\Data\{{ data }};
+use App\Features\{{ feature }}\Models\{{ feature }};
+use App\Rules\BoundedString;
+use Illuminate\Contracts\Auth\Authenticatable;
+use Kit\Reactive\Attributes\ReactiveMutation;
+use Kit\Reactive\Mutation;
+
+#[ReactiveMutation('{{ name }}', result: {{ data }}::class)]
+final class {{ class }} extends Mutation
+{
+    public function rules(): array
+    {
+        return ['name' => [new BoundedString(1, 255)]];
+    }
+
+    public function authorize(Authenticatable $user, array $args): void
+    {
+        $this->gate($user)->authorize('create', {{ feature }}::class);
+    }
+
+    /**
+     * Runs inside the transaction the runner opened. Do not call
+     * DB::transaction, afterCommit or dispatch an invalidation here; a
+     * PHPStan rule fails the build if you do. Use $this->lock($model) to
+     * read a row you are about to branch on.
+     */
+    public function handle(array $args): {{ data }}
+    {
+        return {{ data }}::from({{ feature }}::query()->create(['name' => $args['name']]));
+    }
+}

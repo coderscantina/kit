@@ -9,7 +9,9 @@ use App\Models\Role;
 use App\Models\User;
 use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Foundation\Testing\TestCase as BaseTestCase;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
+use Kit\Reactive\Invalidation\ChangeBuffer;
 
 abstract class TestCase extends BaseTestCase
 {
@@ -33,6 +35,12 @@ abstract class TestCase extends BaseTestCase
         ]);
 
         $this->clearSetupMarkers();
+
+        // RefreshDatabase holds one transaction open for the whole test, so
+        // without this every write looks like it is inside a transaction that
+        // never commits and no invalidation is ever dispatched.
+        app(ChangeBuffer::class)->setBaseTransactionLevel(DB::transactionLevel());
+
         $this->booted = true;
     }
 

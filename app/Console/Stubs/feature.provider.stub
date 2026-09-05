@@ -1,0 +1,20 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Features\{{ feature }};
+
+use App\Features\{{ feature }}\Models\{{ feature }};
+use App\Features\{{ feature }}\Policies\{{ feature }}Policy;
+use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\ServiceProvider;
+
+class {{ feature }}ServiceProvider extends ServiceProvider
+{
+    public function boot(): void
+    {
+        Gate::policy({{ feature }}::class, {{ feature }}Policy::class);
+
+        $this->loadMigrationsFrom(__DIR__.'/Database/Migrations');
+    }
+}

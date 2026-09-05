@@ -1,0 +1,31 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Features\{{ feature }}\Database\Factories;
+
+use App\Features\{{ feature }}\Models\{{ feature }};
+use Illuminate\Database\Eloquent\Factories\Factory;
+use Illuminate\Support\Str;
+
+/**
+ * Pins its own id and never defaults a relation to another factory: two
+ * factories that default to each other recurse until the memory limit.
+ *
+ * @extends Factory<{{ feature }}>
+ */
+class {{ feature }}Factory extends Factory
+{
+    protected $model = {{ feature }}::class;
+
+    /**
+     * @return array<string, mixed>
+     */
+    public function definition(): array
+    {
+        return [
+            'id' => (string) Str::ulid(),
+            'name' => fake()->words(3, true),
+        ];
+    }
+}

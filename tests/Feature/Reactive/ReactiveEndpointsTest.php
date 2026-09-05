@@ -216,12 +216,14 @@ final class ReactiveEndpointsTest extends TestCase
         $this->assertSame(0, app(Registry::class)->stats()['subscriptions']);
 
         $this->post('/auth/logout');
-        $this->getJson('/rq/health')
+        $health = $this->getJson('/rq/health')
             ->assertOk()
             ->assertJsonPath('registry.driver', 'array')
-            ->assertJsonPath('registry.queries', 2)
             ->assertJsonPath('worker.recomputes', 0)
             ->assertJsonStructure(['version', 'worker' => ['p95_ms', 'unchanged_ratio']]);
+
+        // At least the two fixture queries; a generated feature adds its own.
+        $this->assertGreaterThanOrEqual(2, $health->json('registry.queries'));
     }
 
     #[Test]

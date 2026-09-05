@@ -1,0 +1,13 @@
+import { mount } from '@vue/test-utils'
+import { describe, expect, it } from 'vitest'
+
+import Index from '~/pages/{{ page }}/Index.vue'
+
+describe('{{ title }} page', () => {
+  it('renders the translated title', () => {
+    const wrapper = mount(Index)
+
+    expect(wrapper.text()).toContain('{{ title }}')
+    wrapper.unmount()
+  })
+})

@@ -1,0 +1,51 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Features\{{ feature }}\Tests;
+
+use App\Features\{{ feature }}\Mutations\{{ class }};
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Kit\Reactive\Facades\Reactive;
+use Kit\Reactive\Invalidation\Invalidate;
+use Kit\Reactive\Testing\InteractsWithReactive;
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\Test;
+use Tests\TestCase;
+
+#[CoversClass({{ class }}::class)]
+final class {{ class }}Test extends TestCase
+{
+    use InteractsWithReactive;
+    use RefreshDatabase;
+
+    #[Test]
+    public function it_commits_once_and_invalidates_the_table_it_wrote(): void
+    {
+        $this->createAndActAs(role: 'admin');
+        Reactive::fake();
+
+        $batches = Reactive::capturingInvalidations(function (): void {
+            $this->mutate('{{ name }}', ['name' => 'created'])
+                ->assertOk()
+                ->assertJsonPath('result.name', 'created');
+        });
+
+        $this->assertDatabaseHas('{{ table }}', ['name' => 'created']);
+
+        // One batch, not one job per row: the runner dispatches after commit.
+        $this->assertCount(1, $batches);
+        $this->assertInstanceOf(Invalidate::class, $batches[0]);
+        $this->assertSame(['{{ table }}'], array_column($batches[0]->changes, 'table'));
+    }
+
+    #[Test]
+    public function a_user_without_the_ability_is_forbidden_and_writes_nothing(): void
+    {
+        $this->createAndActAs(role: 'member');
+
+        $this->mutate('{{ name }}', ['name' => 'denied'])->assertForbidden();
+
+        $this->assertDatabaseCount('{{ table }}', 0);
+    }
+}

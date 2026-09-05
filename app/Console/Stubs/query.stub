@@ -1,0 +1,37 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Features\{{ feature }}\Queries;
+
+use App\Features\{{ feature }}\Data\{{ data }};
+use App\Features\{{ feature }}\Models\{{ feature }};
+use Illuminate\Contracts\Auth\Authenticatable;
+use Kit\Reactive\Attributes\ReactiveQuery;
+use Kit\Reactive\Query;
+
+#[ReactiveQuery('{{ name }}', result: {{ data }}::class, list: true)]
+final class {{ class }} extends Query
+{
+    public function rules(): array
+    {
+        return [];
+    }
+
+    public function authorize(Authenticatable $user, array $args): void
+    {
+        $this->gate($user)->authorize('viewAny', {{ feature }}::class);
+    }
+
+    /**
+     * Declare a predicate once `{{ table }}` passes ~10k rows or takes writes
+     * this query does not care about, so a recompute is not queued for every
+     * row in the table:
+     *
+     *     return [Dep::eq('{{ table }}', 'owner_id', $args['ownerId'])];
+     */
+    public function handle(array $args): mixed
+    {
+        return {{ data }}::collect({{ feature }}::query()->orderBy('id')->limit(50)->get());
+    }
+}

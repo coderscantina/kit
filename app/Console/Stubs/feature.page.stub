@@ -1,0 +1,17 @@
+<script setup lang="ts">
+import { Card } from '~/components/ui/card'
+import { useI18n } from '~/plugins/i18n'
+
+// Wire data with `useReactiveQuery('{{ resource }}.list')` from '~/lib/reactive'
+// once `php artisan make:query {{ resource }}.list` has run.
+const { t } = useI18n()
+</script>
+
+<template>
+  <div class="space-y-6">
+    <h1 class="text-2xl font-semibold">{{ t('{{ resource }}.title') }}</h1>
+    <Card class="p-6">
+      <p class="text-sm text-muted-foreground">{{ t('{{ resource }}.empty') }}</p>
+    </Card>
+  </div>
+</template>

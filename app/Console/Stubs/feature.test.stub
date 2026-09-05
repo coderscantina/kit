@@ -1,0 +1,32 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Features\{{ feature }}\Tests;
+
+use App\Features\{{ feature }}\Models\{{ feature }};
+use App\Features\{{ feature }}\Policies\{{ feature }}Policy;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\Test;
+use Tests\TestCase;
+
+#[CoversClass({{ feature }}Policy::class)]
+final class {{ feature }}PolicyTest extends TestCase
+{
+    use RefreshDatabase;
+
+    #[Test]
+    public function roles_map_onto_the_view_and_manage_abilities(): void
+    {
+        $model = {{ feature }}::factory()->create();
+
+        $admin = $this->createAndActAs(role: 'admin');
+        $this->assertTrue($admin->can('viewAny', {{ feature }}::class));
+        $this->assertTrue($admin->can('update', $model));
+
+        $member = $this->createAndActAs(role: 'member');
+        $this->assertFalse($member->can('viewAny', {{ feature }}::class));
+        $this->assertFalse($member->can('create', {{ feature }}::class));
+    }
+}

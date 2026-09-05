@@ -34,6 +34,7 @@ export const navigationItems: NavigationItem[] = [
   { labelKey: 'nav.users', icon: 'users', routeName: 'users' },
   { labelKey: 'nav.profile', icon: 'user', routeName: 'account-profile' },
   { labelKey: 'nav.security', icon: 'shield', routeName: 'account-security' },
+  // kit:nav
 ]
 
 /** Route name → what it takes to open it. Drives the guard and the sidebar. */
@@ -45,6 +46,7 @@ export const routeAccessRequirements: Record<AppRouteName, RouteAccessRequiremen
   impersonate: {
     check: ({ me }) => Boolean(me?.user.isRoot) && runtimeConfig.features.impersonation,
   },
+  // kit:access
 }
 
 export const getRouteAccessRequirement = (

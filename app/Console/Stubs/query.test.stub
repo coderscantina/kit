@@ -1,0 +1,42 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Features\{{ feature }}\Tests;
+
+use App\Features\{{ feature }}\Models\{{ feature }};
+use App\Features\{{ feature }}\Queries\{{ class }};
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Kit\Reactive\Facades\Reactive;
+use Kit\Reactive\Testing\InteractsWithReactive;
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\Test;
+use Tests\TestCase;
+
+#[CoversClass({{ class }}::class)]
+final class {{ class }}Test extends TestCase
+{
+    use InteractsWithReactive;
+    use RefreshDatabase;
+
+    #[Test]
+    public function a_row_change_pushes_the_new_result(): void
+    {
+        $user = $this->createAndActAs(role: 'admin');
+        Reactive::fake();
+
+        $this->actingAsSubscriber($user, '{{ name }}');
+
+        {{ feature }}::factory()->create(['name' => 'pushed']);
+
+        Reactive::assertPushed('{{ name }}', fn (mixed $result) => $result[0]['name'] === 'pushed');
+    }
+
+    #[Test]
+    public function subscribing_without_the_ability_is_forbidden(): void
+    {
+        $this->createAndActAs(role: 'member');
+
+        $this->postJson('/rq/subscribe', ['query' => '{{ name }}'])->assertForbidden();
+    }
+}

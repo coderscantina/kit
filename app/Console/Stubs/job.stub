@@ -1,0 +1,25 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Jobs;
+
+use Throwable;
+
+class {{ class }} extends QueuedJob
+{
+    public function __construct()
+    {
+        $this->onQueue('default');
+    }
+
+    protected function execute(): void
+    {
+        //
+    }
+
+    protected function handleFailure(Throwable $e): void
+    {
+        report($e);
+    }
+}

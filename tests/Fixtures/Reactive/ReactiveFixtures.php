@@ -5,9 +5,7 @@ declare(strict_types=1);
 namespace Tests\Fixtures\Reactive;
 
 use App\Models\User;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
-use Kit\Reactive\Invalidation\ChangeBuffer;
 use Kit\Reactive\Registry\Catalog;
 
 /**
@@ -19,10 +17,6 @@ final class ReactiveFixtures
     public static function install(): void
     {
         Note::migrate();
-
-        // RefreshDatabase holds a transaction open for the whole test; the
-        // buffer must treat that level as the outside world.
-        app(ChangeBuffer::class)->setBaseTransactionLevel(DB::transactionLevel());
 
         config(['reactive.classes' => [ListNotes::class, AllNotes::class, CreateNote::class, RenameNote::class, FailingMutation::class]]);
         app(Catalog::class)->reset();

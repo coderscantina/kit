@@ -81,6 +81,7 @@ const routes: RouteRecordRaw[] = [
     component: () => import('~/pages/account/Security.vue'),
     meta: { layout: 'app' },
   },
+  // kit:routes
   { path: '/:pathMatch(.*)*', name: 'not-found', redirect: '/' },
 ]
 

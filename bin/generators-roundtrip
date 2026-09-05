@@ -1,0 +1,51 @@
+#!/usr/bin/env bash
+# Proves the generators still produce code that passes every gate, without
+# committing an example feature. Scaffolds Fixture, runs its generated tests
+# and the checks it touches, removes it, and fails if anything is left behind.
+#
+# The same script backs the `generators` job in .github/workflows/tests.yml.
+set -euo pipefail
+
+cd "$(dirname "$0")/.."
+
+cleanup() {
+  rm -rf app/Features/Fixture resources/js/pages/fixtures tests/js/pages/fixtures
+  git checkout -- \
+    config/abilities.php \
+    resources/js/i18n/en.json \
+    resources/js/i18n/de.json \
+    resources/js/lib/access-control.ts \
+    resources/js/router/index.ts \
+    resources/js/types/generated.d.ts 2>/dev/null || true
+  # tests/js/pages only exists because of the fixture.
+  rmdir tests/js/pages 2>/dev/null || true
+}
+trap cleanup EXIT
+
+if [ -n "$(git status --porcelain -- app/Features resources/js/pages/fixtures)" ]; then
+  echo "generators: app/Features is dirty; commit or stash first." >&2
+  exit 1
+fi
+
+php artisan make:feature Fixture
+php artisan make:query fixture.list
+php artisan make:mutation fixture.create
+php artisan types:generate
+
+php artisan test --filter=Fixture
+bun run typecheck
+bun run test -- tests/js/pages/fixtures
+vendor/bin/pint --test
+vendor/bin/phpstan analyse --no-progress
+bun run lint:ci
+
+cleanup
+trap - EXIT
+
+if [ -n "$(git status --porcelain)" ]; then
+  echo "generators: the working tree is not clean after removing the fixture:" >&2
+  git status --porcelain >&2
+  exit 1
+fi
+
+echo "generators: round trip clean."
