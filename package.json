@@ -15,7 +15,7 @@
     "typecheck": "vue-tsc --noEmit",
     "test": "NODE_NO_WARNINGS=1 vitest run",
     "test:watch": "NODE_NO_WARNINGS=1 vitest",
-    "docs:dev": "vitepress dev docs",
+    "docs:dev": "php artisan docs:commands && vitepress dev docs",
     "docs:build": "php artisan docs:commands && vitepress build docs",
     "docs:preview": "vitepress preview docs"
   },

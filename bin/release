@@ -17,12 +17,17 @@ CHANGELOG_FILE="CHANGELOG.md"
 # Release commits sit between tags and are not content changes.
 LOG_OPTS=(--pretty=format:'- %s' --no-merges --invert-grep --grep='^🔖 Release')
 
+# Kept identical to the committed CHANGELOG.md header, so --backfill rewrites
+# the file without changing what is above the first release.
 header() {
   cat <<'TXT'
 # Changelog
 
 Every release, newest first. Commit subjects are the changelog lines, so write
 them that way. Subjects follow the [Gitmoji](https://gitmoji.dev/) convention.
+
+`bin/release` prepends a block here and tags the commit that adds it, so every
+tagged tree contains its own release notes.
 TXT
 }
 

@@ -1,58 +1,74 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# Kit
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+A Laravel 13 + Vue 3 starter kit with a Convex-style data layer. The client
+subscribes to server-side query functions, writes go through transactional
+mutations, and a result that changes is pushed to everyone watching it, end to
+end typed.
 
-## About Laravel
+It ships the parts every client app needs before the first feature: login,
+registration behind a first-account latch, password reset, email verification,
+TOTP with backup codes, password confirmation, invites, roles enforced by
+policies, impersonation, an app shell and `en`/`de` i18n. It ships no example
+feature. Features come from the generators.
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+## Get it running
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
-
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
-
-## Learning Laravel
-
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
-
-In addition, [Laracasts](https://laracasts.com) contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
-
-You can also watch bite-sized lessons with real-world projects on [Laravel Learn](https://laravel.com/learn), where you will be guided through building a Laravel application from scratch while learning PHP fundamentals.
-
-## Agentic Development
-
-Laravel's predictable structure and conventions make it ideal for AI coding agents like Claude Code, Cursor, and GitHub Copilot. Install [Laravel Boost](https://laravel.com/docs/ai) to supercharge your AI workflow:
-
-```bash
-composer require laravel/boost --dev
-
-php artisan boost:install
+```sh
+git clone <repo> kit && cd kit
+bin/dev up
 ```
 
-Boost provides your agent 15+ tools and skills that help agents build Laravel applications while following best practices.
+That builds the image, boots MariaDB and Redis, runs `kit:setup` and serves the
+app on <http://localhost:8000>. Register the first account: it becomes the owner
+and closes self-registration. Under ten minutes on a fresh machine, most of it
+the image build.
 
-## Contributing
+For a host PHP setup instead of the container:
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+```sh
+composer install && bun install
+cp .env.example .env && php artisan key:generate
+php artisan kit:setup
+php artisan serve & bun run dev
+```
 
-## Code of Conduct
+## Commands
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+| Command | Does |
+|---|---|
+| `bin/dev up` | rebuild and start the local stack, waiting for health |
+| `bin/dev down --wipe` | stop it and drop the volumes |
+| `bin/dev artisan <cmd>` | run artisan inside the container |
+| `bin/gate` | everything CI runs, locally, in CI's order |
+| `bin/release` | cut and push a CalVer release; `--dry-run`, `--backfill` |
+| `php artisan make:feature Post` | scaffold a feature and wire it into the registry, router, nav and messages |
+| `php artisan make:query posts.list` | a query, its data class and a test asserting push-on-change and 403 |
+| `php artisan make:mutation posts.create` | a mutation, its data class and a test asserting the commit, the invalidation and 403 |
+| `php artisan make:data Post/Summary` | a laravel-data class with the TypeScript attribute |
+| `php artisan make:job RebuildIndex` | a `QueuedJob` subclass |
+| `php artisan types:generate [--check]` | regenerate `resources/js/types/generated.d.ts` |
+| `php artisan kit:setup` | idempotent first run and upgrade |
+| `php artisan kit:doctor` | check the runtime, the registry, the suite and the message files |
+| `bun run docs:dev` | the documentation site |
 
-## Security Vulnerabilities
+## Stack
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+Laravel 13 on PHP 8.5 under FrankenPHP + Octane, MariaDB 11 or MySQL 8,
+Redis 7, Reverb, Horizon. Vue 3, TypeScript, Vite 8, TanStack Query v5,
+Tailwind 4 with reka-ui, vue-i18n. PHPUnit 13 and Vitest, PHPStan level 6 with
+kit-specific rules, Pint and oxlint. Bun, never npm. Never prettier.
 
-## License
+## Documentation
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+`bun run docs:dev`, or read the sources:
+
+- [Architecture](docs/architecture.md) - how the reactive loop, the registry and the types fit together
+- [Adding a feature](docs/adding-a-feature.md) - the generator walkthrough
+- [Runtime contract](docs/runtime-contract.md) - the image, the four processes, boot order, health, `kit:doctor`
+- [Release procedure](docs/release.md) - tags, workflows, webhooks, rollback
+- [Known limitations](docs/limitations.md) - what the design does not promise
+- [CLAUDE.md](CLAUDE.md) - the conventions agents and reviewers work from
+
+## Licence
+
+MIT.

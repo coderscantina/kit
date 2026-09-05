@@ -34,6 +34,7 @@ frankenphp-worker.php
 /public/frankenphp-worker.php
 /frankenphp
 /.phpunit.cache
+/docs/generated
 /docs/.vitepress/cache
 /docs/.vitepress/dist
 /dist
