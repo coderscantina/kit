@@ -70,16 +70,32 @@ const routes: RouteRecordRaw[] = [
     meta: { layout: 'app' },
   },
   {
-    path: '/account/profile',
-    name: 'account-profile',
-    component: () => import('~/pages/account/Profile.vue'),
+    // One parent for the account area, so the sub-nav and the identity block
+    // stay mounted while the page under them changes.
+    path: '/account',
+    component: () => import('~/pages/account/Layout.vue'),
+    redirect: { name: 'account-profile' },
     meta: { layout: 'app' },
-  },
-  {
-    path: '/account/security',
-    name: 'account-security',
-    component: () => import('~/pages/account/Security.vue'),
-    meta: { layout: 'app' },
+    children: [
+      {
+        path: 'profile',
+        name: 'account-profile',
+        component: () => import('~/pages/account/Profile.vue'),
+        meta: { layout: 'app' },
+      },
+      {
+        path: 'security',
+        name: 'account-security',
+        component: () => import('~/pages/account/Security.vue'),
+        meta: { layout: 'app' },
+      },
+      {
+        path: 'data',
+        name: 'account-data',
+        component: () => import('~/pages/account/Data.vue'),
+        meta: { layout: 'app' },
+      },
+    ],
   },
   {
     path: '/assistant',

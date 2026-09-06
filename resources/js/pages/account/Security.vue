@@ -1,26 +1,35 @@
 <script setup lang="ts">
-import DangerZoneCard from '~/components/account/DangerZoneCard.vue'
-import PasswordCard from '~/components/account/PasswordCard.vue'
-import SecurityActivityCard from '~/components/account/SecurityActivityCard.vue'
-import SessionsCard from '~/components/account/SessionsCard.vue'
-import TwoFactorCard from '~/components/account/TwoFactorCard.vue'
+import PasswordSection from '~/components/account/PasswordSection.vue'
+import SecurityActivitySection from '~/components/account/SecurityActivitySection.vue'
+import SecurityOverview from '~/components/account/SecurityOverview.vue'
+import SessionsSection from '~/components/account/SessionsSection.vue'
+import SettingsPage from '~/components/account/SettingsPage.vue'
+import TwoFactorSection from '~/components/account/TwoFactorSection.vue'
+import { usePageMeta } from '~/composables/usePageMeta'
 import { useI18n } from '~/plugins/i18n'
 
 /**
  * One page to check after a scare: what protects the account, what is signed
- * in to it, what has happened to it, and how to leave.
+ * in to it, and what has happened to it. The overview at the top answers all
+ * three at a glance; the sections below are where you act on them.
  */
 const { t } = useI18n()
+
+usePageMeta(() => ({
+  title: t('account.security.title'),
+  breadcrumbs: [{ label: t('account.title') }, { label: t('account.security.title') }],
+}))
 </script>
 
 <template>
-  <div class="max-w-2xl space-y-6">
-    <h1 class="text-2xl font-semibold">{{ t('account.security.title') }}</h1>
-
-    <PasswordCard />
-    <TwoFactorCard />
-    <SessionsCard />
-    <SecurityActivityCard />
-    <DangerZoneCard />
-  </div>
+  <SettingsPage
+    :title="t('account.security.title')"
+    :description="t('account.security.description')"
+  >
+    <SecurityOverview />
+    <PasswordSection />
+    <TwoFactorSection />
+    <SessionsSection />
+    <SecurityActivitySection />
+  </SettingsPage>
 </template>

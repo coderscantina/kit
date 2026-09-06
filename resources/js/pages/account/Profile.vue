@@ -2,11 +2,13 @@
 import { toast } from 'vue-sonner'
 
 import { api } from '~/api'
+import AppearanceSection from '~/components/account/AppearanceSection.vue'
 import AvatarField from '~/components/account/AvatarField.vue'
-import EmailChangeCard from '~/components/account/EmailChangeCard.vue'
+import EmailSection from '~/components/account/EmailSection.vue'
+import SettingsPage from '~/components/account/SettingsPage.vue'
+import SettingsSection from '~/components/account/SettingsSection.vue'
 import FormField from '~/components/FormField.vue'
 import { Button } from '~/components/ui/button'
-import { Card, CardContent, CardHeaderCombined } from '~/components/ui/card'
 import { Label } from '~/components/ui/label'
 import {
   Select,
@@ -17,11 +19,17 @@ import {
 } from '~/components/ui/select'
 import { useAuth } from '~/composables/useAuth'
 import { useFormErrors } from '~/composables/useFormErrors'
+import { usePageMeta } from '~/composables/usePageMeta'
 import { isSupportedLocale, setLocale, useI18n, type LocaleCode } from '~/plugins/i18n'
 
 const { t, locales } = useI18n()
 const auth = useAuth()
 const errors = useFormErrors()
+
+usePageMeta(() => ({
+  title: t('account.profile.title'),
+  breadcrumbs: [{ label: t('account.title') }, { label: t('account.profile.title') }],
+}))
 
 const name = ref(auth.user.value?.name ?? '')
 const locale = ref<LocaleCode>(
@@ -31,6 +39,12 @@ const saving = ref(false)
 
 const localeName = computed(
   () => locales.find((entry) => entry.code === locale.value)?.name ?? locale.value
+)
+
+/** Save only lights up once something differs from what the server has. */
+const dirty = computed(
+  () =>
+    name.value.trim() !== (auth.user.value?.name ?? '') || locale.value !== auth.user.value?.locale
 )
 
 const save = async () => {
@@ -55,79 +69,73 @@ const onAvatarChanged = async () => {
 </script>
 
 <template>
-  <div class="max-w-2xl space-y-6">
-    <h1 class="text-2xl font-semibold">{{ t('account.profile.title') }}</h1>
-
-    <Card class="p-6">
-      <CardHeaderCombined
-        class="p-0 pb-4"
-        :title="t('account.profile.avatar')"
-        :description="t('account.profile.avatarDescription')"
-      />
-      <CardContent class="p-0">
+  <SettingsPage
+    :title="t('account.profile.title')"
+    :description="t('account.profile.description')"
+  >
+    <SettingsSection
+      id="details"
+      :title="t('account.profile.details')"
+      :description="t('account.profile.detailsDescription')"
+    >
+      <form
+        id="profile-form"
+        class="grid gap-5"
+        @submit.prevent="save"
+      >
         <AvatarField
           :name="auth.user.value?.name ?? ''"
           :avatar-url="auth.user.value?.avatarUrl ?? null"
           @changed="onAvatarChanged"
         />
-      </CardContent>
-    </Card>
-
-    <Card class="p-6">
-      <CardHeaderCombined
-        class="p-0 pb-4"
-        :title="t('account.profile.details')"
-        :description="t('account.profile.detailsDescription')"
-      />
-      <CardContent class="p-0">
-        <form
-          class="grid gap-4"
-          @submit.prevent="save"
+        <FormField
+          id="name"
+          v-model="name"
+          autocomplete="name"
+          :label="t('auth.fields.name')"
+          :error="errors.fields.value.name"
+          required
+        />
+        <div class="grid gap-1.5">
+          <Label for="locale">{{ t('account.profile.language') }}</Label>
+          <Select v-model="locale">
+            <SelectTrigger id="locale">
+              <SelectValue>{{ localeName }}</SelectValue>
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem
+                v-for="entry in locales"
+                :key="entry.code"
+                :value="entry.code"
+              >
+                {{ entry.name }}
+              </SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        <p
+          v-if="errors.message.value"
+          class="text-sm text-destructive"
         >
-          <FormField
-            id="name"
-            v-model="name"
-            autocomplete="name"
-            :label="t('auth.fields.name')"
-            :error="errors.fields.value.name"
-            required
-          />
-          <div class="grid gap-1.5">
-            <Label for="locale">{{ t('account.profile.language') }}</Label>
-            <Select v-model="locale">
-              <SelectTrigger id="locale">
-                <SelectValue>{{ localeName }}</SelectValue>
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem
-                  v-for="entry in locales"
-                  :key="entry.code"
-                  :value="entry.code"
-                >
-                  {{ entry.name }}
-                </SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          <p
-            v-if="errors.message.value"
-            class="text-sm text-destructive"
-          >
-            {{ errors.message.value }}
-          </p>
-          <div>
-            <Button
-              variant="primary"
-              type="submit"
-              :loading="saving"
-            >
-              {{ t('actions.save') }}
-            </Button>
-          </div>
-        </form>
-      </CardContent>
-    </Card>
+          {{ errors.message.value }}
+        </p>
+      </form>
 
-    <EmailChangeCard />
-  </div>
+      <template #footer>
+        <Button
+          variant="primary"
+          type="submit"
+          form="profile-form"
+          :loading="saving"
+          :disabled="!dirty"
+        >
+          {{ t('actions.save') }}
+        </Button>
+      </template>
+    </SettingsSection>
+
+    <EmailSection />
+
+    <AppearanceSection />
+  </SettingsPage>
 </template>

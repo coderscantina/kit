@@ -39,6 +39,25 @@ the numbers.
 | GET    | `/api/people`                  | `search`, `role`, `status`, `sort`, `direction`, `page`, `per_page` |
 | POST   | `/api/invites/{invite}/resend` | New token, fresh expiry; the mailed token stops working             |
 
+## The account pages
+
+`/account` is one area with three pages: Profile, Security and Your data. The
+parent route (`pages/account/Layout.vue`) holds the identity block and the
+sub-nav, which is a sticky column on a wide screen and a scrollable row on a
+phone, and the child routes render into it. The layout is the b10cks account
+settings pattern with two changes: sections are two columns on a wide pane
+(heading left, controls right) so the page scans by topic, and Security opens
+with an overview row that links a red tile to the section that turns it green.
+
+A page is `SettingsPage` (title, one line of intent) holding
+`SettingsSection`s. A section takes a `title`, a `description`, an `id` for
+hash links, and a `footer` slot for the button that commits it; sections are
+separated by rules, not cards. `destructive` paints the heading red and is
+reserved for what cannot be undone.
+
+The pages are reachable from the account menu, the command palette and the
+phone drawer, and from nowhere in the sidebar.
+
 ## Avatars
 
 **Stored on a private disk, served through the app.** `config('kit.avatars.disk')`
