@@ -63,15 +63,26 @@ const useConfirmBase = () => {
     }, CLOSE_ANIMATION_MS)
   }
 
-  /**
-   * Answers the open dialog. Every path funnels through here, including a
-   * dismissal via Escape or an overlay click: those used to leave the promise
-   * unsettled, so every `await confirm(...)` the user escaped out of hung
-   * forever. A button click runs synchronously, before the resulting
-   * `update:open`, so a real answer still wins over the dismissal's `false`.
-   */
+  /** Answers the open dialog from one of its buttons. */
   const answer = (value: boolean) => {
     current.value?.settle(value)
+    close()
+  }
+
+  /**
+   * Escape, an overlay click — and also the close the primitive performs for
+   * its own action buttons. Without this the promise stayed unsettled and
+   * every `await confirm(...)` the user escaped out hung forever.
+   *
+   * The `false` waits a microtask because the primitive closes itself before
+   * the button's own click handler runs: settling here and now would beat a
+   * real answer to it and report every confirmation as a cancel. `settle` is
+   * idempotent, so whichever answer lands first is the one that counts.
+   */
+  const dismiss = () => {
+    const entry = current.value
+
+    void Promise.resolve().then(() => entry?.settle(false))
     close()
   }
 
@@ -103,7 +114,7 @@ const useConfirmBase = () => {
     cancel: (options: ConfirmOptions) => options.cancelLabel ?? t('actions.cancel'),
   }
 
-  return { open, current, confirm, answer, labels }
+  return { open, current, confirm, answer, dismiss, labels }
 }
 
 /**

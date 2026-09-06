@@ -11,14 +11,14 @@ import {
 } from '~/components/ui/alert-dialog'
 import { useConfirm } from '~/composables/useConfirm'
 
-const { open, current, answer, labels } = useConfirm()
+const { open, current, answer, dismiss, labels } = useConfirm()
 </script>
 
 <template>
   <AlertDialog
     v-if="current"
     :open="open"
-    @update:open="(value) => !value && answer(false)"
+    @update:open="(value) => !value && dismiss()"
   >
     <AlertDialogContent>
       <AlertDialogHeader>

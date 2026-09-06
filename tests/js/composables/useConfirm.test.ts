@@ -13,7 +13,7 @@ describe('useConfirm', () => {
   afterEach(() => vi.useRealTimers())
 
   it('resolves true when the dialog is confirmed and false when it is dismissed', async () => {
-    const { confirm, answer } = useConfirm()
+    const { confirm, answer, dismiss } = useConfirm()
 
     const confirmed = confirm({ message: 'Delete?' })
     await nextTick()
@@ -25,14 +25,14 @@ describe('useConfirm', () => {
     const dismissed = confirm({ message: 'Delete?' })
     await nextTick()
     // What Escape and an overlay click reach: without it the await hangs forever.
-    answer(false)
+    dismiss()
     await expect(dismissed).resolves.toBe(false)
 
     await flush()
   })
 
   it('queues a second request instead of tearing down the first one', async () => {
-    const { confirm, current, answer } = useConfirm()
+    const { confirm, current, answer, dismiss } = useConfirm()
 
     const first = confirm({ message: 'First' })
     await nextTick()
@@ -46,21 +46,23 @@ describe('useConfirm', () => {
     await flush()
     expect(current.value?.options.message).toBe('Second')
 
-    answer(false)
+    dismiss()
     await expect(second).resolves.toBe(false)
 
     await flush()
     expect(current.value).toBeNull()
   })
 
-  it('ignores the dismissal that follows an answered button click', async () => {
-    const { confirm, answer } = useConfirm()
+  it('lets the button win when the primitive closes itself first', async () => {
+    const { confirm, answer, dismiss } = useConfirm()
 
     const result = confirm({ message: 'Delete?' })
     await nextTick()
 
+    // The order reka produces for an AlertDialogAction: it closes the dialog,
+    // and only then does the button's own click handler run.
+    dismiss()
     answer(true)
-    answer(false)
 
     await expect(result).resolves.toBe(true)
 
