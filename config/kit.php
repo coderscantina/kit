@@ -47,6 +47,26 @@ return [
 
     'invite_expiry_days' => (int) env('INVITE_EXPIRY_DAYS', 7),
 
+    'email_change_expiry_hours' => (int) env('EMAIL_CHANGE_EXPIRY_HOURS', 2),
+
+    /*
+    |--------------------------------------------------------------------------
+    | Avatars
+    |--------------------------------------------------------------------------
+    |
+    | Avatars are stored on a private disk and read back through
+    | GET /api/users/{user}/avatar, so they stay behind the same session the
+    | rest of the app needs. Point the disk at s3 to move them off the box.
+    | The client crops and resizes before upload; these limits are the backstop.
+    |
+    */
+
+    'avatars' => [
+        'disk' => env('AVATAR_DISK', 'local'),
+        'max_kilobytes' => (int) env('AVATAR_MAX_KILOBYTES', 2048),
+        'max_dimension' => (int) env('AVATAR_MAX_DIMENSION', 1024),
+    ],
+
     /*
     |--------------------------------------------------------------------------
     | Required environment

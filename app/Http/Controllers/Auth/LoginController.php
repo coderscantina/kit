@@ -7,7 +7,9 @@ namespace App\Http\Controllers\Auth;
 use App\Http\Controllers\Controller;
 use App\Http\Middleware\Concerns\ThrottlesStepUpVerification;
 use App\Http\Requests\Auth\LoginRequest;
+use App\Models\SecurityEvent;
 use App\Models\User;
+use App\Services\Account\SecurityLog;
 use App\Services\Auth\TwoFactorAuthService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Auth;
@@ -18,6 +20,7 @@ class LoginController extends Controller
 
     public function __construct(
         private readonly TwoFactorAuthService $twoFactor,
+        private readonly SecurityLog $securityLog,
     ) {}
 
     public function __invoke(LoginRequest $request): JsonResponse
@@ -73,6 +76,8 @@ class LoginController extends Controller
 
         $user->last_login_at = now();
         $user->save();
+
+        $this->securityLog->record($user, SecurityEvent::SIGNED_IN);
 
         $request->session()->regenerate();
 

@@ -40,4 +40,21 @@ return [
     'invite_action' => 'Einladung annehmen',
     'invite_expires' => 'Diese Einladung läuft am :date ab.',
 
+    'email_taken' => 'Diese Adresse gehört inzwischen zu einem anderen Konto.',
+    'email_change_requested' => 'Prüfe die neue Adresse auf den Bestätigungslink.',
+    'email_change_subject' => 'Bestätige deine neue Adresse für :app',
+    'email_change_line' => 'Öffne den Link unten, um dein :app-Konto auf diese Adresse umzuziehen.',
+    'email_change_action' => 'Adresse bestätigen',
+    'email_change_expires' => 'Der Link läuft am :date ab.',
+    'email_change_ignore' => 'Wenn du das nicht angefordert hast, ignoriere diese Mail. Es hat sich nichts geändert.',
+    'email_change_notice_subject' => 'Für dein :app-Konto wurde eine Adressänderung angefordert',
+    'email_change_notice_line' => 'Jemand möchte dein Konto auf :email umziehen. Der Umzug findet erst statt, wenn diese Adresse bestätigt.',
+    'email_change_notice_warning' => 'Warst du das nicht, ändere jetzt dein Passwort und melde die anderen Geräte ab.',
+    'email_changed_subject' => 'Die Adresse deines :app-Kontos hat sich geändert',
+    'email_changed_line' => 'Dein Konto nutzt jetzt :email. Mit dieser Adresse ist keine Anmeldung mehr möglich.',
+
+    'unknown_device' => 'Unbekanntes Gerät',
+    'session_revoked' => 'Dieses Gerät wurde von einer anderen Sitzung abgemeldet.',
+    'session_is_current' => 'Das Gerät, das du gerade benutzt, kannst du nicht abmelden.',
+
 ];

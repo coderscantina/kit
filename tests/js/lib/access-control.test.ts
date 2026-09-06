@@ -14,6 +14,8 @@ const me = (abilities: string[], isRoot = false): App.Data.MeData => ({
     name: 'Mike',
     email: 'm@example.test',
     locale: 'en',
+    avatarUrl: null,
+    pendingEmail: null,
     role: 'member',
     isRoot,
     emailVerified: true,

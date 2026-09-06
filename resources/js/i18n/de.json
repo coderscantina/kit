@@ -179,31 +179,90 @@
     "reload": "App neu laden"
   },
   "account": {
+    "actions": {
+      "continue": "Weiter",
+      "back": "Zurück",
+      "done": "Fertig",
+      "copy": "Kopieren",
+      "download": "Herunterladen",
+      "loadMore": "Mehr laden"
+    },
     "profile": {
       "title": "Profil",
+      "details": "Deine Angaben",
+      "detailsDescription": "Der Name, den andere sehen, und die Sprache, in der die App mit dir spricht.",
       "language": "Sprache",
       "saved": "Profil gespeichert.",
-      "changeEmail": "E-Mail ändern",
-      "emailChanged": "E-Mail geändert. Der Bestätigungslink ist unterwegs.",
-      "unverified": "Diese Adresse ist noch nicht bestätigt."
+      "avatar": "Avatar",
+      "avatarDescription": "Zieh ein Bild hierher oder wähle eines aus. Es wird vor dem Hochladen quadratisch zugeschnitten und verkleinert.",
+      "avatarChange": "Bild hochladen",
+      "avatarHint": "PNG, JPEG oder WebP. Das mittlere Quadrat bleibt erhalten.",
+      "avatarSaved": "Avatar aktualisiert.",
+      "avatarFailed": "Dieses Bild ließ sich nicht verwenden. Versuch ein anderes.",
+      "emailDescription": "Die Adresse, mit der du dich anmeldest und an die ein neues Passwort geht.",
+      "newEmail": "Neue Adresse",
+      "newEmailHint": "Wir schicken einen Bestätigungslink dorthin. Die Änderung greift, sobald du ihn öffnest.",
+      "changeEmail": "Adresse ändern",
+      "emailPending": "Warten auf die Bestätigung durch {email}.",
+      "emailPendingToast": "Prüfe die neue Adresse auf den Bestätigungslink.",
+      "verified": "Bestätigt",
+      "unverified": "Diese Adresse ist noch nicht bestätigt.",
+      "resendVerification": "Link erneut senden",
+      "verificationSent": "Ein neuer Bestätigungslink ist unterwegs."
     },
     "security": {
       "title": "Sicherheit",
       "changePassword": "Passwort ändern",
+      "changePasswordDescription": "Eine Änderung meldet alle anderen Geräte ab.",
       "currentPassword": "Aktuelles Passwort",
       "newPassword": "Neues Passwort",
-      "passwordChanged": "Passwort geändert. Andere Sitzungen wurden abgemeldet.",
+      "passwordHint": "Mindestens 8 Zeichen.",
+      "passwordMismatch": "Die beiden Passwörter stimmen nicht überein.",
+      "passwordChanged": "Passwort geändert. Andere Geräte wurden abgemeldet.",
       "twoFactor": "Zwei-Faktor-Authentifizierung",
+      "twoFactorDescription": "Zusätzlich zum Passwort ein Code aus deiner Authenticator-App.",
       "twoFactorOn": "Die Zwei-Faktor-Authentifizierung ist aktiv.",
-      "twoFactorOff": "Füge mit einer Authenticator-App einen zweiten Faktor hinzu.",
-      "twoFactorDisabled": "Die Zwei-Faktor-Authentifizierung ist deaktiviert.",
+      "twoFactorOff": "Dein Konto ist nur durch ein Passwort geschützt.",
+      "twoFactorEnabled": "Die Zwei-Faktor-Authentifizierung ist aktiv.",
+      "twoFactorDisabled": "Die Zwei-Faktor-Authentifizierung ist aus.",
       "enable": "Aktivieren",
-      "disable": "Deaktivieren",
+      "disable": "Abschalten",
+      "disableConfirm": "Zwei-Faktor-Authentifizierung abschalten? Dann schützt nur noch dein Passwort das Konto.",
       "regenerateCodes": "Neue Backup-Codes",
-      "backupCodes": "Bewahre diese Backup-Codes sicher auf. Jeder funktioniert einmal.",
-      "deleteAccount": "Konto löschen",
-      "deleteDescription": "Löscht dein Konto und meldet dich ab. Das kann nicht rückgängig gemacht werden.",
-      "deleteConfirm": "Konto löschen? Das kann nicht rückgängig gemacht werden."
+      "regenerateConfirm": "Neue Codes ersetzen die alten. Jeder zuvor gespeicherte Code wird ungültig.",
+      "regeneratedDescription": "Speichere diese Codes. Die vorherigen funktionieren nicht mehr.",
+      "backupCodes": "Bewahre diese Backup-Codes sicher auf. Jeder Code funktioniert einmal.",
+      "codesSaved": "Ich habe meine Backup-Codes gespeichert",
+      "codesCopied": "Backup-Codes kopiert.",
+      "setup": {
+        "introDescription": "Sichere die Anmeldung mit einem zweiten Schritt ab.",
+        "scanDescription": "Scanne den Code und tippe ein, was deine App anzeigt.",
+        "codesDescription": "Die Zwei-Faktor-Authentifizierung ist aktiv. Diese Codes bringen dich wieder hinein.",
+        "what": "Eine Authenticator-App erzeugt alle 30 Sekunden einen neuen sechsstelligen Code. Bei der Anmeldung wird er zusätzlich zum Passwort abgefragt.",
+        "step1": "Installiere eine Authenticator-App, falls du noch keine hast.",
+        "step2": "Scanne den QR-Code damit.",
+        "step3": "Tippe den angezeigten Code ein, um abzuschließen.",
+        "manualEntry": "Oder gib diesen Schlüssel von Hand ein"
+      },
+      "deleteAccount": "Konto schließen",
+      "deleteDescription": "Löscht dein Konto und alles, was daran hängt.",
+      "deleteWarning": "Das lässt sich nicht rückgängig machen. Exportiere vorher deine Daten, wenn du sie behalten willst.",
+      "deleteTypeEmail": "Tippe {email} zur Bestätigung",
+      "deleteConfirmAction": "Mein Konto schließen"
+    },
+    "export": {
+      "title": "Daten exportieren",
+      "description": "Alles, was diese Installation über dich gespeichert hat, als eine JSON-Datei.",
+      "action": "Export herunterladen",
+      "done": "Dein Export wurde heruntergeladen."
+    },
+    "confirmEmail": {
+      "title": "Adresse bestätigen",
+      "done": "Deine Adresse wurde geändert. Melde dich ab jetzt damit an.",
+      "failed": "Dieser Link ist nicht mehr gültig. Fordere die Änderung erneut an.",
+      "missingToken": "Dieser Link ist unvollständig. Öffne den Link aus der Mail.",
+      "continue": "Zum Profil",
+      "backToSignIn": "Zurück zur Anmeldung"
     }
   },
   "users": {
@@ -330,5 +389,34 @@
         "last30d": "Letzte 30 Tage"
       }
     }
+  },
+  "security": {
+    "activityTitle": "Letzte Aktivität",
+    "activityDescription": "Anmeldungen und Änderungen am Schutz dieses Kontos.",
+    "activityEmpty": "Auf diesem Konto ist noch nichts passiert.",
+    "events": {
+      "signedIn": "Angemeldet",
+      "signedOut": "Abgemeldet",
+      "passwordChanged": "Passwort geändert",
+      "emailChangeRequested": "Adressänderung angefordert",
+      "emailChanged": "Adresse geändert",
+      "twoFactorEnabled": "Zwei-Faktor-Authentifizierung aktiviert",
+      "twoFactorDisabled": "Zwei-Faktor-Authentifizierung abgeschaltet",
+      "backupCodesRegenerated": "Backup-Codes ersetzt",
+      "sessionRevoked": "Gerät abgemeldet",
+      "dataExported": "Daten exportiert"
+    }
+  },
+  "sessions": {
+    "title": "Angemeldete Geräte",
+    "description": "Wo dieses Konto geöffnet ist. Ein abgemeldetes Gerät fliegt bei seiner nächsten Aktion raus.",
+    "current": "Dieses Gerät",
+    "revoke": "Abmelden",
+    "revokeTitle": "Gerät abmelden",
+    "revokeConfirm": "{device} abmelden?",
+    "revoked": "Das Gerät wurde abgemeldet.",
+    "revokeOthers": "Alle anderen Geräte abmelden",
+    "revokeOthersConfirm": "Alle Geräte außer diesem abmelden?",
+    "revokedCount": "{count} Gerät(e) abgemeldet."
   }
 }

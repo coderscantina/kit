@@ -7,11 +7,9 @@ namespace Tests\Feature\Auth;
 use App\Actions\Users\DeleteUser;
 use App\Http\Controllers\Account\ProfileController;
 use App\Models\User;
-use App\Notifications\VerifyEmailNotification;
 use App\Services\Auth\MembershipGuard;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Notification;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
@@ -34,23 +32,6 @@ final class ProfileTest extends TestCase
             ->assertJsonPath('locale', 'de');
 
         $this->patchJson('/api/account/profile', ['locale' => 'fr'])->assertUnprocessable();
-    }
-
-    #[Test]
-    public function changing_the_email_needs_confirmation_and_restarts_verification(): void
-    {
-        Notification::fake();
-        $user = $this->createAndActAs(role: 'member');
-
-        $this->patchJson('/api/account/email', ['email' => 'new@example.test'])->assertStatus(423);
-
-        $this->postJson('/auth/password/confirm', ['password' => 'password'])->assertOk();
-
-        $this->patchJson('/api/account/email', ['email' => 'new@example.test'])
-            ->assertOk()
-            ->assertJsonPath('emailVerified', false);
-
-        Notification::assertSentTo($user, VerifyEmailNotification::class);
     }
 
     #[Test]

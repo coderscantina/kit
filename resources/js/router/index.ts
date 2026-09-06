@@ -87,6 +87,15 @@ const routes: RouteRecordRaw[] = [
     component: () => import('~/pages/ai/Assistant.vue'),
     meta: { layout: 'app' },
   },
+  {
+    // Opened from the mail sent to the new address, often in the browser that
+    // holds the mailbox rather than the one that asked for the change. The
+    // token in the URL is the proof, so no session is required.
+    path: '/account/email/confirm',
+    name: 'account-email-confirm',
+    component: () => import('~/pages/account/ConfirmEmail.vue'),
+    meta: { layout: 'unauthenticated', public: true },
+  },
   // kit:routes
   // A real page, not a redirect to `/`: silently landing on the dashboard
   // hides typos and broken links instead of reporting them. Still behind the

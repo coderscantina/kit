@@ -40,4 +40,21 @@ return [
     'invite_action' => 'Accept invitation',
     'invite_expires' => 'This invitation expires on :date.',
 
+    'email_taken' => 'That address now belongs to another account.',
+    'email_change_requested' => 'Check the new address for a confirmation link.',
+    'email_change_subject' => 'Confirm your new address for :app',
+    'email_change_line' => 'Open the link below to move your :app account to this address.',
+    'email_change_action' => 'Confirm address',
+    'email_change_expires' => 'The link expires on :date.',
+    'email_change_ignore' => 'If you did not ask for this, ignore this mail. Nothing has changed.',
+    'email_change_notice_subject' => 'An address change was requested on your :app account',
+    'email_change_notice_line' => 'Someone asked to move your account to :email. It will not move until that address confirms.',
+    'email_change_notice_warning' => 'If this was not you, change your password now and sign out the other devices.',
+    'email_changed_subject' => 'The address on your :app account has changed',
+    'email_changed_line' => 'Your account now uses :email. This address no longer signs in.',
+
+    'unknown_device' => 'Unknown device',
+    'session_revoked' => 'This device was signed out from another session.',
+    'session_is_current' => 'You cannot sign out the device you are using.',
+
 ];

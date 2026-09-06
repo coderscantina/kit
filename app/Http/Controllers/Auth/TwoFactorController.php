@@ -6,7 +6,9 @@ namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Auth\TwoFactorCodeRequest;
+use App\Models\SecurityEvent;
 use App\Models\User;
+use App\Services\Account\SecurityLog;
 use App\Services\Auth\TwoFactorAuthService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -18,6 +20,7 @@ class TwoFactorController extends Controller
 
     public function __construct(
         private readonly TwoFactorAuthService $twoFactor,
+        private readonly SecurityLog $securityLog,
     ) {}
 
     /**
@@ -73,6 +76,7 @@ class TwoFactorController extends Controller
 
         Cache::forget($this->setupKey($user));
         $this->twoFactor->setGracePeriod($user->id);
+        $this->securityLog->record($user, SecurityEvent::TWO_FACTOR_ENABLED);
 
         return response()->json(['backup_codes' => $codes]);
     }
@@ -88,6 +92,7 @@ class TwoFactorController extends Controller
         $user->save();
 
         $this->twoFactor->clearGracePeriod($user->id);
+        $this->securityLog->record($user, SecurityEvent::TWO_FACTOR_DISABLED);
 
         return response()->json(['message' => __('auth.totp_disabled')]);
     }
@@ -104,6 +109,8 @@ class TwoFactorController extends Controller
         $codes = $this->twoFactor->generateBackupCodes();
         $user->two_factor_backup_codes = $codes;
         $user->save();
+
+        $this->securityLog->record($user, SecurityEvent::BACKUP_CODES_REGENERATED);
 
         return response()->json(['backup_codes' => $codes]);
     }

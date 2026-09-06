@@ -26,6 +26,7 @@ export default defineConfig({
           { text: 'Adding a feature', link: '/adding-a-feature' },
           { text: 'App shell', link: '/app-shell' },
           { text: 'AI', link: '/ai' },
+          { text: 'People and account', link: '/account' },
           { text: 'Runtime contract', link: '/runtime-contract' },
           { text: 'Release procedure', link: '/release' },
           { text: 'Known limitations', link: '/limitations' },

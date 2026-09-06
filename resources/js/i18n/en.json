@@ -179,31 +179,90 @@
     "reload": "Reload the app"
   },
   "account": {
+    "actions": {
+      "continue": "Continue",
+      "back": "Back",
+      "done": "Done",
+      "copy": "Copy",
+      "download": "Download",
+      "loadMore": "Load more"
+    },
     "profile": {
       "title": "Profile",
+      "details": "Your details",
+      "detailsDescription": "The name other people see, and the language this app speaks to you.",
       "language": "Language",
       "saved": "Profile saved.",
-      "changeEmail": "Change email",
-      "emailChanged": "Email changed. Check your inbox for the verification link.",
-      "unverified": "This address is not verified yet."
+      "avatar": "Avatar",
+      "avatarDescription": "Drop an image here or pick one. It is squared and resized before it is uploaded.",
+      "avatarChange": "Upload image",
+      "avatarHint": "PNG, JPEG or WebP. The centre square is kept.",
+      "avatarSaved": "Avatar updated.",
+      "avatarFailed": "That image could not be used. Try another one.",
+      "emailDescription": "The address you sign in with, and where a password reset is sent.",
+      "newEmail": "New address",
+      "newEmailHint": "We mail a confirmation link there. The change lands when you open it.",
+      "changeEmail": "Change address",
+      "emailPending": "Waiting for {email} to confirm.",
+      "emailPendingToast": "Check the new address for the confirmation link.",
+      "verified": "Verified",
+      "unverified": "This address is not verified yet.",
+      "resendVerification": "Resend the link",
+      "verificationSent": "A new verification link is on its way."
     },
     "security": {
       "title": "Security",
       "changePassword": "Change password",
+      "changePasswordDescription": "Changing it signs out every other device.",
       "currentPassword": "Current password",
       "newPassword": "New password",
-      "passwordChanged": "Password changed. Other sessions were signed out.",
+      "passwordHint": "At least 8 characters.",
+      "passwordMismatch": "The two passwords do not match.",
+      "passwordChanged": "Password changed. Other devices were signed out.",
       "twoFactor": "Two-factor authentication",
+      "twoFactorDescription": "A code from your authenticator app on top of your password.",
       "twoFactorOn": "Two-factor authentication is on.",
-      "twoFactorOff": "Add a second factor with an authenticator app.",
+      "twoFactorOff": "Your account is protected by a password alone.",
+      "twoFactorEnabled": "Two-factor authentication is on.",
       "twoFactorDisabled": "Two-factor authentication is off.",
       "enable": "Enable",
-      "disable": "Disable",
+      "disable": "Turn off",
+      "disableConfirm": "Turn off two-factor authentication? Your password will be the only thing protecting the account.",
       "regenerateCodes": "New backup codes",
-      "backupCodes": "Store these backup codes somewhere safe. Each works once.",
-      "deleteAccount": "Delete account",
-      "deleteDescription": "Deletes your account and signs you out. This cannot be undone.",
-      "deleteConfirm": "Delete your account? This cannot be undone."
+      "regenerateConfirm": "New codes replace the old ones. Any code you saved before stops working.",
+      "regeneratedDescription": "Save these. The previous codes no longer work.",
+      "backupCodes": "Store these backup codes somewhere safe. Each one works once.",
+      "codesSaved": "I have saved my backup codes",
+      "codesCopied": "Backup codes copied.",
+      "setup": {
+        "introDescription": "Add a second step to signing in.",
+        "scanDescription": "Scan the code, then type what your app shows.",
+        "codesDescription": "Two-factor authentication is on. These codes are your way back in.",
+        "what": "An authenticator app generates a new six-digit code every 30 seconds. Signing in asks for it alongside your password.",
+        "step1": "Install an authenticator app if you do not have one.",
+        "step2": "Scan the QR code with it.",
+        "step3": "Type the code it shows to finish.",
+        "manualEntry": "Or enter this key by hand"
+      },
+      "deleteAccount": "Close account",
+      "deleteDescription": "Removes your account and everything attached to it.",
+      "deleteWarning": "This cannot be undone. Export your data first if you want to keep it.",
+      "deleteTypeEmail": "Type {email} to confirm",
+      "deleteConfirmAction": "Close my account"
+    },
+    "export": {
+      "title": "Export your data",
+      "description": "Everything this installation holds about you, as one JSON file.",
+      "action": "Download export",
+      "done": "Your export was downloaded."
+    },
+    "confirmEmail": {
+      "title": "Confirm your address",
+      "done": "Your address has been changed. Sign in with it from now on.",
+      "failed": "This link is no longer valid. Ask for the change again.",
+      "missingToken": "This link is incomplete. Open the one from the mail.",
+      "continue": "Go to your profile",
+      "backToSignIn": "Back to sign in"
     }
   },
   "users": {
@@ -330,5 +389,34 @@
         "last30d": "Last 30 days"
       }
     }
+  },
+  "security": {
+    "activityTitle": "Recent activity",
+    "activityDescription": "Sign ins and changes to how this account is protected.",
+    "activityEmpty": "Nothing has happened on this account yet.",
+    "events": {
+      "signedIn": "Signed in",
+      "signedOut": "Signed out",
+      "passwordChanged": "Password changed",
+      "emailChangeRequested": "Address change requested",
+      "emailChanged": "Address changed",
+      "twoFactorEnabled": "Two-factor authentication turned on",
+      "twoFactorDisabled": "Two-factor authentication turned off",
+      "backupCodesRegenerated": "Backup codes replaced",
+      "sessionRevoked": "Device signed out",
+      "dataExported": "Data exported"
+    }
+  },
+  "sessions": {
+    "title": "Signed-in devices",
+    "description": "Where this account is open. A revoked device is signed out the next time it does anything.",
+    "current": "This device",
+    "revoke": "Sign out",
+    "revokeTitle": "Sign out device",
+    "revokeConfirm": "Sign out {device}?",
+    "revoked": "That device was signed out.",
+    "revokeOthers": "Sign out every other device",
+    "revokeOthersConfirm": "Sign out every device except this one?",
+    "revokedCount": "Signed out {count} device(s)."
   }
 }

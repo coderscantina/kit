@@ -6,5 +6,7 @@ export const queryKeys = {
   users: (query: UserListQuery) => ['users', 'list', query] as const,
   roles: () => ['roles'] as const,
   invites: (page: number) => ['invites', 'list', page] as const,
+  sessions: () => ['account', 'sessions'] as const,
+  securityActivity: (page: number) => ['account', 'security-activity', page] as const,
   publicInvite: (id: string, token: string) => ['invites', 'public', id, token] as const,
 }

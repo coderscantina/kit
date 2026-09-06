@@ -23,6 +23,25 @@ declare namespace App {
       abilities: string[],
       impersonating: boolean,
     };
+    export type PersonData = {
+      kind: string,
+      id: string,
+      name: string | null,
+      email: string,
+      role: string | null,
+      avatarUrl: string | null,
+      state: string,
+      isRoot: boolean,
+      emailVerified: boolean,
+      twoFactorEnabled: boolean,
+      lastLoginAt: string | null,
+      invitedBy: string | null,
+      expiresAt: string | null,
+      createdAt: string,
+      canAssignRole: boolean,
+      canRemove: boolean,
+      canResend: boolean,
+    };
     export type PublicInviteData = {
       id: string,
       email: string,
@@ -37,17 +56,35 @@ declare namespace App {
       level: number,
       abilities: string[],
     };
+    export type SecurityEventData = {
+      id: string,
+      event: string,
+      ipAddress: string | null,
+      device: string,
+      context: Record<string, any> | null,
+      createdAt: string,
+    };
+    export type SessionData = {
+      id: string,
+      device: string,
+      ipAddress: string | null,
+      lastActiveAt: string,
+      createdAt: string,
+      current: boolean,
+    };
     export type UserData = {
       id: string,
       name: string,
       email: string,
       locale: string,
+      avatarUrl: string | null,
       role: string | null,
       isRoot: boolean,
       emailVerified: boolean,
       twoFactorEnabled: boolean,
       lastLoginAt: string | null,
       createdAt: string,
+      pendingEmail: string | null,
     };
   }
   namespace Services {

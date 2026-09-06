@@ -16,7 +16,7 @@ class MeController extends Controller
     {
         /** @var User $user */
         $user = $request->user();
-        $user->loadMissing('role');
+        $user->loadMissing(['role', 'emailChange']);
 
         return MeData::fromUser($user, $impersonation->isImpersonating($request->session()));
     }

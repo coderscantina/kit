@@ -13,6 +13,8 @@ use Illuminate\Database\Eloquent\Attributes\Hidden;
 use Illuminate\Database\Eloquent\Concerns\HasUlids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Carbon;
@@ -24,6 +26,7 @@ use Kit\Reactive\Invalidation\HasReactiveInvalidation;
  * @property string $email
  * @property string $password
  * @property string $locale
+ * @property string|null $avatar_path
  * @property string|null $role_id
  * @property bool $is_root
  * @property string|null $two_factor_secret
@@ -74,6 +77,32 @@ class User extends Authenticatable implements MustVerifyEmail
     public function role(): BelongsTo
     {
         return $this->belongsTo(Role::class);
+    }
+
+    /**
+     * The address change waiting for the link mailed to it to be opened.
+     *
+     * @return HasOne<EmailChange, $this>
+     */
+    public function emailChange(): HasOne
+    {
+        return $this->hasOne(EmailChange::class);
+    }
+
+    /**
+     * @return HasMany<UserSession, $this>
+     */
+    public function sessions(): HasMany
+    {
+        return $this->hasMany(UserSession::class);
+    }
+
+    /**
+     * @return HasMany<SecurityEvent, $this>
+     */
+    public function securityEvents(): HasMany
+    {
+        return $this->hasMany(SecurityEvent::class);
     }
 
     public function hasEnabledTwoFactor(): bool

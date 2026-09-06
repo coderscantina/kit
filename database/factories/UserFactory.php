@@ -26,6 +26,7 @@ class UserFactory extends Factory
             'email_verified_at' => now(),
             'password' => static::$password ??= 'password',
             'locale' => 'en',
+            'avatar_path' => null,
             // Every column, not just the required ones: models are strict about
             // missing attributes and a created (unrefreshed) instance has only
             // what the factory gave it, not the database defaults.

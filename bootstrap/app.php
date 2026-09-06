@@ -7,6 +7,7 @@ use App\Http\Middleware\PreventDuringImpersonation;
 use App\Http\Middleware\RequirePasswordVerification;
 use App\Http\Middleware\RequireTotpVerification;
 use App\Http\Middleware\SecurityHeaders;
+use App\Http\Middleware\TrackUserSession;
 use App\Http\Middleware\VersionHeader;
 use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Application;
@@ -54,7 +55,9 @@ return Application::configure(basePath: dirname(__DIR__))
 
         // Binds each session to the password hash it was created under, so
         // changing a password logs out every other browser holding a session.
-        $middleware->web(append: [AuthenticateSession::class]);
+        // TrackUserSession runs behind it: the device list only means anything
+        // once the session has survived the binding check.
+        $middleware->web(append: [AuthenticateSession::class, TrackUserSession::class]);
 
         $middleware->alias([
             'app.access' => EnsureAppAccess::class,

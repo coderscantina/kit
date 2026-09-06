@@ -7,10 +7,12 @@ namespace App\Http\Controllers\Account;
 use App\Actions\Users\DeleteUser;
 use App\Data\UserData;
 use App\Http\Controllers\Controller;
-use App\Http\Requests\Account\UpdateEmailRequest;
 use App\Http\Requests\Account\UpdatePasswordRequest;
 use App\Http\Requests\Account\UpdateProfileRequest;
+use App\Models\SecurityEvent;
 use App\Models\User;
+use App\Services\Account\SecurityLog;
+use App\Services\Account\SessionRegistry;
 use App\Services\Auth\SessionBinding;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -26,40 +28,31 @@ class ProfileController extends Controller
         $user->fill($request->only('name', 'locale'));
         $user->save();
 
-        return UserData::fromModel($user->load('role'));
-    }
-
-    /**
-     * A new address starts unverified and gets a fresh verification mail.
-     */
-    public function updateEmail(UpdateEmailRequest $request): UserData
-    {
-        /** @var User $user */
-        $user = $request->user();
-        $email = $request->string('email')->toString();
-
-        if (strcasecmp($email, $user->email) !== 0) {
-            $user->email = $email;
-            $user->email_verified_at = null;
-            $user->save();
-            $user->sendEmailVerificationNotification();
-        }
-
-        return UserData::fromModel($user->load('role'));
+        return UserData::fromModel($user->load(['role', 'emailChange']));
     }
 
     /**
      * This browser stays signed in; every other session holds the old hash
      * and is dropped on its next request.
      */
-    public function updatePassword(UpdatePasswordRequest $request, SessionBinding $binding): JsonResponse
-    {
+    public function updatePassword(
+        UpdatePasswordRequest $request,
+        SessionBinding $binding,
+        SessionRegistry $registry,
+        SecurityLog $securityLog,
+    ): JsonResponse {
         /** @var User $user */
         $user = $request->user();
         $user->password = $request->string('password')->toString();
         $user->save();
 
         $binding->rebind($request->session(), $user);
+
+        // The other browsers are already dead on their next request; drop them
+        // from the device list too, so it does not show sessions that no
+        // longer work.
+        $registry->revokeOthers($user, $request->session()->getId());
+        $securityLog->record($user, SecurityEvent::PASSWORD_CHANGED);
 
         return response()->json(['message' => __('auth.password_updated')]);
     }

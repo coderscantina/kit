@@ -2,8 +2,13 @@
 
 declare(strict_types=1);
 
+use App\Http\Controllers\Account\AvatarController;
+use App\Http\Controllers\Account\DataExportController;
+use App\Http\Controllers\Account\EmailChangeController;
 use App\Http\Controllers\Account\InviteController;
 use App\Http\Controllers\Account\ProfileController;
+use App\Http\Controllers\Account\SecurityActivityController;
+use App\Http\Controllers\Account\SessionController;
 use App\Http\Controllers\Account\UserController;
 use App\Http\Controllers\Ai\AiStreamController;
 use Illuminate\Support\Facades\Route;
@@ -14,9 +19,31 @@ Route::prefix('api')->name('api.')->middleware('web')->group(function (): void {
     Route::middleware(['auth:sanctum', 'app.access', 'throttle:app'])->group(function (): void {
         Route::prefix('account')->name('account.')->group(function (): void {
             Route::patch('profile', [ProfileController::class, 'update'])->name('profile');
-            Route::patch('email', [ProfileController::class, 'updateEmail'])->middleware('password.confirmed')->name('email');
             Route::put('password', [ProfileController::class, 'updatePassword'])->middleware('password.confirmed')->name('password');
             Route::delete('/', [ProfileController::class, 'destroy'])->middleware(['password.confirmed', 'not-impersonating'])->name('destroy');
+
+            // Requesting the change is sensitive; cancelling one is not.
+            Route::post('email', [EmailChangeController::class, 'store'])
+                ->middleware(['password.confirmed', 'not-impersonating', 'throttle:sensitive'])
+                ->name('email.request');
+            Route::delete('email', [EmailChangeController::class, 'destroy'])->name('email.cancel');
+
+            Route::post('avatar', [AvatarController::class, 'store'])->name('avatar.store');
+            Route::delete('avatar', [AvatarController::class, 'destroy'])->name('avatar.destroy');
+
+            Route::get('sessions', [SessionController::class, 'index'])->name('sessions.index');
+            Route::delete('sessions', [SessionController::class, 'destroyOthers'])
+                ->middleware('password.confirmed')
+                ->name('sessions.destroy-others');
+            Route::delete('sessions/{session}', [SessionController::class, 'destroy'])
+                ->middleware('password.confirmed')
+                ->name('sessions.destroy');
+
+            Route::get('security-activity', [SecurityActivityController::class, 'index'])->name('security-activity');
+
+            Route::get('export', DataExportController::class)
+                ->middleware(['password.confirmed', 'not-impersonating'])
+                ->name('export');
         });
 
         Route::get('invites', [InviteController::class, 'index'])->name('invites.index');
@@ -28,10 +55,17 @@ Route::prefix('api')->name('api.')->middleware('web')->group(function (): void {
         Route::post('ai/stream', AiStreamController::class)->middleware('throttle:ai')->name('ai.stream');
 
         Route::get('users', [UserController::class, 'index'])->name('users.index');
+        Route::get('users/{user}/avatar', [AvatarController::class, 'show'])->name('users.avatar');
         Route::get('roles', [UserController::class, 'roles'])->name('roles.index');
         Route::patch('users/{user}/role', [UserController::class, 'updateRole'])->middleware('totp')->name('users.role');
         Route::delete('users/{user}', [UserController::class, 'destroy'])->middleware('totp')->name('users.destroy');
     });
+
+    // Token-gated, session-free: the confirmation link is opened wherever the
+    // mailbox is, which is often not the browser that asked for the change.
+    Route::post('account/email/confirm/{change}', [EmailChangeController::class, 'confirm'])
+        ->middleware('throttle:public')
+        ->name('account.email.confirm');
 
     // Token-gated invite pages: reachable without a session because the
     // invitee usually has none yet.

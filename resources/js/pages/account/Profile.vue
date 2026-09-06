@@ -2,31 +2,38 @@
 import { toast } from 'vue-sonner'
 
 import { api } from '~/api'
+import AvatarField from '~/components/account/AvatarField.vue'
+import EmailChangeCard from '~/components/account/EmailChangeCard.vue'
 import FormField from '~/components/FormField.vue'
-import PasswordConfirmDialog from '~/components/PasswordConfirmDialog.vue'
-import { Alert } from '~/components/ui/alert'
 import { Button } from '~/components/ui/button'
-import { Card } from '~/components/ui/card'
+import { Card, CardContent, CardHeaderCombined } from '~/components/ui/card'
 import { Label } from '~/components/ui/label'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '~/components/ui/select'
 import { useAuth } from '~/composables/useAuth'
 import { useFormErrors } from '~/composables/useFormErrors'
-import { useStepUp } from '~/composables/useStepUp'
-import { useI18n, isSupportedLocale, setLocale, type LocaleCode } from '~/plugins/i18n'
+import { isSupportedLocale, setLocale, useI18n, type LocaleCode } from '~/plugins/i18n'
 
 const { t, locales } = useI18n()
 const auth = useAuth()
 const errors = useFormErrors()
-const stepUp = useStepUp()
 
 const name = ref(auth.user.value?.name ?? '')
 const locale = ref<LocaleCode>(
   isSupportedLocale(auth.user.value?.locale ?? '') ? (auth.user.value?.locale as LocaleCode) : 'en'
 )
-const email = ref(auth.user.value?.email ?? '')
 const saving = ref(false)
-const savingEmail = ref(false)
 
-const saveProfile = async () => {
+const localeName = computed(
+  () => locales.find((entry) => entry.code === locale.value)?.name ?? locale.value
+)
+
+const save = async () => {
   saving.value = true
   errors.clear()
   try {
@@ -41,100 +48,86 @@ const saveProfile = async () => {
   }
 }
 
-const saveEmail = async () => {
-  savingEmail.value = true
-  errors.clear()
-  try {
-    await stepUp.run(() => api.account.updateEmail(email.value))
-    await auth.refresh()
-    toast.success(t('account.profile.emailChanged'))
-  } catch (error) {
-    errors.capture(error)
-  } finally {
-    savingEmail.value = false
-  }
+const onAvatarChanged = async () => {
+  await auth.refresh()
+  toast.success(t('account.profile.avatarSaved'))
 }
 </script>
 
 <template>
-  <div class="max-w-lg space-y-6">
+  <div class="max-w-2xl space-y-6">
     <h1 class="text-2xl font-semibold">{{ t('account.profile.title') }}</h1>
+
     <Card class="p-6">
-      <form
-        class="space-y-4"
-        @submit.prevent="saveProfile"
-      >
-        <FormField
-          id="name"
-          v-model="name"
-          autocomplete="name"
-          :label="t('auth.fields.name')"
-          :error="errors.fields.value.name"
-          required
+      <CardHeaderCombined
+        class="p-0 pb-4"
+        :title="t('account.profile.avatar')"
+        :description="t('account.profile.avatarDescription')"
+      />
+      <CardContent class="p-0">
+        <AvatarField
+          :name="auth.user.value?.name ?? ''"
+          :avatar-url="auth.user.value?.avatarUrl ?? null"
+          @changed="onAvatarChanged"
         />
-        <div class="space-y-2">
-          <Label for="locale">{{ t('account.profile.language') }}</Label>
-          <select
-            id="locale"
-            v-model="locale"
-            class="flex h-9 w-full rounded-md border border-input bg-background px-3 text-sm"
+      </CardContent>
+    </Card>
+
+    <Card class="p-6">
+      <CardHeaderCombined
+        class="p-0 pb-4"
+        :title="t('account.profile.details')"
+        :description="t('account.profile.detailsDescription')"
+      />
+      <CardContent class="p-0">
+        <form
+          class="grid gap-4"
+          @submit.prevent="save"
+        >
+          <FormField
+            id="name"
+            v-model="name"
+            autocomplete="name"
+            :label="t('auth.fields.name')"
+            :error="errors.fields.value.name"
+            required
+          />
+          <div class="grid gap-1.5">
+            <Label for="locale">{{ t('account.profile.language') }}</Label>
+            <Select v-model="locale">
+              <SelectTrigger id="locale">
+                <SelectValue>{{ localeName }}</SelectValue>
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem
+                  v-for="entry in locales"
+                  :key="entry.code"
+                  :value="entry.code"
+                >
+                  {{ entry.name }}
+                </SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <p
+            v-if="errors.message.value"
+            class="text-sm text-destructive"
           >
-            <option
-              v-for="entry in locales"
-              :key="entry.code"
-              :value="entry.code"
+            {{ errors.message.value }}
+          </p>
+          <div>
+            <Button
+              variant="primary"
+              type="submit"
+              :loading="saving"
             >
-              {{ entry.name }}
-            </option>
-          </select>
-        </div>
-        <Button
-          variant="primary"
-          type="submit"
-          :loading="saving"
-        >
-          {{ t('actions.save') }}
-        </Button>
-      </form>
+              {{ t('actions.save') }}
+            </Button>
+          </div>
+        </form>
+      </CardContent>
     </Card>
-    <Card class="p-6">
-      <form
-        class="space-y-4"
-        @submit.prevent="saveEmail"
-      >
-        <FormField
-          id="email"
-          v-model="email"
-          type="email"
-          autocomplete="email"
-          :label="t('auth.fields.email')"
-          :error="errors.fields.value.email"
-          required
-        />
-        <p
-          v-if="auth.user.value && !auth.user.value.emailVerified"
-          class="text-sm text-muted"
-        >
-          {{ t('account.profile.unverified') }}
-        </p>
-        <Button
-          type="submit"
-          variant="default"
-          :loading="savingEmail"
-        >
-          {{ t('account.profile.changeEmail') }}
-        </Button>
-      </form>
-    </Card>
-    <Alert
-      v-if="errors.message.value"
-      color="destructive"
-    >
-      {{ errors.message.value }}
-    </Alert>
-    <PasswordConfirmDialog
-      v-model:open="stepUp.confirmOpen.value"
-      @confirmed="stepUp.onConfirmed"
-    />
+
+    <EmailChangeCard />
   </div>
 </template>
