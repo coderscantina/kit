@@ -7,17 +7,24 @@ import PageActions from '~/components/app/PageActions.vue'
 import { useAuth } from '~/composables/useAuth'
 import { useSidebar } from '~/composables/useSidebar'
 import AppLayout from '~/layouts/AppLayout.vue'
+import { accountNavigationItems, navigationItems } from '~/lib/access-control'
 
 const stub = { template: '<div />' }
 
+/**
+ * Routed off the navigation lists rather than a hand-written array: the
+ * sidebar renders every item in them, and a RouterLink to a name this router
+ * does not know throws. A generated feature adds an item, so a fixed list
+ * here would make `make:feature` fail a test that has nothing to do with it.
+ */
 const router = createRouter({
   history: createMemoryHistory(),
   routes: [
-    { path: '/', name: 'dashboard', component: stub },
-    { path: '/users', name: 'users', component: stub },
-    { path: '/assistant', name: 'assistant', component: stub },
-    { path: '/account/profile', name: 'account-profile', component: stub },
-    { path: '/account/security', name: 'account-security', component: stub },
+    ...[...navigationItems, ...accountNavigationItems].map((item) => ({
+      path: item.routeName === 'dashboard' ? '/' : `/${item.routeName.replaceAll('-', '/')}`,
+      name: item.routeName,
+      component: stub,
+    })),
     { path: '/login', name: 'login', component: stub },
   ],
 })
