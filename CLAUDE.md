@@ -87,6 +87,12 @@ Reactive data comes from `useReactiveQuery` / `useReactiveMutation` in
 `~/lib/reactive`. Never `fetch` `/rq/*` directly. REST data goes through an
 `api` resource class in `resources/js/api/resources/`, never a bare `fetch`.
 
+Presence is not the reactive layer. A roster comes from `usePresence`, a
+status indicator from `UserAvatar` plus `usePresenceStatus`, and field-level
+"who is editing this" from `provideFieldPresence` on the form. All of it
+rides whispers, so a value never goes over the wire and nothing survives the
+sender's socket. `docs/presence.md` has the contract.
+
 Composables are imported explicitly. Only `vue` and `vue-router` APIs are
 auto-imported; a directory auto-import silently drops a composable that imports
 a sibling, and typecheck, lint and tests all stay green while the app renders

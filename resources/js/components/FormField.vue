@@ -1,7 +1,9 @@
 <script setup lang="ts">
 import Icon from '~/components/Icon.vue'
+import FieldPresence from '~/components/ui/form/FieldPresence.vue'
 import { Input } from '~/components/ui/input'
 import { Label } from '~/components/ui/label'
+import { useFieldPresence } from '~/composables/useFieldPresence'
 import { useI18n } from '~/plugins/i18n'
 
 const props = defineProps<{
@@ -17,6 +19,9 @@ const props = defineProps<{
 }>()
 
 const { t } = useI18n()
+
+// Inert, down to the listeners, unless a form called provideFieldPresence.
+const presence = useFieldPresence(() => props.id)
 
 const model = defineModel<string>({ default: '' })
 
@@ -42,16 +47,22 @@ const describedBy = computed(() => {
 </script>
 
 <template>
-  <div class="grid gap-1.5">
-    <Label :for="id">
-      {{ label }}
-      <span
-        v-if="required"
-        aria-hidden="true"
-        class="text-muted"
-        >*</span
-      >
-    </Label>
+  <div
+    class="grid gap-1.5"
+    v-on="presence.handlers"
+  >
+    <div class="flex items-center justify-between gap-2">
+      <Label :for="id">
+        {{ label }}
+        <span
+          v-if="required"
+          aria-hidden="true"
+          class="text-muted"
+          >*</span
+        >
+      </Label>
+      <FieldPresence :editors="presence.editors.value" />
+    </div>
 
     <div class="relative">
       <Input

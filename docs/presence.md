@@ -138,6 +138,74 @@ members (`accept_client_events_from`), so a whisper on a channel the user was
 refused simply goes nowhere. And a connection may only send so many of them,
 which is why the example throttles rather than sending on every `pointermove`.
 
+## Presence on a form field
+
+While someone else has a field focused, everyone else on the form sees who,
+and whether they have unsaved changes in it. It rides whispers, so it is
+worthless the moment the sender disconnects, which is exactly right: an
+abandoned "Grace is editing" would be worse than nothing.
+
+One call turns it on for a whole form:
+
+```ts
+import { provideFieldPresence } from '~/composables/useFieldPresence'
+
+provideFieldPresence('users')
+```
+
+Every `FormField` below it then joins in. Without that call a `FormField`
+behaves exactly as it did: no channel, no listeners, not even a handler bound
+to the wrapper.
+
+The field name is the key, so both sessions have to agree on it: the `id` on
+`~/components/FormField.vue`, the `name` on `~/components/ui/form/FormField.vue`.
+
+### Why the wrapper and not the control
+
+A field is rarely one element. An OTP input is six, a combobox is a button
+and a listbox, a date picker is whatever reka-ui renders this week, and a
+slot may hold a component that owns no DOM you can reach. So the handlers go
+on the field wrapper and rely on `focusin` and `focusout`, which bubble where
+`focus` and `blur` do not. One pair there covers every control the kit puts
+inside a field, and stepping between two controls of the same field is not a
+blur: the wrapper still holds the focus.
+
+Changed or not is read the same way, off `input` and `change`, against the
+value the control held when it took focus. A control that has no value of its
+own is taken at its word: anything it emits counts as a change. One that
+emits nothing at all, a reka-ui select say, has an escape hatch on
+`ui/form/FormField`:
+
+```vue
+<FormField name="role" :dirty="role !== saved.role" />
+```
+
+### What goes over the wire
+
+Who, which field, and changed yes or no. Never the value, never a keystroke,
+never a selection range. A field value is the user's data and a whisper is
+not the place for it, so the payload cannot carry it even by accident:
+
+```json
+{ "field": "invite-email", "dirty": true, "senderId": "01m1..." }
+```
+
+One whisper carries the whole of a sender's state, because a person holds one
+field at a time. It is throttled at 50 ms, the same floor the cursor stream
+takes, so tabbing through a form sends the last state of each window rather
+than every transition.
+
+State clears three ways: on blur, on unmount, and when the member leaves the
+roster. The last one is what covers a closed laptop, which never gets to
+release anything.
+
+### What it looks like
+
+The indicator is `UserAvatar`, so a field and a roster say the same thing the
+same way. Focused reads as `online`; focused with changes reads as
+`unavailable`, because red is the state that means do not save over this yet.
+Both carry the sentence, not just the colour.
+
 ## What it is not
 
 - **Not durable.** Nothing is stored. A member is on the roster while the
@@ -146,4 +214,5 @@ which is why the example throttles rather than sending on every `pointermove`.
   Reverb. A query that needs "is this user active" needs a column and a
   mutation that writes it.
 - **Not a lock.** Two people editing the same row still both win. Presence
-  shows you that it is about to happen; it does not prevent it.
+  shows you that it is about to happen; it does not prevent it. Field
+  presence is the same: it is a warning, not a mutex.
