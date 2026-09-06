@@ -72,6 +72,18 @@ otherwise. Take row locks with `$this->lock($model)` inside `handle()`.
 `authorize()` is abstract and must do real work. An empty body fails an
 architecture test.
 
+A mutation that edits a row a form can hold states the version it read:
+the model uses `Kit\Reactive\Concurrency\Versioned`, the args carry
+`int $version`, and `handle()` takes the row with
+`$this->lockVersion($model, $args->version)`. A row that moved answers 409
+with the current row; the client resolves, never overwrites. Plain
+`$this->lock()` is for a row no form holds open.
+
+After commit, a write that wakes at most four computations recomputes and
+pushes them inside its own request; more than that goes to the `reactive`
+queue. `docs/architecture.md` has the numbers and `docs/limitations.md` the
+cost.
+
 A query's `handle()` takes args only. Never read `auth()`, `request()` or the
 session in it: subscribers asking the same question share one computed result,
 and `handle()` also runs on a worker with no session. Scope through args, check
@@ -87,11 +99,19 @@ Reactive data comes from `useReactiveQuery` / `useReactiveMutation` in
 `~/lib/reactive`. Never `fetch` `/rq/*` directly. REST data goes through an
 `api` resource class in `resources/js/api/resources/`, never a bare `fetch`.
 
+A form bound to a row uses `useReactiveForm` from `~/lib/reactive`: pushes
+land in the fields the user has not touched, his edits stay, `conflicts`
+says where both sides met, and a 409 goes through the same `apply()`. Pass
+`onConflict` to `useReactiveMutation` for it. `docs/architecture.md` has the
+contract.
+
 Presence is not the reactive layer. A roster comes from `usePresence`, a
 status indicator from `UserAvatar` plus `usePresenceStatus`, and field-level
 "who is editing this" from `provideFieldPresence` on the form. All of it
-rides whispers, so a value never goes over the wire and nothing survives the
-sender's socket. `docs/presence.md` has the contract.
+rides whispers, so nothing survives the sender's socket. A form opts into
+whispering the value as typed with `{ values: true }`; it is never the
+default and never sent for a password or a field listed in `secret`.
+`docs/presence.md` has the contract and the reason.
 
 Composables are imported explicitly. Only `vue` and `vue-router` APIs are
 auto-imported; a directory auto-import silently drops a composable that imports
@@ -187,10 +207,12 @@ re-running the receiver with the previous tag. See `docs/release.md`.
 ## 11. When kit:doctor fails
 
 Redis, Horizon and Reverb warnings mean a service is down; restart it. A
-failure means the repository is wrong: an unregistered query name (run
-`types:generate`), an ambient binding missing from `config/octane.php` `flush`
-(add it to `config/kit.php` `ambient_bindings`), or an `en`/`de` key mismatch.
-See `docs/runtime-contract.md`.
+`reactive queue` warning means no worker took the probe, or the one that did
+started before the last change to the reactive code and is running stale
+code: restart it. A failure means the repository is wrong: an unregistered
+query name (run `types:generate`), an ambient binding missing from
+`config/octane.php` `flush` (add it to `config/kit.php` `ambient_bindings`), or
+an `en`/`de` key mismatch. See `docs/runtime-contract.md`.
 
 ## 12. Accepted trade-offs
 

@@ -125,6 +125,18 @@ The generator also adds `mutations.posts.create.error` to both message files,
 because `useReactiveMutation` always translates that key and a missing one
 would echo back at the user.
 
+A mutation that edits a row two people can have open states the version it
+read. Give the model `Kit\Reactive\Concurrency\Versioned` and the table an
+`unsignedInteger('version')->default(1)`, put `public int $version` on the
+args, and lock against it:
+
+```php
+$post = $this->lockVersion(Post::query()->findOrFail($args->id), $args->version);
+```
+
+A row that moved answers 409 with the current row instead of being
+overwritten. `docs/architecture.md` has the payload and the client half.
+
 ## 4. Types and the page
 
 ```sh
@@ -149,6 +161,26 @@ const create = useReactiveMutation('posts.create', {
 
 The name is a literal union off `Kit.ReactiveMap`, so a typo is a type error
 and the args and result infer. Never `fetch` `/rq/*` directly.
+
+A form on one of those rows binds to it with `useReactiveForm`, so a
+colleague's save lands in the fields the user has not touched while he is
+typing:
+
+```ts
+import { useReactiveForm, useReactiveMutation } from '~/lib/reactive'
+
+const form = useReactiveForm(() => post.value, { fields: ['title', 'body'] })
+const update = useReactiveMutation('posts.update', {
+  onConflict: (error) => form.apply(error.current),
+})
+
+const save = () =>
+  update.mutate({ id: form.base.value!.id, version: form.base.value!.version, ...form.values() })
+```
+
+Bind `form.fields.title` with `v-model` as you would a ref. `form.conflicts`
+lists the fields both sides changed, each with the server's value, and
+`form.accept('title')` takes it.
 
 ## 5. Ask a model about it
 

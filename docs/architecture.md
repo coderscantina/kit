@@ -81,13 +81,36 @@ client                      server                       redis
   |  POST /rq/mutate     ->  transaction (REPEATABLE READ, 3 attempts)
   |                          model hooks buffer changes
   |                          on commit: INCR mutation id  reactive:mutation_id
-  |  <- result, mid          dispatch one Invalidate      queue: reactive
+  |                          resolve the dep sets         rq:dep:* -> comp keys
+  |  <- ResultChanged        up to 4 keys: recompute and push right here
+  |  <- result, mid          more, or a busy lock: one Invalidate job  queue: reactive
   |
-  |                          Invalidate resolves the dep sets
+  |                          Invalidate resolves again on the worker
   |                          RecomputeComputation per key, 50 ms debounce
   |  <- ResultChanged        re-run once, hash; on a change
   |                          re-authorize and push per subscriber
 ```
+
+The recompute runs in the writer's own request first. After commit the
+`Invalidator` resolves which computations the batch touched; up to
+`inline_recomputes` of them (4) it recomputes and pushes before the response
+returns, so the other session's screen never waits on a queue, and the
+writer's own screen has its push before its response. Anything beyond that
+count, a lock another recompute holds, or a recompute that throws goes to the
+`reactive` queue as before; a failure there can never fail the request, the
+row is committed by then. `/rq/health` reports `inline` next to `recomputes`.
+
+Measured on a laptop, one writer, a ten row page, `POST /rq/mutate` returning
+to the other browser's row changing: through the queue with a worker on the
+default three second poll, 839 to 2309 ms, median 1062 ms, and five of twelve
+writes never showed because the next one coalesced over them. Inline, every
+write shows and the median is a few tens of milliseconds; the numbers are in
+the commit that made the change.
+
+The 50 ms debounce is not a delay. It is an NX marker set when a recompute is
+decided on and released when it starts reading, so a burst that arrives while
+one is queued collapses onto it. Under a single writer it never fires and
+costs nothing; it only pays when a worker is behind.
 
 Four things decide the cost of a write:
 
@@ -126,6 +149,15 @@ subscriptions survive and pushes resume on reconnect.
 
 ## Client reconciliation
 
+`useReactiveForm(source, { fields })` binds a form to a live row. `fields`
+are the `v-model` targets, `base` is the last row the server gave, and dirty
+is a comparison between the two rather than a flag, so a field typed back to
+its old value is clean again. Every new row from `source` (a push, usually)
+lands in the clean fields and leaves the dirty ones; a dirty field whose server
+value moved is listed in `conflicts` with the server's value, and `accept()`
+takes it. A row with a different identity (`id`) replaces the form, edits
+included, because that is a different record, not an update.
+
 An optimistic patch is recorded against a pending id. When a push arrives with
 mutation id `M`, the cache is set to the pushed result and every pending patch
 whose mutation has not committed at or below `M` is re-applied on top. A
@@ -133,6 +165,50 @@ mutation that resolves with committed id `C` drops its patches from any key
 already at `>= C`. Entries older than 10 seconds are dropped and their keys
 refetched. That is what keeps a list from flickering while a second client
 writes to it.
+
+## Conflicts
+
+A mutation says which version of the row it was written against, and the row
+says no when that version has moved.
+
+```php
+// the model
+use Kit\Reactive\Concurrency\Versioned;   // integer `version`: 1 on create, +1 per change
+
+// the args
+public int $version,
+
+// the mutation
+$card = $this->lockVersion(Card::query()->findOrFail($args->id), $args->version);
+```
+
+`lockVersion()` takes the row lock `lock()` takes and compares. A row at
+another version throws `VersionConflict` inside the transaction, so nothing is
+written, and the runner answers 409:
+
+```json
+{
+  "message": "The row changed since it was read (version 3 expected, 4 found).",
+  "code": "CONFLICT",
+  "expected": 3,
+  "actual": 4,
+  "current": { "id": "01m1…", "version": 4, "name": "theirs", "...": "..." }
+}
+```
+
+`current` is the row now, presented through the mutation's declared `result`
+class, so the client holds three things: the row it read (`base`), what the
+user typed (`fields`), and what the server has. That is enough to resolve
+field by field. On the client the 409 is a `ConflictError<TResult>` and
+`useReactiveMutation` takes an `onConflict` for it; a conflict that has a
+handler never reaches the error toast. `useReactiveForm().apply(error.current)`
+does the merge: fields the user left alone take the server's value, fields he
+edited keep his and show up in `conflicts` with what the server has, and
+`base.version` moves forward so the next save carries the current version.
+
+Because an open form also takes pushes through the same `apply()`, a 409 is
+the rare case: most of the time the form already holds the latest row when the
+user saves. The 409 covers the race the push lost.
 
 ## Counters
 

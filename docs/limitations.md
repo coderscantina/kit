@@ -28,6 +28,39 @@ write use `Model::withoutReactiveEvents()` plus one explicit
 `Invalidate::table('posts')`; never `Model::withoutEvents()`, which also kills
 the ULID hooks.
 
+## Conflicts are resolved per field, not per character
+
+A versioned mutation and `useReactiveForm` give you the three rows a merge
+needs (read, mine, theirs) and resolve them one field at a time: a field only
+one side changed takes that side, a field both changed is a conflict the user
+settles. That is the whole promise. Two people typing into the same text field
+at once do not get their keystrokes interleaved; the second to save sees the
+first one's text next to his own and picks. Operational transforms and CRDTs
+are out of scope: they are a document model, not a form model, and a form
+that needs them (a shared notes pane, a live spec) should be a separate
+document feature on a purpose-built store rather than a wider `Versioned`.
+
+What to do instead, in order of how often it is enough: keep fields small so
+two people rarely land in the same one, let the whispered value (`values: true`
+on `provideFieldPresence`) show who is where before anyone saves, and split a
+long text into several fields where the domain allows it.
+
+A row that was deleted under an open form answers 404 from `findOrFail`, not
+409: there is no current row to hand back. Treat a 404 on save as "gone" and
+close the form.
+
+## The writer's request pays for small recomputes
+
+A write that wakes at most four computations recomputes and pushes them
+before its response returns. That is what takes the queue off the path the
+other session waits on, and it is why a dead worker no longer looks like a
+dead layer for ordinary writes. The cost is the recompute inside the request:
+a mutation on a table read by a slow query gets slower by that query. Declare
+`reads()` so fewer computations wake, keep queries paged, or set
+`inline_recomputes` to 0 to send everything to the queue and accept the
+worker's pickup delay. Bulk invalidations (`Invalidate::table()`) always take
+the queue.
+
 ## Revocation waits for a changed result
 
 A recompute re-authorizes each subscriber only when the result actually

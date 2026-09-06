@@ -182,13 +182,33 @@ emits nothing at all, a reka-ui select say, has an escape hatch on
 
 ### What goes over the wire
 
-Who, which field, and changed yes or no. Never the value, never a keystroke,
-never a selection range. A field value is the user's data and a whisper is
-not the place for it, so the payload cannot carry it even by accident:
+Who, which field, and changed yes or no:
 
 ```json
 { "field": "invite-email", "dirty": true, "senderId": "01m1..." }
 ```
+
+A form can opt into sending the value as it is typed, so the other person sees
+what is coming and not only that something is:
+
+```ts
+provideFieldPresence('cards', { values: true, secret: ['token'] })
+```
+
+Then the whisper carries `value`, capped at 1000 characters, and every
+`FormField` on the other side shows it under the control in the sender's
+colour. It is never written into the receiver's own input, whether they are
+in the same field or not: a preview sits next to the field, the field stays
+theirs. It is never sent for a `type="password"` control, for a field named
+in `secret`, or through the `:dirty` escape hatch, which knows no value.
+
+Off by default, and deliberately so. A value in a mutation is validated,
+authorized, written under a lock and pushed to whoever may read it. A value
+on a whisper is none of that: it reaches everyone on the presence channel
+with no policy in between, it is gone when the sender's socket closes, and
+nothing about it is true a second later. Turn it on for a form where seeing a
+colleague's draft is worth more than that gap, which is most collaborative
+edit dialogs and no login, invite or secret form.
 
 One whisper carries the whole of a sender's state, because a person holds one
 field at a time. It is throttled at 50 ms, the same floor the cursor stream

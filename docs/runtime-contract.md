@@ -124,8 +124,16 @@ A failing check and what it usually means:
 
 - **redis unreachable** — the registry is down, so nothing pushes. Subscriptions
   fall back to a 30 s poll on the client. Restart Redis first.
-- **no master supervisor** — Horizon is not running, so recomputes queue up and
-  nothing pushes. Check the `horizon` program in supervisord.
+- **no master supervisor** — Horizon is not running. Small writes still push
+  from their own request, but large fan-out and bulk invalidations queue up and
+  never land. Check the `horizon` program in supervisord.
+- **reactive queue: no worker took the probe** — the doctor put a job on the
+  `reactive` queue and nothing ran it within five seconds. Same cause as above,
+  or a worker consuming another queue name.
+- **reactive queue: started before the last change** — a worker answered, but
+  its process is older than the newest file the layer loads, so it runs stale
+  code. That worker once resolved a new query to "deleted" and revoked every
+  subscriber. Restart it (`horizon:terminate`, or the `queue:work` process).
 - **client query names not registered** — the SPA calls a name the server does
   not have. Almost always a missing `php artisan types:generate` plus a
   hand-written string.
