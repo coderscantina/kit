@@ -216,3 +216,9 @@ Both carry the sentence, not just the colour.
 - **Not a lock.** Two people editing the same row still both win. Presence
   shows you that it is about to happen; it does not prevent it. Field
   presence is the same: it is a warning, not a mutex.
+- **Not per tab.** A presence channel counts users, not connections, so two
+  tabs signed in as the same person are one member. `others` drops that
+  member because it is you, so the roster is empty, no avatar appears on a
+  row or a field, and nothing says why. Testing presence needs two accounts,
+  in two browser profiles or one of them a private window: one profile shares
+  the session cookie and you get the same user twice.

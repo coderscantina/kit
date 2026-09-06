@@ -16,7 +16,10 @@ use Spatie\LaravelData\Data;
 /**
  * Name → class map, discovered from the #[ReactiveQuery] / #[ReactiveMutation]
  * attributes under the configured directories. Memoised for the life of the
- * process; the class list is static data, so that is safe under Octane.
+ * process; the class list is static data, so that is safe under Octane. A
+ * name that is not in the map reads the disk once more before it is called
+ * missing, which is what keeps a worker that outlived a deploy from
+ * revoking the subscribers of a query it has simply never seen.
  *
  * Scanning every file on boot costs a directory walk per request
  * outside Octane, so `php artisan reactive:cache` writes the two maps to a
@@ -33,15 +36,19 @@ final class Catalog
 
     private bool $useCache = true;
 
+    private float $scannedAt = 0.0;
+
     /**
      * @param  array<string, string>  $discovery  namespace prefix => directory
      * @param  array<int, class-string>  $classes  explicitly registered classes
      * @param  string|null  $cachePath  the file reactive:cache writes, if any
+     * @param  float  $rescanSeconds  how long a miss is trusted before the disk is read again
      */
     public function __construct(
         private readonly array $discovery,
         private readonly array $classes = [],
         private readonly ?string $cachePath = null,
+        private readonly float $rescanSeconds = 1.0,
     ) {}
 
     /**
@@ -49,7 +56,13 @@ final class Catalog
      */
     public function query(string $name): ?string
     {
-        return $this->queries()[$name] ?? null;
+        $found = $this->queries()[$name] ?? null;
+
+        if ($found === null && $this->rescan()) {
+            $found = $this->queries()[$name] ?? null;
+        }
+
+        return $found;
     }
 
     /**
@@ -57,7 +70,13 @@ final class Catalog
      */
     public function mutation(string $name): ?string
     {
-        return $this->mutations()[$name] ?? null;
+        $found = $this->mutations()[$name] ?? null;
+
+        if ($found === null && $this->rescan()) {
+            $found = $this->mutations()[$name] ?? null;
+        }
+
+        return $found;
     }
 
     /**
@@ -130,6 +149,25 @@ final class Catalog
         $this->build();
     }
 
+    /**
+     * A name this process has never seen may be new rather than gone: a
+     * worker that booted before the deploy carries the map from before it,
+     * and RecomputeComputation reads a miss as "the query was deleted" and
+     * revokes every subscriber of it for good. So a miss reads the disk once
+     * more before it is believed. Throttled, because /rq/subscribe with a
+     * name that was never real reaches here too.
+     */
+    private function rescan(): bool
+    {
+        if ((microtime(true) - $this->scannedAt) < $this->rescanSeconds) {
+            return false;
+        }
+
+        $this->scan();
+
+        return true;
+    }
+
     private function build(): void
     {
         $this->queries = [];
@@ -138,6 +176,8 @@ final class Catalog
         foreach ([...$this->discoveredClasses(), ...$this->classes] as $class) {
             $this->register($class);
         }
+
+        $this->scannedAt = microtime(true);
     }
 
     private function loadFromCache(): bool
