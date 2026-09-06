@@ -2,6 +2,7 @@
 import AppHeader from '~/components/app/AppHeader.vue'
 import AppMobileSidebar from '~/components/app/AppMobileSidebar.vue'
 import AppSidebar from '~/components/app/AppSidebar.vue'
+import AppTabBar from '~/components/app/AppTabBar.vue'
 import ImpersonationBanner from '~/components/app/ImpersonationBanner.vue'
 import SkipLink from '~/components/app/SkipLink.vue'
 import ErrorBoundary from '~/components/ErrorBoundary.vue'
@@ -90,16 +91,20 @@ useShortcut({
       <!-- overflow-x-clip, not overflow-hidden: hidden breaks every sticky element inside. -->
       <!-- Inside the shell, not around it: a page that fails to render leaves the
            sidebar usable, so navigating away is still a way out. -->
+      <!-- The bottom padding on a phone is the tab bar plus the home indicator,
+           so the last row of a page is never hidden under either. -->
       <main
         id="main-content"
         tabindex="-1"
-        class="min-w-0 flex-1 overflow-x-clip p-shell-gutter focus:outline-none"
+        class="min-w-0 flex-1 overflow-x-clip p-shell-gutter pb-[calc(var(--shell-gutter)+var(--shell-tabbar-height)+env(safe-area-inset-bottom))] focus:outline-none lg:pb-shell-gutter"
       >
         <ErrorBoundary>
           <slot />
         </ErrorBoundary>
       </main>
     </div>
+
+    <AppTabBar />
 
     <span
       aria-live="polite"

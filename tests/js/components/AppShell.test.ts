@@ -119,6 +119,20 @@ describe('the app shell', () => {
     wrapper.unmount()
   })
 
+  it('keeps the account pages out of the sidebar and gives the phone a tab bar', async () => {
+    const wrapper = await mountShell()
+
+    const sidebarLinks = wrapper.findAll('aside#app-sidebar nav a').map((a) => a.attributes('href'))
+    expect(sidebarLinks).not.toContain('/account/profile')
+
+    const tabBar = wrapper.find('nav[aria-label="Quick navigation"]')
+    expect(tabBar.exists()).toBe(true)
+    expect(tabBar.find('a[aria-current="page"]').text()).toContain('Dashboard')
+    expect(tabBar.find('button[aria-expanded]').text()).toContain('Menu')
+
+    wrapper.unmount()
+  })
+
   it('collapses the sidebar to the rail width', async () => {
     const wrapper = await mountShell()
     const sidebar = useSidebar()
