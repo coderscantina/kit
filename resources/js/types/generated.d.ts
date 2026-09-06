@@ -42,6 +42,12 @@ declare namespace App {
       canRemove: boolean,
       canResend: boolean,
     };
+    export type PresenceMemberData = {
+      id: string,
+      name: string,
+      avatarUrl: string | null,
+      color: string,
+    };
     export type PublicInviteData = {
       id: string,
       email: string,

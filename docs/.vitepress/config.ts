@@ -28,6 +28,7 @@ export default defineConfig({
           { text: 'AI', link: '/ai' },
           { text: 'People and account', link: '/account' },
           { text: 'Lists and filters', link: '/lists' },
+          { text: 'Presence', link: '/presence' },
           { text: 'Social login', link: '/social-login' },
           { text: 'Push notifications', link: '/push-notifications' },
           { text: 'Runtime contract', link: '/runtime-contract' },

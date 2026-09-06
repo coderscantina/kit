@@ -9,7 +9,8 @@ Read [architecture](/architecture) for how the pieces fit, then
 [App shell](/app-shell) covers what a user sees: the sidebar, the header, the
 keyboard layer and the one file you edit to rebrand. [Lists and
 filters](/lists) covers the query contract every list surface speaks, and the
-saved views built on it. [Social login](/social-login) and [push
+saved views built on it. [Presence](/presence) covers the roster
+and the whisper channel behind it. [Social login](/social-login) and [push
 notifications](/push-notifications) are both off until configured. [AI](/ai)
 covers the streamed model calls. When
 something is broken in production, [runtime contract](/runtime-contract) says

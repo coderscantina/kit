@@ -139,7 +139,20 @@ typed off `Kit.AiMap`. Never fetch `/api/ai/stream` directly. Run
 Test with `FakeAiDriver::swap(...)`: no network, no key, no bill. Full contract
 in `docs/ai.md`.
 
-## 7. Migrations
+## 7. Presence
+
+Who is on a screen is not a query. `usePresence('<resource>')` joins
+`presence.<resource>` over Echo; `App\Support\Presence` opens it to whoever
+has `<resource>.view`, falling back to `app.access`. Nothing to register: the
+one callback in `routes/channels.php` covers every resource-level roster. A
+row-scoped roster needs its own callback with a real policy check.
+
+Whispers (`whisper` / `onWhisper`) go client to client and never reach PHP,
+so they carry cursors, typing flags and selections, and nothing that has to
+survive a refresh. Throttle a stream of them. Full contract in
+`docs/presence.md`.
+
+## 8. Migrations
 
 Nothing here has shipped to a database anyone has to protect, so the schema is
 kept as few files as it can be: the framework's three, plus
@@ -148,7 +161,7 @@ that file and re-running `php artisan migrate:fresh --seed`, not by stacking an
 `ALTER` on top. A generated feature gets its own `create_<table>_table`, which
 is the right shape once the feature is real.
 
-## 8. Definition of done
+## 9. Definition of done
 
 `bin/gate` green locally. One test per query and per mutation; the generators
 write them, keep them meaningful. Tests use `#[Test]`, never a `@test`
@@ -159,13 +172,13 @@ docblock, which PHPUnit 13 ignores silently;
 `Fixture` feature and checks it passes everything. Any change to the
 generators, the stubs, or where files go has to keep that green.
 
-## 9. Release
+## 10. Release
 
 `bin/release` cuts `vYYYY.M.D-<shortsha>` from `main`, writes the changelog
 block from the commit subjects and tags the changelog commit. Rollback is
 re-running the receiver with the previous tag. See `docs/release.md`.
 
-## 10. When kit:doctor fails
+## 11. When kit:doctor fails
 
 Redis, Horizon and Reverb warnings mean a service is down; restart it. A
 failure means the repository is wrong: an unregistered query name (run
@@ -173,7 +186,7 @@ failure means the repository is wrong: an unregistered query name (run
 (add it to `config/kit.php` `ambient_bindings`), or an `en`/`de` key mismatch.
 See `docs/runtime-contract.md`.
 
-## 11. Accepted trade-offs
+## 12. Accepted trade-offs
 
 Decisions reviewers keep re-filing. They are deliberate.
 

@@ -62,9 +62,32 @@ export interface EchoConnectionLike {
   ): void
 }
 
-/** The slice of laravel-echo the package uses. Null when realtime is off. */
+/**
+ * The slice of a laravel-echo presence channel the app uses. `here` fires
+ * once with the roster, `joining` and `leaving` per change, and the whisper
+ * pair carries client events between members without touching the server.
+ */
+export interface EchoPresenceChannelLike<TMember = unknown> {
+  here(callback: (members: TMember[]) => void): this
+  joining(callback: (member: TMember) => void): this
+  leaving(callback: (member: TMember) => void): this
+  error(callback: (error: unknown) => void): this
+  whisper(event: string, payload: unknown): this
+  listenForWhisper(event: string, callback: (payload: never) => void): this
+  /** Without a callback laravel-echo drops every listener for the event. */
+  stopListeningForWhisper(event: string, callback?: (payload: never) => void): this
+}
+
+/**
+ * The slice of laravel-echo the package uses. Null when realtime is off.
+ *
+ * `join` is optional: the reactive layer itself never calls it, and the
+ * fakes in the tests would all have to grow a presence channel they do not
+ * use. A caller that wants presence checks for it.
+ */
 export interface EchoLike {
   private(name: string): EchoChannelLike
+  join?(name: string): EchoPresenceChannelLike
   leave(name: string): void
   connector: { pusher?: { connection: EchoConnectionLike } }
 }
