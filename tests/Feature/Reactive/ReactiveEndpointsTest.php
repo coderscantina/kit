@@ -347,4 +347,50 @@ final class ReactiveEndpointsTest extends TestCase
         $this->assertFalse($callback($other, $mine->id));
         $this->assertFalse($callback($this->user, 'unknown'));
     }
+
+    #[Test]
+    public function a_versioned_write_against_the_current_version_lands_and_bumps_the_version(): void
+    {
+        $note = Note::query()->create(['owner_id' => $this->user->id, 'title' => 'first']);
+        $this->assertSame(1, $note->version, 'a new row starts at version 1');
+
+        $this->mutate('notes.edit', ['id' => $note->id, 'version' => 1, 'title' => 'second', 'body' => 'b'])
+            ->assertOk()
+            ->assertJsonPath('result.title', 'second')
+            ->assertJsonPath('result.version', 2);
+
+        $this->assertSame(2, $note->fresh()?->version);
+    }
+
+    #[Test]
+    public function a_versioned_write_against_a_moved_row_answers_409_with_the_current_row_and_writes_nothing(): void
+    {
+        $note = Note::query()->create(['owner_id' => $this->user->id, 'title' => 'first']);
+        // Someone else saved in between: the row is at version 2 now.
+        $note->update(['title' => 'theirs']);
+
+        $response = $this->mutate('notes.edit', ['id' => $note->id, 'version' => 1, 'title' => 'mine', 'body' => 'b'])
+            ->assertStatus(409)
+            ->assertJsonPath('code', 'CONFLICT')
+            ->assertJsonPath('expected', 1)
+            ->assertJsonPath('actual', 2)
+            // Presented through the mutation's result class, not the raw model.
+            ->assertJsonPath('current.title', 'theirs')
+            ->assertJsonPath('current.version', 2)
+            ->assertJsonMissingPath('current.owner_id');
+
+        $this->assertSame(['message', 'code', 'expected', 'actual', 'current'], array_keys($response->json()));
+        $this->assertDatabaseHas('notes', ['id' => $note->id, 'title' => 'theirs', 'version' => 2]);
+        Reactive::assertNotPushed();
+    }
+
+    #[Test]
+    public function a_save_that_changes_nothing_keeps_its_version(): void
+    {
+        $note = Note::query()->create(['owner_id' => $this->user->id, 'title' => 'same', 'body' => 'kept']);
+
+        $this->mutate('notes.edit', ['id' => $note->id, 'version' => 1, 'title' => 'same', 'body' => 'kept'])
+            ->assertOk()
+            ->assertJsonPath('result.version', 1);
+    }
 }

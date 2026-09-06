@@ -18,7 +18,7 @@ final class ReactiveFixtures
     {
         Note::migrate();
 
-        config(['reactive.classes' => [ListNotes::class, AllNotes::class, CreateNote::class, RenameNote::class, FailingMutation::class]]);
+        config(['reactive.classes' => [ListNotes::class, AllNotes::class, CreateNote::class, RenameNote::class, EditNote::class, FailingMutation::class]]);
         app(Catalog::class)->reset();
 
         Gate::define('view-notes', fn (User $user, string $ownerId) => $user->is_root || $user->id === $ownerId);

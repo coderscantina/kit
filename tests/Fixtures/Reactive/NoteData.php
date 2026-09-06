@@ -13,10 +13,11 @@ final class NoteData extends Data
         public string $ownerId,
         public string $title,
         public string $body,
+        public int $version,
     ) {}
 
     public static function fromModel(Note $note): self
     {
-        return new self($note->id, $note->owner_id, $note->title, $note->body);
+        return new self($note->id, $note->owner_id, $note->title, $note->body, $note->version);
     }
 }

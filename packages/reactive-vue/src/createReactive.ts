@@ -19,7 +19,7 @@ import {
 } from 'vue'
 
 import { createConnectionMonitor, type ConnectionMonitor } from './connection'
-import { ForbiddenError } from './errors'
+import { ConflictError, ForbiddenError } from './errors'
 import {
   applyOptimistic,
   applyPush,
@@ -84,6 +84,13 @@ export interface ReactiveMutationOptions<M extends ReactiveMapLike, K extends ke
   optimistic?: (cache: ReactiveCache<M>, args: M[K]['args']) => void
   onSuccess?: (result: M[K]['result'], args: M[K]['args']) => void
   onError?: (error: Error, args: M[K]['args']) => void
+  /**
+   * A 409: the row moved and nothing was written. `error.current` is the
+   * row now, typed as this mutation's result. When set, a conflict does
+   * not reach `onError` or the app's error toast: the caller is resolving
+   * it, not reporting it.
+   */
+  onConflict?: (error: ConflictError<M[K]['result']>, args: M[K]['args']) => void
 }
 
 export type ReactiveQueryReturn<TResult> = UseQueryReturnType<TResult, Error> & {
@@ -327,6 +334,10 @@ export function createReactive<M extends ReactiveMapLike>(options: ReactiveOptio
             }
             refetchKey(key)
           }
+        }
+        if (error instanceof ConflictError && mutationOptions.onConflict) {
+          mutationOptions.onConflict(error as ConflictError<M[K]['result']>, args)
+          return
         }
         mutationOptions.onError?.(error, args)
         options.onMutationError?.(name, error)

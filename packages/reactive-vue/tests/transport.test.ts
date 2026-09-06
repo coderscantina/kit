@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest'
 
-import { ValidationError } from '../src/errors'
+import { ConflictError, ValidationError } from '../src/errors'
 import { createHttpTransport, type HttpPoster } from '../src/transport'
 
 describe('createHttpTransport', () => {
@@ -40,6 +40,20 @@ describe('createHttpTransport', () => {
     await expect(transport.mutate('notes.create', {})).rejects.toBeInstanceOf(ValidationError)
     await transport.mutate('notes.create', {}).catch((e: ValidationError) => {
       expect(e.first('title')).toBe('The title field is required.')
+    })
+  })
+
+  it('turns a 409 with code CONFLICT into a ConflictError carrying the current row', async () => {
+    const error = Object.assign(new Error('moved'), {
+      status: 409,
+      data: { message: 'moved', code: 'CONFLICT', expected: 1, actual: 3, current: { id: 'n' } },
+    })
+    const transport = createHttpTransport({ post: vi.fn(async () => Promise.reject(error)) })
+
+    await transport.mutate('notes.edit', {}).catch((e: ConflictError) => {
+      expect(e).toBeInstanceOf(ConflictError)
+      expect(e.actual).toBe(3)
+      expect(e.current).toEqual({ id: 'n' })
     })
   })
 

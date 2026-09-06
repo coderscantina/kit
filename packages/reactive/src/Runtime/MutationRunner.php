@@ -10,17 +10,21 @@ use Illuminate\Database\Connection;
 use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
+use Kit\Reactive\Attributes\ReactiveMutation;
+use Kit\Reactive\Concurrency\VersionConflict;
 use Kit\Reactive\Contracts\Registry;
 use Kit\Reactive\Invalidation\ChangeBuffer;
 use Kit\Reactive\Mutation;
+use ReflectionClass;
 use Spatie\LaravelData\Data;
 use Throwable;
 
 /**
  * The mutation pipeline (§4.2): build the args class → authorize → REPEATABLE READ
  * transaction retried on deadlock/lock-wait with jittered backoff → on
- * commit the change buffer takes a mutation id and dispatches the
- * invalidation batch → {result, mutationId}.
+ * commit the change buffer takes a mutation id and hands the batch to the
+ * Invalidator → {result, mutationId}. A VersionConflict from inside the
+ * transaction is not retried: the row moved, and the caller has to see it.
  */
 final class MutationRunner
 {
@@ -48,7 +52,13 @@ final class MutationRunner
 
         $mutation->authorize($user, $validated);
 
-        $raw = $this->transaction(fn () => $mutation->handle($validated));
+        try {
+            $raw = $this->transaction(fn () => $mutation->handle($validated));
+        } catch (VersionConflict $conflict) {
+            // Rolled back already. The client gets the row as it is now, in
+            // the shape this mutation's result would have had.
+            throw $conflict->presentAs($this->resultClass($mutation));
+        }
 
         // The buffer INCRs the counter when it flushes on commit. A mutation
         // that changed no tracked row still gets an id, so the client can
@@ -102,6 +112,20 @@ final class MutationRunner
         if ($connection->transactionLevel() === 0 && in_array($connection->getDriverName(), ['mysql', 'mariadb'], true)) {
             $connection->statement('SET TRANSACTION ISOLATION LEVEL REPEATABLE READ');
         }
+    }
+
+    /**
+     * @param  Mutation<Data>  $mutation
+     * @return class-string<Data>|null
+     */
+    private function resultClass(Mutation $mutation): ?string
+    {
+        $attributes = (new ReflectionClass($mutation))->getAttributes(ReactiveMutation::class);
+
+        /** @var class-string<Data>|null $result */
+        $result = $attributes === [] ? null : $attributes[0]->newInstance()->result;
+
+        return $result;
     }
 
     private function isRetryable(Throwable $e): bool

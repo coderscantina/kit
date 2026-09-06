@@ -8,6 +8,7 @@ use Illuminate\Contracts\Auth\Access\Gate;
 use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Gate as GateFacade;
+use Kit\Reactive\Concurrency\VersionConflict;
 use Spatie\LaravelData\Data;
 
 /**
@@ -66,5 +67,31 @@ abstract class Mutation
         $model->setRawAttributes($fresh->getAttributes(), true);
 
         return $model;
+    }
+
+    /**
+     * Lock the row and check it is still the version the client read. The
+     * model uses `Kit\Reactive\Concurrency\Versioned`; the args carry the
+     * version the form was opened with. A row that moved throws
+     * VersionConflict, which the runner turns into a 409 carrying the row
+     * as it is now.
+     *
+     * @template TModel of Model
+     *
+     * @param  TModel  $model
+     * @return TModel
+     *
+     * @throws VersionConflict
+     */
+    protected function lockVersion(Model $model, int $version): Model
+    {
+        $locked = $this->lock($model);
+        $actual = (int) $locked->getAttribute('version');
+
+        if ($actual !== $version) {
+            throw new VersionConflict($locked, $version, $actual);
+        }
+
+        return $locked;
     }
 }

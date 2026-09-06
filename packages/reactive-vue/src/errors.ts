@@ -27,10 +27,40 @@ export class ForbiddenError extends Error {
   }
 }
 
+/**
+ * A 409 from /rq/mutate: the row moved between the client's read and its
+ * write, and nothing was written. `current` is the row as it is now, in
+ * the mutation's result shape, so the caller can resolve field by field
+ * (`useReactiveForm().apply(error.current)`) and save again against
+ * `current.version`.
+ */
+export class ConflictError<TCurrent = unknown> extends Error {
+  readonly status = 409
+
+  readonly code = 'CONFLICT'
+
+  constructor(
+    message: string,
+    public readonly expected: number,
+    public readonly actual: number,
+    public readonly current: TCurrent
+  ) {
+    super(message)
+    this.name = 'ConflictError'
+  }
+}
+
 interface HttpErrorLike {
   status?: number
   message?: string
-  data?: { message?: string; errors?: Record<string, string[]> }
+  data?: {
+    message?: string
+    errors?: Record<string, string[]>
+    code?: string
+    expected?: number
+    actual?: number
+    current?: unknown
+  }
 }
 
 /** Map the API client's error shape onto the package's typed errors. */
@@ -41,6 +71,15 @@ export const normalizeError = (error: unknown): Error => {
     return new ValidationError(
       http.data?.message ?? http.message ?? 'Validation failed',
       http.data?.errors ?? {}
+    )
+  }
+
+  if (http?.status === 409 && http.data?.code === 'CONFLICT') {
+    return new ConflictError(
+      http.data.message ?? 'The row changed since it was read',
+      http.data.expected ?? 0,
+      http.data.actual ?? 0,
+      http.data.current
     )
   }
 

@@ -4,7 +4,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import { defineComponent, h, nextTick, ref } from 'vue'
 
 import { createReactive, type Reactive } from '../src/createReactive'
-import { ForbiddenError } from '../src/errors'
+import { ConflictError, ForbiddenError } from '../src/errors'
 import type {
   EchoLike,
   ReactiveTransport,
@@ -289,5 +289,40 @@ describe('useReactiveMutation', () => {
 
     expect(result.list.data.value).toEqual(['a'])
     expect(onMutationError).toHaveBeenCalledWith('notes.create', expect.any(Error))
+  })
+
+  it('hands a 409 to onConflict with the current row, and not to the error toast', async () => {
+    const { echo } = createFakeEcho()
+    const { transport } = createFakeTransport()
+    const onMutationError = vi.fn()
+    const onConflict = vi.fn()
+    const onError = vi.fn()
+    const reactive = createReactive<TestMap>({ transport, echo, onMutationError })
+
+    const { result } = mountWith(reactive, () => ({
+      list: reactive.useReactiveQuery('notes.list', { ownerId: 'u' }),
+      create: reactive.useReactiveMutation('notes.create', {
+        optimistic: (cache, args) =>
+          cache.patch(['notes.list', { ownerId: 'u' }], (list) => [...list, args.title]),
+        onConflict,
+        onError,
+      }),
+    }))
+    await flushPromises()
+    ;(transport.mutate as ReturnType<typeof vi.fn>).mockImplementationOnce(async () => {
+      throw new ConflictError('moved', 1, 2, { title: 'theirs' })
+    })
+
+    await result.create.mutateAsync({ title: 'mine' }).catch(() => undefined)
+    await flushPromises()
+
+    // The optimistic patch is rolled back: nothing was written.
+    expect(result.list.data.value).toEqual(['a'])
+    expect(onConflict).toHaveBeenCalledWith(
+      expect.objectContaining({ current: { title: 'theirs' }, actual: 2 }),
+      { title: 'mine' }
+    )
+    expect(onError).not.toHaveBeenCalled()
+    expect(onMutationError).not.toHaveBeenCalled()
   })
 })
