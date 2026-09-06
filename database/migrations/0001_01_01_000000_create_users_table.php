@@ -26,6 +26,7 @@ return new class extends Migration
             $table->timestamp('email_verified_at')->nullable();
             $table->string('password');
             $table->string('locale', 8)->default('en');
+            $table->string('avatar_path')->nullable();
             $table->foreignUlid('role_id')->nullable()->constrained('roles')->nullOnDelete();
             $table->boolean('is_root')->default(false);
             $table->text('two_factor_secret')->nullable();
