@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import InstallDialog from '~/components/app/InstallDialog.vue'
 import Icon from '~/components/Icon.vue'
 import { Avatar } from '~/components/ui/avatar'
 import {
@@ -17,8 +18,13 @@ import {
 } from '~/components/ui/dropdown-menu'
 import { useAuth } from '~/composables/useAuth'
 import { type ColorMode, useColorMode } from '~/composables/useColorMode'
+import { useInstallPrompt } from '~/composables/useInstallPrompt'
 import { useShortcutHelp } from '~/composables/useShortcuts'
-import { canAccessRouteByName } from '~/lib/access-control'
+import {
+  accountNavigationItems,
+  filterNavigationItems,
+  navigationIcons,
+} from '~/lib/access-control'
 import { appConfig } from '~/lib/app-config'
 import { type LocaleCode, useI18n } from '~/plugins/i18n'
 
@@ -27,6 +33,7 @@ const auth = useAuth()
 const router = useRouter()
 const { mode, isDark, setMode, colorModes } = useColorMode()
 const shortcutHelp = useShortcutHelp()
+const installPrompt = useInstallPrompt()
 
 const features = appConfig.features
 
@@ -42,15 +49,21 @@ const colorModeLabels = computed<Record<ColorMode, string>>(() => ({
   system: t('colorMode.system'),
 }))
 
-/** The account pages, shown only when the current user may actually open them. */
-const accountEntries = [
-  { name: 'account-profile', labelKey: 'nav.profile', icon: 'lucide:user' },
-  { name: 'account-security', labelKey: 'nav.security', icon: 'lucide:shield' },
-] as const
-
+/** The account pages are reachable from here and from nowhere in the sidebar. */
 const accountRoutes = computed(() =>
-  accountEntries.filter((entry) => canAccessRouteByName(entry.name, { me: auth.me.value }))
+  filterNavigationItems(accountNavigationItems, { me: auth.me.value })
 )
+
+const installOpen = ref(false)
+
+/** Prompt straight away where the browser allows it; show the steps where it does not. */
+const install = async () => {
+  if (installPrompt.canPrompt.value) {
+    await installPrompt.install()
+    return
+  }
+  installOpen.value = true
+}
 
 const logout = async () => {
   await auth.logout()
@@ -68,33 +81,41 @@ const logout = async () => {
         size="sm"
         class="size-7 rounded-lg"
         :name="auth.user.value?.name ?? '?'"
+        :avatar="auth.user.value?.avatarUrl"
       />
       <Icon
         name="lucide:chevron-down"
         size="14"
-        class="text-muted"
+        class="hidden text-muted sm:block"
         aria-hidden="true"
       />
     </DropdownMenuTrigger>
 
     <DropdownMenuContent
       align="end"
-      class="min-w-56"
+      class="min-w-60"
     >
-      <div class="px-2 py-1.5">
-        <p class="truncate text-sm font-semibold text-primary">{{ auth.user.value?.name }}</p>
-        <p class="truncate text-xs text-muted">{{ auth.user.value?.email }}</p>
+      <div class="flex items-center gap-3 px-2 py-2">
+        <Avatar
+          :name="auth.user.value?.name ?? '?'"
+          :avatar="auth.user.value?.avatarUrl"
+          class="rounded-lg"
+        />
+        <div class="min-w-0">
+          <p class="truncate text-sm font-semibold text-primary">{{ auth.user.value?.name }}</p>
+          <p class="truncate text-xs text-muted">{{ auth.user.value?.email }}</p>
+        </div>
       </div>
       <DropdownMenuSeparator />
 
       <DropdownMenuGroup>
         <DropdownMenuItem
           v-for="entry in accountRoutes"
-          :key="entry.name"
+          :key="entry.routeName"
           as-child
         >
-          <RouterLink :to="{ name: entry.name }">
-            <Icon :name="entry.icon" />
+          <RouterLink :to="{ name: entry.routeName }">
+            <Icon :name="navigationIcons[entry.icon]" />
             {{ t(entry.labelKey) }}
           </RouterLink>
         </DropdownMenuItem>
@@ -149,11 +170,20 @@ const logout = async () => {
 
       <DropdownMenuItem
         v-if="features.shortcutsHelp"
+        class="max-lg:hidden"
         @select="shortcutHelp.show()"
       >
         <Icon name="lucide:keyboard" />
         {{ t('shortcuts.title') }}
         <DropdownMenuShortcut>?</DropdownMenuShortcut>
+      </DropdownMenuItem>
+
+      <DropdownMenuItem
+        v-if="installPrompt.available.value"
+        @select="install"
+      >
+        <Icon name="lucide:smartphone" />
+        {{ t('pwa.install') }}
       </DropdownMenuItem>
 
       <DropdownMenuSeparator />
@@ -163,4 +193,6 @@ const logout = async () => {
       </DropdownMenuItem>
     </DropdownMenuContent>
   </DropdownMenu>
+
+  <InstallDialog v-model:open="installOpen" />
 </template>

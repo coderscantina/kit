@@ -15,7 +15,11 @@ import { useCommandPalette } from '~/composables/useCommandPalette'
 import { useNavigation } from '~/composables/useNavigation'
 import { useShortcut, useShortcutHelp } from '~/composables/useShortcuts'
 import { useSidebar } from '~/composables/useSidebar'
-import { navigationIcons } from '~/lib/access-control'
+import {
+  accountNavigationItems,
+  filterNavigationItems,
+  navigationIcons,
+} from '~/lib/access-control'
 import { appConfig } from '~/lib/app-config'
 import { useI18n } from '~/plugins/i18n'
 
@@ -30,6 +34,9 @@ const shortcutHelp = useShortcutHelp()
 // The same filter the sidebar uses, so the palette never offers a page the
 // user would only be bounced off.
 const { items } = useNavigation()
+const accountItems = computed(() =>
+  filterNavigationItems(accountNavigationItems, { me: auth.me.value })
+)
 
 interface Command {
   id: string
@@ -106,6 +113,17 @@ const run = (action: () => void) => {
       <CommandGroup :heading="t('commandPalette.navigation')">
         <CommandItem
           v-for="item in items"
+          :key="item.routeName"
+          :value="`${t(item.labelKey)} ${item.routeName}`"
+          @select="run(() => router.push({ name: item.routeName }))"
+        >
+          <Icon :name="navigationIcons[item.icon]" />
+          {{ t(item.labelKey) }}
+        </CommandItem>
+      </CommandGroup>
+      <CommandGroup :heading="t('account.title')">
+        <CommandItem
+          v-for="item in accountItems"
           :key="item.routeName"
           :value="`${t(item.labelKey)} ${item.routeName}`"
           @select="run(() => router.push({ name: item.routeName }))"

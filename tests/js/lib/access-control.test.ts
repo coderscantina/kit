@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 
 import {
+  accountNavigationItems,
   canAccessRouteByName,
   filterNavigationItems,
   firstAllowedRoute,
@@ -50,9 +51,10 @@ describe('navigation', () => {
 
     expect(filterNavigationItems(navigationItems, context).map((item) => item.routeName)).toEqual([
       'dashboard',
-      'account-profile',
-      'account-security',
     ])
+    expect(
+      filterNavigationItems(accountNavigationItems, context).map((item) => item.routeName)
+    ).toEqual(['account-profile', 'account-security', 'account-data'])
     expect(canAccessRouteByName('users', context)).toBe(false)
     expect(firstAllowedRoute(context)).toEqual({ name: 'dashboard' })
     expect(firstAllowedRoute({ me: me([]) })).toBeNull()

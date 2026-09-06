@@ -37,6 +37,7 @@ export const navigationIcons: Record<string, string> = {
   user: 'lucide:user',
   shield: 'lucide:shield',
   sparkles: 'lucide:sparkles',
+  database: 'lucide:database',
   box: 'lucide:box',
 }
 
@@ -48,9 +49,18 @@ export const navigationItems: NavigationItem[] = [
   { labelKey: 'nav.dashboard', icon: 'home', routeName: 'dashboard' },
   { labelKey: 'nav.users', icon: 'users', routeName: 'users' },
   { labelKey: 'nav.assistant', icon: 'sparkles', routeName: 'assistant' },
+  // kit:nav
+]
+
+/**
+ * The pages about the signed-in person rather than the product. They are not
+ * in the sidebar on purpose: they hang off the account menu and off the
+ * settings sub-nav, and they never compete with a feature for the eye.
+ */
+export const accountNavigationItems: NavigationItem[] = [
   { labelKey: 'nav.profile', icon: 'user', routeName: 'account-profile' },
   { labelKey: 'nav.security', icon: 'shield', routeName: 'account-security' },
-  // kit:nav
+  { labelKey: 'nav.data', icon: 'database', routeName: 'account-data' },
 ]
 
 /** Route name → what it takes to open it. Drives the guard and the sidebar. */
@@ -59,6 +69,7 @@ export const routeAccessRequirements: Record<AppRouteName, RouteAccessRequiremen
   users: { abilities: { anyOf: ['users.view', 'invites.view'] } },
   'account-profile': { abilities: 'app.access' },
   'account-security': { abilities: 'app.access' },
+  'account-data': { abilities: 'app.access' },
   assistant: {
     // Two gates: the ability, and whether the installation has a provider
     // key at all. Without the second the item is a button that can only fail.

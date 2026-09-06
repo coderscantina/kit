@@ -27,7 +27,8 @@
     "sections": {
       "manage": "Verwalten",
       "account": "Konto"
-    }
+    },
+    "data": "Deine Daten"
   },
   "shell": {
     "skipToContent": "Zum Inhalt springen",
@@ -35,7 +36,9 @@
     "toggleSidebar": "Seitenleiste ein-/ausklappen",
     "resizeSidebar": "Breite der Seitenleiste ändern",
     "userMenu": "Kontomenü",
-    "language": "Sprache"
+    "language": "Sprache",
+    "menu": "Menü",
+    "mobileNavigation": "Schnellnavigation"
   },
   "colorMode": {
     "label": "Erscheinungsbild",
@@ -208,7 +211,8 @@
       "verified": "Bestätigt",
       "unverified": "Diese Adresse ist noch nicht bestätigt.",
       "resendVerification": "Link erneut senden",
-      "verificationSent": "Ein neuer Bestätigungslink ist unterwegs."
+      "verificationSent": "Ein neuer Bestätigungslink ist unterwegs.",
+      "description": "Wie andere dich sehen und wie die App mit dir spricht."
     },
     "security": {
       "title": "Sicherheit",
@@ -248,7 +252,14 @@
       "deleteDescription": "Löscht dein Konto und alles, was daran hängt.",
       "deleteWarning": "Das lässt sich nicht rückgängig machen. Exportiere vorher deine Daten, wenn du sie behalten willst.",
       "deleteTypeEmail": "Tippe {email} zur Bestätigung",
-      "deleteConfirmAction": "Mein Konto schließen"
+      "deleteConfirmAction": "Mein Konto schließen",
+      "description": "Was dieses Konto schützt, was darin angemeldet ist und was damit passiert ist.",
+      "overview": {
+        "on": "Aktiv",
+        "off": "Aus",
+        "authenticator": "Authenticator-App",
+        "devices": "{count} angemeldetes Gerät | {count} angemeldete Geräte"
+      }
     },
     "export": {
       "title": "Daten exportieren",
@@ -263,6 +274,18 @@
       "missingToken": "Dieser Link ist unvollständig. Öffne den Link aus der Mail.",
       "continue": "Zum Profil",
       "backToSignIn": "Zurück zur Anmeldung"
+    },
+    "title": "Konto",
+    "nav": {
+      "label": "Kontoeinstellungen"
+    },
+    "appearance": {
+      "title": "Darstellung",
+      "description": "Dem System folgen oder eine Seite wählen. Wird in diesem Browser gespeichert."
+    },
+    "data": {
+      "title": "Deine Daten",
+      "description": "Nimm eine Kopie dessen mit, was diese Installation über dich gespeichert hat, oder schließe das Konto."
     }
   },
   "users": {
@@ -445,5 +468,16 @@
     "revokeOthers": "Alle anderen Geräte abmelden",
     "revokeOthersConfirm": "Alle Geräte außer diesem abmelden?",
     "revokedCount": "{count} Gerät(e) abgemeldet."
+  },
+  "pwa": {
+    "install": "App installieren",
+    "installTitle": "{name} installieren",
+    "installDescription": "Öffnet sich vom Startbildschirm aus im Vollbild, mit eigenem Symbol und ohne Browserleisten.",
+    "installAction": "Installieren",
+    "ios": {
+      "share": "Tippe in Safari auf „Teilen“.",
+      "add": "Wähle „Zum Home-Bildschirm“.",
+      "confirm": "Tippe auf „Hinzufügen“."
+    }
   }
 }

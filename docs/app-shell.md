@@ -20,13 +20,15 @@ export const appConfig = defineAppConfig({
     sections: [
       { items: ['dashboard'] },
       { labelKey: 'nav.sections.manage', items: ['users', 'assistant'] },
-      { labelKey: 'nav.sections.account', items: ['account-profile', 'account-security'] },
     ],
     overflowSection: 1,
     collapsible: true,
     defaultCollapsed: false,
     resizable: true,
     width: { default: 248, min: 208, max: 360 },
+  },
+  mobile: {
+    tabBarItems: 4,
   },
   features: {
     commandPalette: true,
@@ -69,6 +71,23 @@ Reordering a section is a config edit; adding a page is not.
 
 A group whose items are all filtered out by access control disappears, heading
 included.
+
+The account pages are not sidebar items. They live in `accountNavigationItems`
+in the same file and hang off the account menu, the command palette, the
+phone drawer and the settings sub-nav under `/account`. A product's sidebar is
+for the product; where you change your password is one click behind your
+avatar, on every page, and never competes with a feature for the eye.
+
+### Phone navigation
+
+Below `lg` the sidebar is gone and a bottom tab bar takes its place: the first
+`mobile.tabBarItems` nav items as thumb-reach tabs, then a Menu tab that opens
+the drawer with the rest of the nav, the account pages and sign-out. The
+header keeps the brand, the palette trigger and the account menu.
+
+The tab bar pads itself with `env(safe-area-inset-bottom)` and `<main>` pads
+its bottom by the tab bar's height, so nothing ends up under the home
+indicator. The header does the same at the top with `pt-safe`.
 
 ### Feature toggles
 
@@ -179,6 +198,33 @@ The gutter is removed by `main:has(> [data-bleed])` in `app.css`.
 - Everything that animates collapses under `prefers-reduced-motion: reduce`.
   Opacity fades stay, because losing them makes overlays snap harder than the
   motion they replace.
+
+## Installing to the home screen
+
+The app is a PWA in production builds: `vite-plugin-pwa` emits the manifest
+and a service worker under `/build/`, and `resources/views/app.blade.php`
+links the manifest when the file exists. In development the plugin is off;
+`VITE_PWA=1 bun run dev` turns it on to test the install flow.
+
+What ships:
+
+- `public/icons/icon.svg`, `icon-192.png`, `icon-512.png` and
+  `icon-maskable-512.png`, plus `public/apple-touch-icon.png`. Replace them
+  with your mark; the maskable one needs its glyph inside the centre 80%.
+- Manifest shortcuts for Users and Account, the long-press targets on the
+  home-screen icon. Edit them in `vite.config.ts` when your features change.
+- `theme-color` for light and dark, `viewport-fit=cover`, and the iOS tags for
+  a translucent status bar the shell paints under.
+
+The service worker precaches the hashed assets only. API responses are never
+cached: a stale answer is worse than no answer. When a new worker is waiting
+the shell shows the same reload toast the `X-App-Version` header triggers, so
+one deploy is one toast.
+
+"Install app" in the account menu prompts where the browser can
+(`beforeinstallprompt`) and, on iOS Safari, shows the three Share-sheet steps
+instead. It disappears once the app runs standalone. See
+`composables/useInstallPrompt.ts`.
 
 ## Auth pages
 

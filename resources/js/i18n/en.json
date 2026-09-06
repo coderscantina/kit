@@ -27,7 +27,8 @@
     "sections": {
       "manage": "Manage",
       "account": "Account"
-    }
+    },
+    "data": "Your data"
   },
   "shell": {
     "skipToContent": "Skip to content",
@@ -35,7 +36,9 @@
     "toggleSidebar": "Toggle sidebar",
     "resizeSidebar": "Resize sidebar",
     "userMenu": "Account menu",
-    "language": "Language"
+    "language": "Language",
+    "menu": "Menu",
+    "mobileNavigation": "Quick navigation"
   },
   "colorMode": {
     "label": "Theme",
@@ -208,7 +211,8 @@
       "verified": "Verified",
       "unverified": "This address is not verified yet.",
       "resendVerification": "Resend the link",
-      "verificationSent": "A new verification link is on its way."
+      "verificationSent": "A new verification link is on its way.",
+      "description": "How you appear to other people, and how the app speaks to you."
     },
     "security": {
       "title": "Security",
@@ -248,7 +252,14 @@
       "deleteDescription": "Removes your account and everything attached to it.",
       "deleteWarning": "This cannot be undone. Export your data first if you want to keep it.",
       "deleteTypeEmail": "Type {email} to confirm",
-      "deleteConfirmAction": "Close my account"
+      "deleteConfirmAction": "Close my account",
+      "description": "What protects this account, what is signed in to it, and what has happened to it.",
+      "overview": {
+        "on": "On",
+        "off": "Off",
+        "authenticator": "Authenticator app",
+        "devices": "{count} signed-in device | {count} signed-in devices"
+      }
     },
     "export": {
       "title": "Export your data",
@@ -263,6 +274,18 @@
       "missingToken": "This link is incomplete. Open the one from the mail.",
       "continue": "Go to your profile",
       "backToSignIn": "Back to sign in"
+    },
+    "title": "Account",
+    "nav": {
+      "label": "Account settings"
+    },
+    "appearance": {
+      "title": "Appearance",
+      "description": "Follow the system, or pick a side. Stored in this browser."
+    },
+    "data": {
+      "title": "Your data",
+      "description": "Take a copy of what this installation holds about you, or close the account."
     }
   },
   "users": {
@@ -445,5 +468,16 @@
     "revokeOthers": "Sign out every other device",
     "revokeOthersConfirm": "Sign out every device except this one?",
     "revokedCount": "Signed out {count} device(s)."
+  },
+  "pwa": {
+    "install": "Install app",
+    "installTitle": "Install {name}",
+    "installDescription": "Opens full screen from your home screen, with its own icon and no browser bars.",
+    "installAction": "Install",
+    "ios": {
+      "share": "Tap the Share button in Safari.",
+      "add": "Choose “Add to Home Screen”.",
+      "confirm": "Tap Add."
+    }
   }
 }

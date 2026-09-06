@@ -41,7 +41,11 @@ export interface SidebarConfig {
    * an edit here.
    */
   sections: SidebarSection[]
-  /** Index of the section unlisted items land in. Clamped to a real section. */
+  /**
+   * Index of the section unlisted items land in. Clamped to a real section.
+   * Account pages never land here: they live in `accountNavigationItems` and
+   * hang off the account menu instead.
+   */
   overflowSection: number
   /** Collapse to an icon rail. `false` pins the sidebar open and hides the toggle. */
   collapsible: boolean
@@ -51,6 +55,14 @@ export interface SidebarConfig {
   resizable: boolean
   /** Expanded width bounds and default, in pixels. */
   width: { default: number; min: number; max: number }
+}
+
+export interface MobileConfig {
+  /**
+   * How many nav items the bottom tab bar shows before the trailing "Menu"
+   * tab, which opens the full drawer. Four is what fits a phone in one row.
+   */
+  tabBarItems: number
 }
 
 export interface ShellFeatures {
@@ -71,6 +83,7 @@ export interface ShellFeatures {
 export interface AppConfig {
   brand: BrandConfig
   sidebar: SidebarConfig
+  mobile: MobileConfig
   features: ShellFeatures
   /** Row heights and shell padding. `compact` trims roughly 20%. */
   density: 'comfortable' | 'compact'
@@ -94,13 +107,15 @@ export const appConfig = defineAppConfig({
     sections: [
       { items: ['dashboard'] },
       { labelKey: 'nav.sections.manage', items: ['users', 'assistant'] },
-      { labelKey: 'nav.sections.account', items: ['account-profile', 'account-security'] },
     ],
     overflowSection: 1,
     collapsible: true,
     defaultCollapsed: false,
     resizable: true,
     width: { default: 248, min: 208, max: 360 },
+  },
+  mobile: {
+    tabBarItems: 4,
   },
   features: {
     commandPalette: true,

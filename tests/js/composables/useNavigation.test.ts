@@ -42,7 +42,7 @@ describe('useNavigation', () => {
     const { result, unmount }: Harness<ReturnType<typeof useNavigation>> = withSetup(useNavigation)
 
     const labels = result.sections.value.map((section) => section.labelKey)
-    expect(labels).toEqual([null, 'nav.sections.manage', 'nav.sections.account'])
+    expect(labels).toEqual([null, 'nav.sections.manage'])
 
     const first = result.sections.value[0]
     expect(first?.items.map((item) => item.routeName)).toEqual(['dashboard'])
