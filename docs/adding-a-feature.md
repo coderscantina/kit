@@ -11,12 +11,26 @@ php artisan make:feature Post
 
 <!--@include: ./generated/make-feature.md-->
 
-That writes `app/Features/Post/` with the model, factory, migration, data
-class, policy, service provider and a policy test, plus
-`resources/js/pages/posts/Index.vue` and its Vitest file. It then runs
-`make:query posts.list` and `types:generate`, so the page renders real rows
-from the moment it exists rather than a placeholder. It also inserts, at the
-`// kit:` marker lines:
+That writes the feature across the layers, every file named after it:
+
+| File                                           | Is                         |
+| ---------------------------------------------- | -------------------------- |
+| `app/Models/Post.php`                          | the model                  |
+| `app/Policies/PostPolicy.php`                  | the policy, found by name  |
+| `app/Data/PostData.php`                        | what queries serialize to  |
+| `database/factories/PostFactory.php`           | the factory, found by name |
+| `database/migrations/*_create_posts_table.php` | the table                  |
+| `tests/Feature/Post/PostPolicyTest.php`        | the policy test            |
+| `resources/js/pages/posts/Index.vue`           | the page                   |
+| `tests/js/pages/posts/Index.test.ts`           | its Vitest file            |
+
+Nothing is registered anywhere. Laravel resolves `App\Models\Post` to
+`App\Policies\PostPolicy` and `Database\Factories\PostFactory` by name, and the
+migration is already in the directory `php artisan migrate` reads.
+
+The command then runs `make:query posts.list` and `types:generate`, so the page
+renders real rows from the moment it exists rather than a placeholder. It also
+inserts, at the `// kit:` marker lines:
 
 - `posts.view` and `posts.manage` into `config/abilities.php`, and into the
   owner and admin role lists. Member is left alone on purpose; "everyone can
@@ -28,8 +42,7 @@ from the moment it exists rather than a placeholder. It also inserts, at the
 Nothing is overwritten, so a second run only fills gaps.
 
 Open the migration and give the table its real columns, then the model's
-`#[Fillable]` and the factory to match. Migrations run from the feature's own
-provider, so `php artisan migrate` picks them up with no further wiring.
+`#[Fillable]` and the factory to match.
 
 ## 2. A query
 
@@ -42,8 +55,8 @@ php artisan make:query posts.comments
 
 <!--@include: ./generated/make-query.md-->
 
-You get `Queries/ListPost.php` and `Tests/ListPostTest.php`. Fill in `handle()`
-with the read; `authorize()` already points at the feature policy. Re-running
+You get `app/Queries/Post/ListPost.php` and
+`tests/Feature/Post/ListPostTest.php`. Fill in `handle()` with the read; `authorize()` already points at the feature policy. Re-running
 the generator on a query that exists reports what it left alone.
 
 A generated query starts on `NoArgs`. To give it arguments, write a Data class
@@ -96,7 +109,8 @@ php artisan make:mutation posts.create
 
 <!--@include: ./generated/make-mutation.md-->
 
-`Mutations/CreatePost.php` and `Data/CreatePostArgs.php` come out together.
+`app/Mutations/Post/CreatePost.php` and `app/Data/CreatePostArgs.php` come out
+together.
 The mutation runs inside a transaction the runner opened, with
 deadlock retry and after-commit invalidation. Do not call `DB::transaction`,
 `afterCommit` or dispatch an invalidation inside it; a PHPStan rule fails the
@@ -144,8 +158,8 @@ A feature that wants a model does not get a controller either:
 php artisan make:ai-action posts.summarize
 ```
 
-That writes `app/Features/Post/Ai/SummarizePost.php`, its args class and a
-test that runs it against a faked model. The client streams it with
+That writes `app/Ai/Actions/SummarizePost.php`, its args class and a test that
+runs it against a faked model. The client streams it with
 `useAiStream('posts.summarize')`. The whole contract, including tools and the
 prompt-injection rules, is in [AI](/ai).
 

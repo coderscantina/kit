@@ -2,27 +2,42 @@
 
 ## Layout
 
+One folder per layer, one subfolder per domain inside the layers that have
+enough of them to need it.
+
 ```
 app/
-  Features/<Name>/     Models/ Queries/ Mutations/ Data/ Policies/ Tests/
-                       Database/{Factories,Migrations}/ <Name>ServiceProvider.php
-  Ai/                  AI actions that belong to no feature
-  Http/                the few REST controllers: auth, profile, invites, ai
-  Jobs/QueuedJob.php   base job
-  Policies/            ResourcePolicy and the ones with real per-model rules
-  Services/Ai/         the AI layer: driver, actions, SSE transport
-  Support/             FeatureGate, RuntimeConfigPayload, Ambient
-config/abilities.php   the ability registry
-packages/reactive/     PHP: base classes, registry, runner, worker, PHPStan rules
-packages/reactive-vue/ TS: useReactiveQuery, useReactiveMutation, reconciliation
-resources/js/          the SPA
-docs/                  this site
+  Actions/<Domain>/      plain classes that do one thing: CreateUser, AcceptInvite
+  Ai/Actions/            streamed AI actions
+  Data/                  every laravel-data class, args classes included
+  Http/                  controllers, form requests, filters, middleware
+  Jobs/                  QueuedJob and its subclasses
+  Models/                Eloquent models, all of them, on the App\Models\Model base
+  Mutations/<Domain>/    reactive mutations
+  Policies/              ResourcePolicy and the concrete policies
+  Queries/<Domain>/      reactive queries
+  Services/<Domain>/     the stateful pieces: Ai, Auth, Account
+  Support/               FeatureGate, RuntimeConfigPayload, Ambient, Export
+config/abilities.php     the ability registry
+database/               migrations, factories, seeders
+packages/reactive/       PHP: base classes, registry, runner, worker, PHPStan rules
+packages/reactive-vue/   TS: useReactiveQuery, useReactiveMutation, reconciliation
+resources/js/            the SPA
+tests/Feature/<Domain>/  the feature tests for that domain
+docs/                    this site
 ```
 
-A feature is a folder. Everything it owns lives inside it, including its
-migrations and its tests, so deleting the folder deletes the feature. Its
-service provider is discovered from the folder by `AppServiceProvider`, so
-there is no list to keep in sync.
+Nothing registers anything. A model finds its policy and its factory by name,
+migrations are picked up from `database/migrations`, and queries and mutations
+are discovered from `app/Queries` and `app/Mutations` by the
+`#[ReactiveQuery]` / `#[ReactiveMutation]` attribute. `config/reactive.php`
+`discovery` is the one place that says where to look.
+
+Deleting a feature means deleting its files across those folders. That is the
+price of the layout, and it is paid by `grep`, not by a registry: the generators
+name every file after the feature, so `Post` is `app/Models/Post.php`,
+`app/Policies/PostPolicy.php`, `app/Queries/Post/`, `app/Mutations/Post/`,
+`app/Data/Post*.php` and `tests/Feature/Post/`.
 
 ## The request pipeline
 

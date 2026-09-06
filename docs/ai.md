@@ -36,9 +36,10 @@ php artisan make:ai-action posts.summarize
 
 <!--@include: ./generated/make-ai-action.md-->
 
-That writes `app/Features/Post/Ai/SummarizePost.php`, its args class and a
-test that runs it against a faked model. Actions belonging to no feature go
-in `app/Ai` by hand; `assistant.ask` is the worked example there.
+That writes `app/Ai/Actions/SummarizePost.php`, its args class and a
+test that runs it against a faked model. Every action lives in
+`app/Ai/Actions`, its args class in `app/Data`, and the test in
+`tests/Feature/<Feature>/`; `assistant.ask` is the worked example.
 
 ```php
 /**

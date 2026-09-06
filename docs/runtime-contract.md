@@ -52,7 +52,8 @@ Rules the image keeps, each for a reason:
 
 `php artisan optimize` runs `reactive:cache`, which writes
 `bootstrap/cache/reactive.php` with the query and mutation name maps. Without
-it every boot outside Octane walks `app/Features` looking for the attributes.
+it every boot outside Octane walks `app/Queries` and `app/Mutations` looking
+for the attributes.
 `optimize:clear` runs `reactive:clear` and the next boot rediscovers them. The
 image does not run `optimize` today, because Octane holds the scan for the
 life of the process; run it on a host that serves without Octane.
