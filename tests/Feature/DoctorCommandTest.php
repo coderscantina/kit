@@ -31,6 +31,29 @@ final class DoctorCommandTest extends TestCase
             ->expectsOutputToContain('currentTenant');
     }
 
+    #[Test]
+    public function a_sync_queue_needs_no_worker(): void
+    {
+        $this->artisan('kit:doctor')
+            ->assertSuccessful()
+            ->expectsOutputToContain('jobs run inline');
+    }
+
+    /**
+     * The null driver accepts the probe and drops it, which is exactly what
+     * a queue with nobody consuming it looks like from the outside.
+     */
+    #[Test]
+    public function a_queue_nobody_consumes_warns_and_names_the_worker_command(): void
+    {
+        config(['queue.default' => 'null']);
+
+        // One run, not one per mode: the probe waits its full timeout here.
+        $this->artisan('kit:doctor --strict')
+            ->assertFailed()
+            ->expectsOutputToContain('no worker took the probe');
+    }
+
     /**
      * Redis, Horizon and Reverb being down is a laptop with services stopped,
      * not a broken repository, so it must not fail the run.

@@ -8,11 +8,15 @@ use App\Services\Ai\Contracts\AiDriver;
 use App\Services\Ai\Registry\AiCatalog;
 use Illuminate\Console\Command;
 use Illuminate\Contracts\Redis\Factory as RedisFactory;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\Queue;
+use Illuminate\Support\Str;
 use Kit\Reactive\Attributes\ReactiveMutation;
 use Kit\Reactive\Attributes\ReactiveQuery;
 use Kit\Reactive\Contracts\Registry;
 use Kit\Reactive\Invalidation\ChangeBuffer;
+use Kit\Reactive\Jobs\QueueProbe;
 use Kit\Reactive\Registry\Catalog;
 use Kit\Reactive\Runtime\TableTracker;
 use Laravel\Horizon\Contracts\MasterSupervisorRepository;
@@ -36,9 +40,12 @@ class DoctorCommand extends Command
 
     private const string FAIL = 'fail';
 
+    /** A worker on a blocking pop answers in milliseconds; one asleep needs its sleep to end. */
+    private const int PROBE_WAIT_SECONDS = 5;
+
     protected $signature = 'kit:doctor {--strict : Treat warnings as failures}';
 
-    protected $description = 'Check the reactive runtime, the registry, the AI layer, the Octane flush list and the message files';
+    protected $description = 'Check the reactive runtime, the registry, the reactive queue worker, the AI layer, the Octane flush list and the message files';
 
     /** @var array<int, array{0: string, 1: string, 2: string}> */
     private array $results = [];
@@ -49,6 +56,7 @@ class DoctorCommand extends Command
         $this->checkHorizon();
         $this->checkReverb();
         $this->checkRegistry();
+        $this->checkReactiveQueue();
         $this->checkUnregisteredQueries();
         $this->checkAi();
         $this->checkOctaneFlushList();
@@ -138,6 +146,93 @@ class DoctorCommand extends Command
         } catch (Throwable $e) {
             $this->flag('registry', 'cannot be read: '.$this->short($e));
         }
+    }
+
+    /**
+     * Put a probe job on the reactive queue and wait for a worker to answer.
+     * Small writes recompute inside the request now, so a dead worker only
+     * shows on large fan-out and bulk invalidations, which is later and
+     * quieter than it used to be. A worker older than the newest file the
+     * layer reads runs stale code and is called out for it.
+     */
+    private function checkReactiveQueue(): void
+    {
+        $connection = (string) config('queue.default');
+        $queue = (string) config('reactive.queue', 'reactive');
+
+        if ($connection === 'sync') {
+            $this->pass('reactive queue', 'queue connection is sync; jobs run inline, no worker involved');
+
+            return;
+        }
+
+        $token = Str::ulid()->toBase32();
+
+        try {
+            $waiting = Queue::size($queue);
+            QueueProbe::dispatch($token)->onQueue($queue);
+        } catch (Throwable $e) {
+            $this->flag('reactive queue', 'cannot be reached: '.$this->short($e));
+
+            return;
+        }
+
+        $started = microtime(true);
+        $answer = null;
+
+        while ($answer === null && microtime(true) - $started < self::PROBE_WAIT_SECONDS) {
+            usleep(100_000);
+            $answer = Cache::get(QueueProbe::key($token));
+        }
+
+        if (! is_array($answer)) {
+            $this->flag('reactive queue', "no worker took the probe within {$this->probeWait()} ({$waiting} job(s) already waiting); start `queue:work --queue={$queue}` or Horizon");
+
+            return;
+        }
+
+        Cache::forget(QueueProbe::key($token));
+
+        $elapsed = (int) round((microtime(true) - $started) * 1000);
+        $newest = $this->newestReactiveSource();
+        $startedAt = (int) ($answer['startedAt'] ?? 0);
+
+        if ($newest !== null && $startedAt > 0 && $startedAt < $newest) {
+            $this->flag('reactive queue', "worker pid {$answer['pid']} answered in {$elapsed} ms but started before the last change to the reactive code; restart it");
+
+            return;
+        }
+
+        $this->pass('reactive queue', "worker pid {$answer['pid']} on {$answer['host']} answered in {$elapsed} ms");
+    }
+
+    /**
+     * The newest mtime across everything a worker loads for the layer.
+     * A worker started before it runs old queries or old package code.
+     */
+    private function newestReactiveSource(): ?int
+    {
+        /** @var array<string, string> $discovery */
+        $discovery = config('reactive.discovery', []);
+        $directories = [...array_values($discovery), base_path('packages/reactive/src'), app_path('Models'), app_path('Data')];
+        $newest = null;
+
+        foreach ($directories as $directory) {
+            if (! is_dir($directory)) {
+                continue;
+            }
+
+            foreach (File::allFiles($directory) as $file) {
+                $newest = max($newest ?? 0, $file->getMTime());
+            }
+        }
+
+        return $newest;
+    }
+
+    private function probeWait(): string
+    {
+        return self::PROBE_WAIT_SECONDS.' s';
     }
 
     /**
