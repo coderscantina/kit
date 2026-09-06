@@ -57,39 +57,70 @@
   },
   "auth": {
     "logout": "Sign out",
-    "impersonating": "Impersonating",
+    "impersonation": {
+      "active": "You are signed in as {name}.",
+      "stop": "Return to your account",
+      "stopped": "Back on your own account.",
+      "error": "Could not stop impersonating: {error}"
+    },
+    "marketing": {
+      "headline": "Everything your team needs, on one screen.",
+      "pointOne": "Live data: what changes on the server changes in the browser.",
+      "pointTwo": "Roles and abilities from the first commit.",
+      "pointThree": "Keyboard-first, light and dark, on every screen size.",
+      "footer": "By signing in you agree to the terms of service."
+    },
     "fields": {
       "name": "Name",
       "email": "Email",
       "password": "Password",
+      "passwordHint": "At least 8 characters.",
       "passwordConfirmation": "Confirm password",
+      "passwordMismatch": "The two passwords do not match.",
+      "showPassword": "Show password",
+      "hidePassword": "Hide password",
       "totp": "Authenticator code"
     },
     "login": {
       "title": "Sign in",
+      "description": "Welcome back. Use your email address and password.",
       "submit": "Sign in",
+      "remember": "Stay signed in",
       "forgot": "Forgot password?",
-      "register": "Create an account",
+      "noAccount": "No account yet?",
+      "register": "Create one",
+      "totpTitle": "Two-factor code",
+      "totpDescription": "Enter the six-digit code from your authenticator app.",
+      "totpBack": "Use a different account",
       "verified": "Your email address is verified. You can sign in now."
     },
     "register": {
       "title": "Create your account",
+      "description": "It takes a minute. You can change everything later.",
       "submit": "Create account",
+      "haveAccount": "Already have an account?",
       "login": "Back to sign in"
     },
     "forgot": {
       "title": "Reset your password",
+      "description": "Enter your email address and we will send you a link.",
       "submit": "Send reset link",
       "sent": "If that address exists, a reset link is on its way."
     },
     "reset": {
       "title": "Choose a new password",
-      "submit": "Reset password"
+      "description": "Pick something you have not used here before.",
+      "submit": "Reset password",
+      "done": "Your password has been reset. Sign in with the new one.",
+      "missingToken": "This link is incomplete. It was probably cut off by your email client.",
+      "requestNew": "Request a new link"
     },
     "verify": {
       "title": "Verify your email",
       "description": "We sent a verification link to your address. Open it to finish signing up.",
+      "yourAddress": "your email address",
       "resend": "Send the link again",
+      "retryIn": "Send again in {seconds}s",
       "sent": "A new link has been sent.",
       "error": "Could not send the link: {error}"
     },
@@ -110,8 +141,23 @@
   },
   "dashboard": {
     "title": "Hello, {name}",
+    "subtitle": "This page is yours to replace. Here is where to start.",
     "empty": "Nothing here yet. Run `php artisan make:feature` to add your first feature.",
-    "connection": "Realtime connection: {state}"
+    "connection": "Realtime connection: {state}",
+    "steps": {
+      "feature": {
+        "title": "Add a feature",
+        "body": "php artisan make:feature Post scaffolds the folder, a list query and a page that renders real rows."
+      },
+      "docs": {
+        "title": "Read the contract",
+        "body": "docs/architecture explains the reactive data layer, docs/app-shell explains this shell."
+      },
+      "palette": {
+        "title": "Go anywhere",
+        "body": "The command palette reaches every page you may open, and the theme switch."
+      }
+    }
   },
   "accessDenied": {
     "global": {

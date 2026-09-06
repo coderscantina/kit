@@ -1,11 +1,12 @@
 <script setup lang="ts">
 import { api } from '~/api'
+import AuthPanel from '~/components/app/AuthPanel.vue'
 import FormField from '~/components/FormField.vue'
 import { Alert } from '~/components/ui/alert'
 import { Button } from '~/components/ui/button'
-import { Card } from '~/components/ui/card'
 import { useAuth } from '~/composables/useAuth'
 import { useFormErrors } from '~/composables/useFormErrors'
+import { usePageMeta } from '~/composables/usePageMeta'
 import { useI18n } from '~/plugins/i18n'
 
 const { t, locale } = useI18n()
@@ -16,9 +17,19 @@ const errors = useFormErrors()
 const form = reactive({ name: '', email: '', password: '', password_confirmation: '' })
 const loading = ref(false)
 
+usePageMeta(() => ({ title: t('auth.register.title') }))
+
+/** Client-side, before the round trip: a mismatch the server has to tell you about is a slow no. */
+const mismatch = computed(
+  () => form.password_confirmation.length > 0 && form.password !== form.password_confirmation
+)
+
 const submit = async () => {
+  if (loading.value || mismatch.value) return
+
   loading.value = true
   errors.clear()
+
   try {
     await api.auth.register({ ...form, locale: locale.value })
     await auth.refresh()
@@ -32,16 +43,19 @@ const submit = async () => {
 </script>
 
 <template>
-  <Card class="p-6">
-    <h1 class="mb-4 text-xl font-semibold">{{ t('auth.register.title') }}</h1>
+  <AuthPanel
+    :title="t('auth.register.title')"
+    :description="t('auth.register.description')"
+  >
     <form
-      class="space-y-4"
+      class="grid gap-5"
       @submit.prevent="submit"
     >
       <FormField
         id="name"
         v-model="form.name"
         autocomplete="name"
+        autofocus
         :label="t('auth.fields.name')"
         :error="errors.fields.value.name"
         required
@@ -50,7 +64,7 @@ const submit = async () => {
         id="email"
         v-model="form.email"
         type="email"
-        autocomplete="email"
+        autocomplete="username"
         :label="t('auth.fields.email')"
         :error="errors.fields.value.email"
         required
@@ -61,6 +75,7 @@ const submit = async () => {
         type="password"
         autocomplete="new-password"
         :label="t('auth.fields.password')"
+        :description="t('auth.fields.passwordHint')"
         :error="errors.fields.value.password"
         required
       />
@@ -70,16 +85,20 @@ const submit = async () => {
         type="password"
         autocomplete="new-password"
         :label="t('auth.fields.passwordConfirmation')"
+        :error="mismatch ? t('auth.fields.passwordMismatch') : undefined"
         required
       />
+
       <Alert
         v-if="errors.message.value"
         color="destructive"
+        icon="lucide:circle-alert"
       >
         {{ errors.message.value }}
       </Alert>
+
       <Button
-        variant="primary"
+        variant="accent"
         type="submit"
         class="w-full"
         :loading="loading"
@@ -87,13 +106,15 @@ const submit = async () => {
         {{ t('auth.register.submit') }}
       </Button>
     </form>
-    <p class="mt-4 text-sm">
+
+    <template #footer>
+      {{ t('auth.register.haveAccount') }}
       <RouterLink
         :to="{ name: 'login' }"
-        class="underline"
+        class="font-medium text-primary hover:underline"
       >
         {{ t('auth.register.login') }}
       </RouterLink>
-    </p>
-  </Card>
+    </template>
+  </AuthPanel>
 </template>

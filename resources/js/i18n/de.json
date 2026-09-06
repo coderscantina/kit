@@ -57,39 +57,70 @@
   },
   "auth": {
     "logout": "Abmelden",
-    "impersonating": "Impersonation aktiv",
+    "impersonation": {
+      "active": "Du bist als {name} angemeldet.",
+      "stop": "Zurück zum eigenen Konto",
+      "stopped": "Wieder im eigenen Konto.",
+      "error": "Impersonation konnte nicht beendet werden: {error}"
+    },
+    "marketing": {
+      "headline": "Alles, was dein Team braucht, auf einem Bildschirm.",
+      "pointOne": "Live-Daten: Was sich am Server ändert, ändert sich im Browser.",
+      "pointTwo": "Rollen und Rechte ab dem ersten Commit.",
+      "pointThree": "Tastatur zuerst, hell und dunkel, auf jeder Bildschirmgröße.",
+      "footer": "Mit der Anmeldung stimmst du den Nutzungsbedingungen zu."
+    },
     "fields": {
       "name": "Name",
       "email": "E-Mail",
       "password": "Passwort",
+      "passwordHint": "Mindestens 8 Zeichen.",
       "passwordConfirmation": "Passwort bestätigen",
+      "passwordMismatch": "Die beiden Passwörter stimmen nicht überein.",
+      "showPassword": "Passwort anzeigen",
+      "hidePassword": "Passwort verbergen",
       "totp": "Authenticator-Code"
     },
     "login": {
       "title": "Anmelden",
+      "description": "Willkommen zurück. Melde dich mit E-Mail und Passwort an.",
       "submit": "Anmelden",
+      "remember": "Angemeldet bleiben",
       "forgot": "Passwort vergessen?",
-      "register": "Konto erstellen",
+      "noAccount": "Noch kein Konto?",
+      "register": "Jetzt erstellen",
+      "totpTitle": "Zwei-Faktor-Code",
+      "totpDescription": "Gib den sechsstelligen Code aus deiner Authenticator-App ein.",
+      "totpBack": "Anderes Konto verwenden",
       "verified": "Deine E-Mail-Adresse ist bestätigt. Du kannst dich jetzt anmelden."
     },
     "register": {
       "title": "Konto erstellen",
+      "description": "Dauert eine Minute. Alles lässt sich später ändern.",
       "submit": "Konto erstellen",
+      "haveAccount": "Du hast schon ein Konto?",
       "login": "Zurück zur Anmeldung"
     },
     "forgot": {
       "title": "Passwort zurücksetzen",
+      "description": "Gib deine E-Mail-Adresse ein, wir schicken dir einen Link.",
       "submit": "Link senden",
       "sent": "Falls die Adresse existiert, ist ein Link unterwegs."
     },
     "reset": {
       "title": "Neues Passwort wählen",
-      "submit": "Passwort zurücksetzen"
+      "description": "Nimm eines, das du hier noch nicht verwendet hast.",
+      "submit": "Passwort zurücksetzen",
+      "done": "Dein Passwort wurde zurückgesetzt. Melde dich mit dem neuen an.",
+      "missingToken": "Dieser Link ist unvollständig. Vermutlich hat ihn dein E-Mail-Programm abgeschnitten.",
+      "requestNew": "Neuen Link anfordern"
     },
     "verify": {
       "title": "E-Mail bestätigen",
       "description": "Wir haben dir einen Bestätigungslink geschickt. Öffne ihn, um die Registrierung abzuschließen.",
+      "yourAddress": "deine E-Mail-Adresse",
       "resend": "Link erneut senden",
+      "retryIn": "Erneut senden in {seconds}s",
       "sent": "Ein neuer Link wurde gesendet.",
       "error": "Der Link konnte nicht gesendet werden: {error}"
     },
@@ -110,8 +141,23 @@
   },
   "dashboard": {
     "title": "Hallo, {name}",
+    "subtitle": "Diese Seite darfst du ersetzen. Hier ist der Anfang.",
     "empty": "Hier ist noch nichts. Starte mit `php artisan make:feature` dein erstes Feature.",
-    "connection": "Echtzeit-Verbindung: {state}"
+    "connection": "Echtzeit-Verbindung: {state}",
+    "steps": {
+      "feature": {
+        "title": "Feature anlegen",
+        "body": "php artisan make:feature Post erzeugt den Ordner, eine List-Query und eine Seite mit echten Zeilen."
+      },
+      "docs": {
+        "title": "Verträge lesen",
+        "body": "docs/architecture erklärt die reaktive Datenschicht, docs/app-shell diese Shell."
+      },
+      "palette": {
+        "title": "Überallhin springen",
+        "body": "Die Befehlspalette erreicht jede Seite, die du öffnen darfst, und das Erscheinungsbild."
+      }
+    }
   },
   "accessDenied": {
     "global": {

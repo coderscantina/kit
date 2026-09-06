@@ -1,21 +1,28 @@
 <script setup lang="ts">
 import { api } from '~/api'
+import AuthPanel from '~/components/app/AuthPanel.vue'
 import FormField from '~/components/FormField.vue'
 import { Alert } from '~/components/ui/alert'
 import { Button } from '~/components/ui/button'
-import { Card } from '~/components/ui/card'
 import { useFormErrors } from '~/composables/useFormErrors'
+import { usePageMeta } from '~/composables/usePageMeta'
 import { useI18n } from '~/plugins/i18n'
 
 const { t } = useI18n()
 const errors = useFormErrors()
+
 const email = ref('')
 const loading = ref(false)
 const sent = ref(false)
 
+usePageMeta(() => ({ title: t('auth.forgot.title') }))
+
 const submit = async () => {
+  if (loading.value) return
+
   loading.value = true
   errors.clear()
+
   try {
     await api.auth.forgotPassword(email.value)
     sent.value = true
@@ -28,31 +35,47 @@ const submit = async () => {
 </script>
 
 <template>
-  <Card class="p-6">
-    <h1 class="mb-4 text-xl font-semibold">{{ t('auth.forgot.title') }}</h1>
-    <Alert v-if="sent">{{ t('auth.forgot.sent') }}</Alert>
+  <AuthPanel
+    :title="t('auth.forgot.title')"
+    :description="sent ? undefined : t('auth.forgot.description')"
+  >
+    <!-- The confirmation replaces the form. Leaving it up invites a second
+         send that says the same thing again. -->
+    <Alert
+      v-if="sent"
+      color="success"
+      variant="modern"
+      icon="lucide:mail-check"
+    >
+      {{ t('auth.forgot.sent') }}
+    </Alert>
+
     <form
       v-else
-      class="space-y-4"
+      class="grid gap-5"
       @submit.prevent="submit"
     >
       <FormField
         id="email"
         v-model="email"
         type="email"
-        autocomplete="email"
+        autocomplete="username"
+        autofocus
         :label="t('auth.fields.email')"
         :error="errors.fields.value.email"
         required
       />
+
       <Alert
         v-if="errors.message.value"
         color="destructive"
+        icon="lucide:circle-alert"
       >
         {{ errors.message.value }}
       </Alert>
+
       <Button
-        variant="primary"
+        variant="accent"
         type="submit"
         class="w-full"
         :loading="loading"
@@ -60,13 +83,14 @@ const submit = async () => {
         {{ t('auth.forgot.submit') }}
       </Button>
     </form>
-    <p class="mt-4 text-sm">
+
+    <template #footer>
       <RouterLink
         :to="{ name: 'login' }"
-        class="underline"
+        class="font-medium text-primary hover:underline"
       >
         {{ t('auth.register.login') }}
       </RouterLink>
-    </p>
-  </Card>
+    </template>
+  </AuthPanel>
 </template>
