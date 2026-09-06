@@ -101,6 +101,12 @@
     "home": "Go to the first page you can open",
     "back": "Go back"
   },
+  "errorBoundary": {
+    "title": "This page stopped working",
+    "description": "Something in the page failed to render. Try again, or reload if it keeps happening.",
+    "retry": "Try again",
+    "reload": "Reload the app"
+  },
   "account": {
     "profile": {
       "title": "Profile",

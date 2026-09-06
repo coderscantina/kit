@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import ColorModeToggle from '~/components/ColorModeToggle.vue'
+import ErrorBoundary from '~/components/ErrorBoundary.vue'
 import Icon from '~/components/Icon.vue'
 import { Button } from '~/components/ui/button'
 import { useAuth } from '~/composables/useAuth'
@@ -78,8 +79,12 @@ const logout = async () => {
       </div>
     </aside>
     <!-- overflow-x-clip, not overflow-hidden: hidden breaks every sticky element inside. -->
+    <!-- Inside the shell, not around it: a page that fails to render leaves the
+         sidebar usable, so navigating away is still a way out. -->
     <main class="min-w-0 flex-1 overflow-x-clip p-6">
-      <slot />
+      <ErrorBoundary>
+        <slot />
+      </ErrorBoundary>
     </main>
   </div>
 </template>

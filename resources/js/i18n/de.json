@@ -101,6 +101,12 @@
     "home": "Zur ersten Seite, die du öffnen kannst",
     "back": "Zurück"
   },
+  "errorBoundary": {
+    "title": "Diese Seite funktioniert nicht mehr",
+    "description": "Ein Teil der Seite konnte nicht dargestellt werden. Versuch es noch einmal oder lade die App neu, wenn es bleibt.",
+    "retry": "Noch einmal versuchen",
+    "reload": "App neu laden"
+  },
   "account": {
     "profile": {
       "title": "Profil",
