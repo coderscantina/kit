@@ -10,9 +10,10 @@ const props = defineProps<{
 
 <template>
   <tr
+    role="row"
     :class="
       cn(
-        'border-b border-b-border transition-colors hover:bg-muted-background/10 data-[state=selected]:bg-muted-background/20',
+        'border-b border-b-border transition-colors duration-150 ease-butter last:border-b-0 hover:bg-secondary/50 data-[state=selected]:bg-secondary/70',
         props.class
       )
     "

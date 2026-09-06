@@ -19,7 +19,10 @@ const mountState = async (initial = '/users') => {
   mount(
     defineComponent({
       setup() {
-        state = useTableQueryState({ defaultSort: { column: 'name', direction: 'asc' } })
+        state = useTableQueryState({
+          defaultSort: { column: 'name', direction: 'asc' },
+          filterKeys: ['role', 'status'],
+        })
         return () => h('div')
       },
     }),
@@ -34,16 +37,17 @@ describe('useTableQueryState', () => {
   afterEach(() => vi.useRealTimers())
 
   it('reads its state out of the URL', async () => {
-    const { state } = await mountState(
-      '/users?page=3&perPage=50&sort=email&direction=desc&search=ada'
-    )
+    const { state } = await mountState('/users?page=3&perPage=50&sort=-email&q=ada&role=admin')
 
     expect(state.params.value).toEqual({
       page: 3,
-      perPage: 50,
-      sort: { column: 'email', direction: 'desc' },
-      search: 'ada',
+      per_page: 50,
+      sort: '-email',
+      q: 'ada',
+      role: 'admin',
     })
+    expect(state.sort.value).toEqual({ column: 'email', direction: 'desc' })
+    expect(state.isFiltered.value).toBe(true)
   })
 
   it('writes changes to the URL and leaves defaults out of it', async () => {
@@ -55,25 +59,34 @@ describe('useTableQueryState', () => {
 
     state.sort.value = { column: 'email', direction: 'desc' }
     await flushPromises()
-    expect(router.currentRoute.value.query).toEqual({ sort: 'email', direction: 'desc' })
+    expect(router.currentRoute.value.query).toEqual({ sort: '-email' })
 
-    // Back to the default sort, and the params disappear rather than pinning
+    // Back to the default sort, and the param disappears rather than pinning
     // the default into every shared link.
     state.sort.value = { column: 'name', direction: 'asc' }
     await flushPromises()
     expect(router.currentRoute.value.query).toEqual({})
   })
 
+  it('drops a filter that is no longer in the record', async () => {
+    const { state, router } = await mountState('/users?role=admin&status=pending&page=3')
+
+    state.filters.value = { role: 'member' }
+    await flushPromises()
+
+    expect(router.currentRoute.value.query).toEqual({ role: 'member' })
+  })
+
   it('debounces search into the URL and restores the input on a back navigation', async () => {
     const { state, router } = await mountState('/users?page=4')
 
     state.search.value = 'ada'
-    expect(router.currentRoute.value.query.search).toBeUndefined()
+    expect(router.currentRoute.value.query.q).toBeUndefined()
 
     await vi.runAllTimersAsync()
     // Searching starts over on page one; the old page number would show an
     // empty result set for a narrower list.
-    expect(router.currentRoute.value.query).toEqual({ search: 'ada' })
+    expect(router.currentRoute.value.query).toEqual({ q: 'ada' })
 
     await router.back()
     await flushPromises()
@@ -84,5 +97,18 @@ describe('useTableQueryState', () => {
     // The input following the URL must not write it back and drop the page.
     await vi.runAllTimersAsync()
     expect(router.currentRoute.value.query.page).toBe('4')
+  })
+
+  it('snapshots what a saved view stores and puts it back', async () => {
+    const { state, router } = await mountState('/users?q=ada&role=admin&sort=-email&page=2')
+
+    expect(state.snapshot.value).toEqual({ q: 'ada', role: 'admin', sort: '-email' })
+
+    state.apply({ role: 'member' })
+    await flushPromises()
+
+    expect(router.currentRoute.value.query).toEqual({ role: 'member' })
+    expect(state.search.value).toBe('')
+    expect(state.page.value).toBe(1)
   })
 })

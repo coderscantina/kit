@@ -5,11 +5,14 @@ declare(strict_types=1);
 namespace App\Services\Account;
 
 use App\Data\PersonData;
+use App\Http\Filters\PeopleFilter;
 use App\Models\Invite;
-use App\Models\Role;
 use App\Models\User;
+use App\Support\Filtering\SortString;
+use Generator;
 use Illuminate\Database\Query\Builder;
 use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 
 /**
@@ -21,44 +24,77 @@ use Illuminate\Support\Facades\DB;
  * skips rows. Only the columns both sides really have are projected, so no
  * branch has to invent a typed NULL for the other's columns; the rows are
  * hydrated from the models afterwards.
+ *
+ * The table and the export read the same `matching()` query, so a download
+ * cannot show a different set of rows than the screen it was started from.
  */
 class PeopleDirectory
 {
     /** @var list<string> Allow list, not the request's word: the value reaches orderBy(). */
     private const SORTABLE = ['name', 'email', 'created_at'];
 
+    /** Models hydrated per round trip while an export walks the result set. */
+    private const HYDRATION_CHUNK = 500;
+
     /**
-     * @param  array{search?: string, role?: string, status?: string, sort?: string, direction?: string}  $filters
+     * @param  array<string, mixed>  $filters  The request's query bag: `q`, `role`, `email`, `created_at`, `sort`, `status`.
      * @return array{paginator: LengthAwarePaginator<int, PersonData>, counts: array{active: int, pending: int, total: int}}
      */
     public function paginate(User $viewer, array $filters, int $perPage): array
     {
-        $search = trim($filters['search'] ?? '');
-        $roleId = $this->roleId($filters['role'] ?? '');
-        $status = in_array($filters['status'] ?? '', ['active', 'pending'], true) ? $filters['status'] : 'all';
+        $counts = $this->counts($viewer, $filters);
+        $query = $this->matching($viewer, $filters);
 
-        $sort = in_array($filters['sort'] ?? '', self::SORTABLE, true) ? $filters['sort'] : 'name';
-        $column = $sort === 'name' ? 'sort_name' : $sort;
-        $direction = ($filters['direction'] ?? '') === 'desc' ? 'desc' : 'asc';
+        if ($query === null) {
+            return ['paginator' => new LengthAwarePaginator([], 0, $perPage), 'counts' => $counts];
+        }
 
-        $seesUsers = $viewer->can('viewAny', User::class);
-        $seesInvites = $viewer->can('viewAny', Invite::class);
+        $page = $query->paginate($perPage);
 
-        // Counts ignore the segment on purpose: the tab badges must not change
-        // when you switch tabs.
-        $counts = [
-            'active' => $seesUsers ? $this->users($search, $roleId)->count() : 0,
-            'pending' => $seesInvites ? $this->invites($search, $roleId)->count() : 0,
-        ];
-        $counts['total'] = $counts['active'] + $counts['pending'];
+        return ['paginator' => $this->hydrate($page, $viewer), 'counts' => $counts];
+    }
+
+    /**
+     * The same rows the table would show, without pagination and capped.
+     *
+     * Rows are yielded in chunks, so an export of thousands of people holds
+     * one chunk of models at a time rather than the whole list.
+     *
+     * @param  array<string, mixed>  $filters
+     * @return array{rows: iterable<int, PersonData>, total: int}
+     */
+    public function export(User $viewer, array $filters, int $limit): array
+    {
+        $query = $this->matching($viewer, $filters);
+
+        if ($query === null) {
+            return ['rows' => [], 'total' => 0];
+        }
+
+        // Counted before the limit, so the caller can say the file is short.
+        $total = (clone $query)->getCountForPagination();
+
+        return ['rows' => $this->rows($query->limit($limit)->get(), $viewer), 'total' => $total];
+    }
+
+    /**
+     * The ordered union, or null when the viewer may see neither half.
+     *
+     * @param  array<string, mixed>  $filters
+     */
+    private function matching(User $viewer, array $filters): ?Builder
+    {
+        $status = in_array($filters['status'] ?? '', ['active', 'pending'], true)
+            ? (string) $filters['status']
+            : 'all';
 
         $branches = array_values(array_filter([
-            $seesUsers && $status !== 'pending' ? $this->users($search, $roleId) : null,
-            $seesInvites && $status !== 'active' ? $this->invites($search, $roleId) : null,
+            $viewer->can('viewAny', User::class) && $status !== 'pending' ? $this->users($filters) : null,
+            $viewer->can('viewAny', Invite::class) && $status !== 'active' ? $this->invites($filters) : null,
         ]));
 
         if ($branches === []) {
-            return ['paginator' => new LengthAwarePaginator([], 0, $perPage), 'counts' => $counts];
+            return null;
         }
 
         $union = array_shift($branches);
@@ -67,43 +103,48 @@ class PeopleDirectory
             $union->unionAll($branch);
         }
 
+        $sort = SortString::first((string) ($filters['sort'] ?? ''), self::SORTABLE, 'name');
+        // `name` is projected as `sort_name`, because the invitations branch
+        // has no name of its own and sorts by its address instead.
+        $column = $sort['column'] === 'name' ? 'sort_name' : $sort['column'];
+
         // Case-folded: SQLite and Postgres sort upper case before lower by
         // default, which puts "Zoe" above "bob" and reads as a broken list.
         // $column comes from the allow list above, never from the request.
         $order = in_array($column, ['sort_name', 'email'], true) ? DB::raw("lower({$column})") : $column;
 
-        $page = DB::query()
+        return DB::query()
             ->fromSub($union, 'people')
-            ->orderBy($order, $direction)
+            ->orderBy($order, $sort['direction'])
             // ULIDs are unique and creation-ordered, so this only settles ties.
-            ->orderBy('id')
-            ->paginate($perPage);
+            ->orderBy('id');
+    }
 
-        return ['paginator' => $this->hydrate($page, $viewer), 'counts' => $counts];
+    /**
+     * The tab badges. They ignore the segment on purpose: the counts must not
+     * change when you switch tabs.
+     *
+     * @param  array<string, mixed>  $filters
+     * @return array{active: int, pending: int, total: int}
+     */
+    private function counts(User $viewer, array $filters): array
+    {
+        $active = $viewer->can('viewAny', User::class) ? $this->users($filters)->count() : 0;
+        $pending = $viewer->can('viewAny', Invite::class) ? $this->invites($filters)->count() : 0;
+
+        return ['active' => $active, 'pending' => $pending, 'total' => $active + $pending];
     }
 
     /**
      * Swap the raw union rows for full PersonData. Two queries for the whole
      * page, one per kind, rather than one per row.
      *
-     * @param  LengthAwarePaginator<int, object>  $page
+     * @param  LengthAwarePaginator<int, \stdClass>  $page
      * @return LengthAwarePaginator<int, PersonData>
      */
     private function hydrate(LengthAwarePaginator $page, User $viewer): LengthAwarePaginator
     {
-        $rows = collect($page->items());
-        $idsOf = fn (string $kind): array => $rows->where('kind', $kind)->pluck('id')->map(strval(...))->all();
-
-        $users = User::query()->with('role')->findMany($idsOf('user'))->keyBy('id');
-        $invites = Invite::query()->with(['role', 'inviter'])->findMany($idsOf('invite'))->keyBy('id');
-
-        $items = $rows->map(function (object $row) use ($users, $invites, $viewer): PersonData {
-            $id = (string) $row->id;
-
-            return $row->kind === 'user'
-                ? PersonData::fromUser($users->get($id), $viewer)
-                : PersonData::fromInvite($invites->get($id), $viewer);
-        })->all();
+        $items = iterator_to_array($this->rows(collect($page->items()), $viewer), false);
 
         return new LengthAwarePaginator(
             $items,
@@ -114,70 +155,78 @@ class PeopleDirectory
         );
     }
 
-    private function users(string $search, ?string $roleId): Builder
+    /**
+     * Union rows to PersonData, two queries per chunk rather than one per row.
+     *
+     * @param  Collection<int, \stdClass>  $rows
+     * @return Generator<int, PersonData>
+     */
+    private function rows(Collection $rows, User $viewer): Generator
     {
-        return $this->filter(
-            DB::table('users')->select([
-                DB::raw("'user' as kind"),
+        foreach ($rows->chunk(self::HYDRATION_CHUNK) as $chunk) {
+            $idsOf = fn (string $kind): array => $chunk->where('kind', $kind)->pluck('id')->map(strval(...))->all();
+
+            $users = User::query()->with('role')->findMany($idsOf('user'))->keyBy('id');
+            $invites = Invite::query()->with(['role', 'inviter'])->findMany($idsOf('invite'))->keyBy('id');
+
+            foreach ($chunk as $row) {
+                $id = (string) $row->id;
+
+                yield $row->kind === 'user'
+                    ? PersonData::fromUser($users->get($id), $viewer)
+                    : PersonData::fromInvite($invites->get($id), $viewer);
+            }
+        }
+    }
+
+    /**
+     * @param  array<string, mixed>  $filters
+     */
+    private function users(array $filters): Builder
+    {
+        $query = DB::table('users')->select([
+            DB::raw("'user' as kind"),
+            'id',
+            DB::raw('name as sort_name'),
+            'email',
+            'role_id',
+            'created_at',
+        ]);
+
+        return $this->filter($query, $filters, 'name');
+    }
+
+    /**
+     * @param  array<string, mixed>  $filters
+     */
+    private function invites(array $filters): Builder
+    {
+        $query = DB::table('invites')
+            ->select([
+                DB::raw("'invite' as kind"),
                 'id',
-                DB::raw('name as sort_name'),
+                DB::raw('email as sort_name'),
                 'email',
                 'role_id',
                 'created_at',
-            ]),
-            $search,
-            $roleId,
-            'name',
-        );
-    }
+            ])
+            ->whereNull('accepted_at')
+            ->whereNull('declined_at');
 
-    private function invites(string $search, ?string $roleId): Builder
-    {
-        return $this->filter(
-            DB::table('invites')
-                ->select([
-                    DB::raw("'invite' as kind"),
-                    'id',
-                    DB::raw('email as sort_name'),
-                    'email',
-                    'role_id',
-                    'created_at',
-                ])
-                ->whereNull('accepted_at')
-                ->whereNull('declined_at'),
-            $search,
-            $roleId,
-            'email',
-        );
+        return $this->filter($query, $filters, 'email');
     }
 
     /**
      * Filters run inside each branch, before the union, so the indexes on
      * `users.email` and `invites.email` still apply.
+     *
+     * @param  array<string, mixed>  $filters
      */
-    private function filter(Builder $query, string $search, ?string $roleId, string $nameColumn): Builder
+    private function filter(Builder $query, array $filters, string $nameColumn): Builder
     {
-        if ($search !== '') {
-            $term = '%'.addcslashes($search, '%_\\').'%';
+        $filtered = (new PeopleFilter($filters, $nameColumn))->apply($query);
 
-            $query->where(function (Builder $inner) use ($term, $nameColumn): void {
-                $inner->where($nameColumn, 'like', $term)->orWhere('email', 'like', $term);
-            });
-        }
-
-        if ($roleId !== null) {
-            $query->where('role_id', $roleId);
-        }
-
-        return $query;
-    }
-
-    private function roleId(string $key): ?string
-    {
-        if ($key === '') {
-            return null;
-        }
-
-        return Role::query()->where('key', $key)->value('id');
+        /** @var Builder */
+        return $filtered;
     }
 }

@@ -74,6 +74,15 @@ export class AuthResource extends BaseResource {
     return this.client.post(`${this.basePath}/2fa/backup-codes`)
   }
 
+  /**
+   * The second half of a provider sign-in that stopped at the second factor.
+   * Answers with the path to continue to, because the provider round trip
+   * started before the SPA had a route to remember.
+   */
+  socialTwoFactor(code: string): Promise<{ message: string; redirect: string }> {
+    return this.client.post(`${this.basePath}/social/2fa`, { code })
+  }
+
   impersonate(userId: string): Promise<App.Data.MeData> {
     return this.client.post(`${this.basePath}/impersonate`, { userId })
   }

@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { api } from '~/api'
 import AuthPanel from '~/components/app/AuthPanel.vue'
+import SocialSignIn from '~/components/auth/SocialSignIn.vue'
 import FormField from '~/components/FormField.vue'
 import { Alert } from '~/components/ui/alert'
 import { Button } from '~/components/ui/button'
@@ -47,6 +48,8 @@ const submit = async () => {
     :title="t('auth.register.title')"
     :description="t('auth.register.description')"
   >
+    <SocialSignIn />
+
     <form
       class="grid gap-5"
       @submit.prevent="submit"

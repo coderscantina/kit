@@ -9,6 +9,7 @@ use App\Actions\Users\DeleteUser;
 use App\Data\RoleData;
 use App\Data\UserData;
 use App\Http\Controllers\Controller;
+use App\Http\Filters\UserFilter;
 use App\Http\Requests\Users\UpdateUserRoleRequest;
 use App\Models\Role;
 use App\Models\User;
@@ -18,37 +19,24 @@ use Illuminate\Http\Response;
 class UserController extends Controller
 {
     /**
-     * Columns the client may sort by. An allow list, not the request's word:
-     * the value reaches orderBy() and would otherwise be an injection point.
-     *
-     * @var list<string>
-     */
-    private const SORTABLE = ['name', 'email', 'created_at', 'last_login_at'];
-
-    /**
      * @return array<string, mixed>
      */
     public function index(Request $request): array
     {
         $this->authorize('viewAny', User::class);
 
-        $search = trim($request->string('search')->toString());
-        $sort = $request->string('sort')->toString();
-        $sort = in_array($sort, self::SORTABLE, true) ? $sort : 'name';
-        $direction = $request->string('direction')->toString() === 'desc' ? 'desc' : 'asc';
+        $filter = new UserFilter($request->query());
 
-        $users = User::query()
-            ->with('role')
-            ->when($search !== '', function ($query) use ($search): void {
-                $term = '%'.addcslashes($search, '%_\\').'%';
+        $users = User::query()->with('role')->filter($filter);
 
-                $query->where(function ($query) use ($term): void {
-                    $query->where('name', 'like', $term)->orWhere('email', 'like', $term);
-                });
-            })
-            ->orderBy($sort, $direction)
-            ->paginate($this->perPage($request))
-            ->withQueryString();
+        // A list with no ORDER BY is a list whose page 2 may repeat page 1,
+        // and `sort=` naming a column that is not sortable leaves the filter
+        // with nothing applied.
+        if ($filter->getSortColumns() === []) {
+            $users->orderBy('name');
+        }
+
+        $users = $users->paginate($this->perPage($request))->withQueryString();
 
         return UserData::collect($users)->toArray();
     }

@@ -41,6 +41,10 @@ class SecurityEvent extends Model
 
     public const string SESSION_REVOKED = 'session_revoked';
 
+    public const string SOCIAL_LINKED = 'social_linked';
+
+    public const string SOCIAL_UNLINKED = 'social_unlinked';
+
     public const string DATA_EXPORTED = 'data_exported';
 
     public $timestamps = false;

@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import ConnectedAccountsSection from '~/components/account/ConnectedAccountsSection.vue'
+import NotificationsSection from '~/components/account/NotificationsSection.vue'
 import PasswordSection from '~/components/account/PasswordSection.vue'
 import SecurityActivitySection from '~/components/account/SecurityActivitySection.vue'
 import SecurityOverview from '~/components/account/SecurityOverview.vue'
@@ -29,6 +31,8 @@ usePageMeta(() => ({
     <SecurityOverview />
     <PasswordSection />
     <TwoFactorSection />
+    <ConnectedAccountsSection />
+    <NotificationsSection />
     <SessionsSection />
     <SecurityActivitySection />
   </SettingsPage>

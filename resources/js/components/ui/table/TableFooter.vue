@@ -10,12 +10,8 @@ const props = defineProps<{
 
 <template>
   <tfoot
-    :class="
-      cn(
-        'border-t border-t-border bg-muted-background/20 font-medium [&>tr]:last:border-b-0',
-        props.class
-      )
-    "
+    role="rowgroup"
+    :class="cn('border-t border-t-border-strong font-medium [&>tr]:last:border-b-0', props.class)"
   >
     <slot />
   </tfoot>

@@ -1,5 +1,6 @@
 import type { Component } from 'vue'
 
+import type { AccentColor } from '~/composables/useAccentColor'
 import type { ColorMode } from '~/composables/useColorMode'
 import type { AppRouteName } from '~/lib/access-control'
 
@@ -72,6 +73,8 @@ export interface ShellFeatures {
   shortcutsHelp: boolean
   /** Theme switch in the user menu. */
   colorModeToggle: boolean
+  /** Accent picker on the appearance settings. */
+  accentPicker: boolean
   /** Language switch in the user menu. Off when only one locale ships. */
   localeSwitch: boolean
   /** Breadcrumb trail in the header. */
@@ -89,6 +92,12 @@ export interface AppConfig {
   density: 'comfortable' | 'compact'
   /** Applied on a first visit, before the user picks a mode. */
   defaultColorMode: ColorMode
+  /**
+   * The accent a first visit gets, before the user picks one. Anything but
+   * `blue` also means updating the inline script in
+   * `resources/views/app.blade.php`, or the first paint flashes the default.
+   */
+  defaultAccent: AccentColor
   /** `%s` is the page title. Pages without a title get the brand name alone. */
   titleTemplate: (title: string) => string
 }
@@ -121,11 +130,13 @@ export const appConfig = defineAppConfig({
     commandPalette: true,
     shortcutsHelp: true,
     colorModeToggle: true,
+    accentPicker: true,
     localeSwitch: true,
     breadcrumbs: true,
     pageSearchShortcut: true,
   },
   density: 'comfortable',
   defaultColorMode: 'system',
+  defaultAccent: 'blue',
   titleTemplate: (title) => `${title} · Kit`,
 })

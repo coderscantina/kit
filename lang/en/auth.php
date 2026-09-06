@@ -27,6 +27,11 @@ return [
     'totp_setup_expired' => 'The setup has expired. Start again.',
     'totp_disabled' => 'Two-factor authentication has been disabled.',
 
+    'social_email_missing' => 'That provider did not share an email address, so we cannot match it to an account.',
+    'social_link_required' => 'An account already uses that address. Sign in with your password, then connect the provider from your security settings.',
+    'social_session_expired' => 'That sign-in took too long. Start again.',
+    'social_failed' => 'Signing in with that provider did not work. Try again.',
+
     'not_impersonating' => 'This session is not impersonating anyone.',
     'not_while_impersonating' => 'Not available while impersonating another user.',
     'last_owner' => 'The last owner cannot be removed or demoted.',

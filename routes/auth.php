@@ -10,6 +10,7 @@ use App\Http\Controllers\Auth\MeController;
 use App\Http\Controllers\Auth\PasswordConfirmController;
 use App\Http\Controllers\Auth\PasswordResetController;
 use App\Http\Controllers\Auth\RegisterController;
+use App\Http\Controllers\Auth\SocialLoginController;
 use App\Http\Controllers\Auth\TwoFactorController;
 use Illuminate\Support\Facades\Route;
 
@@ -20,6 +21,28 @@ Route::prefix('auth')->name('auth.')->middleware('web')->group(function (): void
         Route::post('register', RegisterController::class)->name('register');
         Route::post('password/forgot', [PasswordResetController::class, 'forgot'])->name('password.forgot');
         Route::post('password/reset', [PasswordResetController::class, 'reset'])->name('password.reset');
+    });
+
+    // Provider round trips. These are browser redirects, not XHR, so they sit
+    // outside the throttle groups the SPA's own calls use and end in a
+    // redirect the client reads off the query string.
+    Route::get('social/{provider}/redirect', [SocialLoginController::class, 'redirect'])
+        ->middleware('throttle:auth')
+        ->name('social.redirect');
+    Route::get('social/{provider}/callback', [SocialLoginController::class, 'callback'])
+        ->middleware('throttle:auth')
+        ->name('social.callback');
+    Route::post('social/2fa', [SocialLoginController::class, 'verifyTwoFactor'])
+        ->middleware('throttle:auth')
+        ->name('social.2fa');
+
+    Route::middleware('auth:sanctum')->group(function (): void {
+        Route::get('social/{provider}/link', [SocialLoginController::class, 'linkRedirect'])
+            ->middleware('throttle:sensitive')
+            ->name('social.link.redirect');
+        Route::get('social/{provider}/link/callback', [SocialLoginController::class, 'linkCallback'])
+            ->middleware('throttle:sensitive')
+            ->name('social.link.callback');
     });
 
     Route::get('email/verify/{id}/{hash}', [EmailVerificationController::class, 'verify'])

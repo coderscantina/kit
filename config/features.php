@@ -8,9 +8,10 @@ declare(strict_types=1);
 |--------------------------------------------------------------------------
 |
 | null means "derive": realtime from whether Reverb is configured, registration
-| from the first-account latch, ai from whether the provider has a key. An
-| explicit boolean overrides. FeatureGate is the only reader; nothing else
-| should touch these values.
+| from the first-account latch, ai from whether the provider has a key, push
+| from whether a VAPID key pair exists, social from whether any provider has
+| credentials. An explicit boolean overrides. FeatureGate is the only reader;
+| nothing else should touch these values.
 |
 */
 
@@ -23,5 +24,9 @@ return [
     'impersonation' => env('APP_FEATURE_IMPERSONATION', true),
 
     'ai' => env('APP_FEATURE_AI'),
+
+    'push' => env('APP_FEATURE_PUSH'),
+
+    'social' => env('APP_FEATURE_SOCIAL'),
 
 ];

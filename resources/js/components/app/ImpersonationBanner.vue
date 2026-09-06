@@ -37,7 +37,7 @@ const stop = async () => {
   <div
     v-if="auth.me.value?.impersonating"
     role="status"
-    class="flex items-center justify-center gap-3 bg-warning-background/20 px-shell-gutter py-1.5 text-xs text-warning"
+    class="flex items-center justify-center gap-3 bg-warning-background/20 px-shell-gutter-x py-1.5 text-xs text-warning"
   >
     <Icon
       name="lucide:venetian-mask"

@@ -45,6 +45,20 @@ export interface ApiError extends Error {
   response: Response
 }
 
+export interface DownloadedFile {
+  blob: Blob
+  filename: string
+  /** The server capped the row count, so the file is shorter than the list. */
+  truncated: boolean
+}
+
+/** `attachment; filename="people-2026-09-06.csv"` — quoted or not. */
+const filenameFrom = (header: string | null, fallback: string): string => {
+  const match = header?.match(/filename\*?=(?:UTF-8''|")?([^";]+)/i)
+
+  return match?.[1] ? decodeURIComponent(match[1].trim()) : fallback
+}
+
 /**
  * The one fetch wrapper. Auth, account, invites and the /rq transport all
  * go through here, so CSRF, the 401 handler, Laravel-style query strings and
@@ -248,6 +262,34 @@ export class ApiClient {
     }
 
     throw error
+  }
+
+  /**
+   * A file, not a payload. The response is read as a blob so the caller can
+   * show a busy state and surface a failure as a normal error, which a plain
+   * `<a download>` cannot: a 403 there lands the user on an error page.
+   */
+  public async download(
+    endpoint: string,
+    query: Record<string, unknown> = {},
+    fallbackName = 'download'
+  ): Promise<DownloadedFile> {
+    const response = await fetch(this.resolveUrl(endpoint, query), {
+      method: 'GET',
+      credentials: 'include',
+      headers: { Accept: '*/*', 'X-Requested-With': 'XMLHttpRequest' },
+    })
+
+    if (!response.ok) {
+      // parseResponse throws the ApiError the rest of the app already handles.
+      await this.parseResponse<unknown>(response)
+    }
+
+    return {
+      blob: await response.blob(),
+      filename: filenameFrom(response.headers.get('content-disposition'), fallbackName),
+      truncated: response.headers.get('x-export-truncated') === '1',
+    }
   }
 
   public get<T>(

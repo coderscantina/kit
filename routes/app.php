@@ -8,8 +8,11 @@ use App\Http\Controllers\Account\EmailChangeController;
 use App\Http\Controllers\Account\InviteController;
 use App\Http\Controllers\Account\PeopleController;
 use App\Http\Controllers\Account\ProfileController;
+use App\Http\Controllers\Account\PushSubscriptionController;
+use App\Http\Controllers\Account\SavedViewController;
 use App\Http\Controllers\Account\SecurityActivityController;
 use App\Http\Controllers\Account\SessionController;
+use App\Http\Controllers\Account\SocialLinkController;
 use App\Http\Controllers\Account\UserController;
 use App\Http\Controllers\Ai\AiStreamController;
 use Illuminate\Support\Facades\Route;
@@ -40,7 +43,24 @@ Route::prefix('api')->name('api.')->middleware('web')->group(function (): void {
                 ->middleware('password.confirmed')
                 ->name('sessions.destroy');
 
+            Route::post('push-subscriptions', [PushSubscriptionController::class, 'store'])->name('push.store');
+            Route::delete('push-subscriptions', [PushSubscriptionController::class, 'destroy'])->name('push.destroy');
+            Route::post('push-subscriptions/test', [PushSubscriptionController::class, 'test'])
+                ->middleware('throttle:sensitive')
+                ->name('push.test');
+
+            Route::get('social-links', [SocialLinkController::class, 'index'])->name('social-links.index');
+            Route::delete('social-links/{provider}', [SocialLinkController::class, 'destroy'])
+                ->middleware('password.confirmed')
+                ->name('social-links.destroy');
+
             Route::get('security-activity', [SecurityActivityController::class, 'index'])->name('security-activity');
+
+            // Private by definition: every query is scoped to the owner.
+            Route::get('views', [SavedViewController::class, 'index'])->name('views.index');
+            Route::post('views', [SavedViewController::class, 'store'])->name('views.store');
+            Route::patch('views/{savedView}', [SavedViewController::class, 'update'])->name('views.update');
+            Route::delete('views/{savedView}', [SavedViewController::class, 'destroy'])->name('views.destroy');
 
             Route::get('export', DataExportController::class)
                 ->middleware(['password.confirmed', 'not-impersonating'])
@@ -54,6 +74,11 @@ Route::prefix('api')->name('api.')->middleware('web')->group(function (): void {
 
         // Accounts and outstanding invitations as one list.
         Route::get('people', [PeopleController::class, 'index'])->name('people.index');
+        // Building a file costs more than a page of rows, so it counts against
+        // the tighter limiter.
+        Route::get('people/export', [PeopleController::class, 'export'])
+            ->middleware('throttle:sensitive')
+            ->name('people.export');
 
         // Its own limiter: an AI request costs money and seconds, so it is
         // counted apart from the 300/minute the rest of the API allows.

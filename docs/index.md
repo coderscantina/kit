@@ -7,7 +7,10 @@ mutations, and a result that changes is pushed to everyone watching it.
 Read [architecture](/architecture) for how the pieces fit, then
 [adding a feature](/adding-a-feature) for the generator walkthrough.
 [App shell](/app-shell) covers what a user sees: the sidebar, the header, the
-keyboard layer and the one file you edit to rebrand. [AI](/ai)
+keyboard layer and the one file you edit to rebrand. [Lists and
+filters](/lists) covers the query contract every list surface speaks, and the
+saved views built on it. [Social login](/social-login) and [push
+notifications](/push-notifications) are both off until configured. [AI](/ai)
 covers the streamed model calls. When
 something is broken in production, [runtime contract](/runtime-contract) says
 what runs where and [known limitations](/limitations) says what the design

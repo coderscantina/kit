@@ -10,9 +10,18 @@ window.__APP_CONFIG__ = {
   version: 'test',
   apiBaseUrl: '',
   locale: 'en',
-  features: { realtime: false, registration: true, impersonation: true, ai: true },
+  features: {
+    realtime: false,
+    registration: true,
+    impersonation: true,
+    ai: true,
+    push: false,
+    social: false,
+  },
   echo: null,
   analytics: null,
+  socialProviders: [],
+  vapidPublicKey: null,
 }
 
 // jsdom ships no ResizeObserver; reka-ui primitives construct one on mount.

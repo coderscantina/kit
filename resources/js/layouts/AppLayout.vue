@@ -96,7 +96,7 @@ useShortcut({
       <main
         id="main-content"
         tabindex="-1"
-        class="min-w-0 flex-1 overflow-x-clip p-shell-gutter pb-[calc(var(--shell-gutter)+var(--shell-tabbar-height)+env(safe-area-inset-bottom))] focus:outline-none lg:pb-shell-gutter"
+        class="min-w-0 flex-1 overflow-x-clip px-shell-gutter-x py-shell-gutter pb-[calc(var(--shell-gutter)+var(--shell-tabbar-height)+env(safe-area-inset-bottom))] focus:outline-none lg:pb-shell-gutter"
       >
         <ErrorBoundary>
           <slot />

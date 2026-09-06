@@ -4,6 +4,7 @@ import { AuthResource } from '~/api/resources/auth'
 import { InvitesResource } from '~/api/resources/invites'
 import { PeopleResource } from '~/api/resources/people'
 import { UsersResource } from '~/api/resources/users'
+import { ViewsResource } from '~/api/resources/views'
 import { runtimeConfig } from '~/lib/runtime-config'
 
 const client = new ApiClient({ baseURL: runtimeConfig.apiBaseUrl })
@@ -16,4 +17,5 @@ export const api = {
   invites: new InvitesResource(client),
   people: new PeopleResource(client),
   users: new UsersResource(client),
+  views: new ViewsResource(client),
 }

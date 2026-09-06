@@ -18,7 +18,13 @@ export const runtimeConfig = {
     registration: appConfig?.features.registration ?? false,
     impersonation: appConfig?.features.impersonation ?? false,
     ai: appConfig?.features.ai ?? false,
+    push: appConfig?.features.push ?? false,
+    social: appConfig?.features.social ?? false,
   },
+  /** The sign-in buttons to offer. Empty when no provider has credentials. */
+  socialProviders: appConfig?.socialProviders ?? [],
+  /** Null when no VAPID key pair is configured, which is what turns push off. */
+  vapidPublicKey: appConfig?.vapidPublicKey ?? null,
   // An echo block without a key cannot connect; null keeps the client from
   // retry-looping against a socket that is not there.
   echo: appConfig?.echo?.key ? appConfig.echo : null,

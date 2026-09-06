@@ -23,9 +23,10 @@
     <link rel="icon" href="/icons/icon.svg" type="image/svg+xml">
     {{-- @json swallows its trailing newline, so the statement ends with an explicit semicolon. --}}
     <script>window.__APP_CONFIG__ = @json($config);</script>
-    {{-- Applies the stored colour mode before first paint. Runs here, ahead of the
-         bundle, because waiting for Vue to mount means a white flash on every load.
-         The storage key is shared with resources/js/composables/useColorMode.ts. --}}
+    {{-- Applies the stored colour mode and accent before first paint. Runs here,
+         ahead of the bundle, because waiting for Vue to mount means a white flash
+         on every load. The storage keys are shared with
+         resources/js/composables/useColorMode.ts and useAccentColor.ts. --}}
     <script>
         (function () {
             try {
@@ -33,6 +34,11 @@
                 var dark = mode === 'dark' || (mode === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);
                 document.documentElement.classList.toggle('dark', dark);
                 document.documentElement.style.colorScheme = dark ? 'dark' : 'light';
+
+                var accent = localStorage.getItem('kit:accent');
+                if (accent && accent !== 'blue' && /^[a-z]+$/.test(accent)) {
+                    document.documentElement.setAttribute('data-accent', accent);
+                }
             } catch (e) {}
         })();
     </script>

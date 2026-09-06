@@ -82,7 +82,7 @@ const points = ['auth.marketing.pointOne', 'auth.marketing.pointTwo', 'auth.mark
         </Button>
       </div>
 
-      <div class="flex flex-1 items-center justify-center px-6 pb-16">
+      <div class="flex flex-1 items-center justify-center px-4 pb-16 sm:px-6">
         <div class="w-full max-w-sm">
           <ErrorBoundary>
             <slot />

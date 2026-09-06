@@ -25,7 +25,7 @@ const props = defineProps<{
   <div
     :class="
       cn(
-        'flex flex-col items-center justify-center gap-3 rounded-xl border border-dashed border-border px-6 py-12 text-center',
+        'flex flex-col items-center justify-center gap-3 rounded-xl border border-dashed border-border px-6 py-12 max-sm:px-4 text-center',
         props.class
       )
     "

@@ -28,6 +28,22 @@ final class FeatureGate
         return self::override('ai') ?? filled(config('ai.drivers.'.config('ai.driver').'.api_key'));
     }
 
+    /**
+     * Whether the browser may be offered push notifications. Derived from the
+     * VAPID public key, because a subscription made without one cannot be
+     * pushed to and there is nothing to gain from offering the switch.
+     */
+    public static function pushEnabled(): bool
+    {
+        return self::override('push') ?? filled(config('webpush.vapid.public_key'));
+    }
+
+    /** Derived from whether any listed provider has credentials. */
+    public static function socialEnabled(): bool
+    {
+        return self::override('social') ?? SocialProviders::anyEnabled();
+    }
+
     public static function impersonationEnabled(): bool
     {
         return self::override('impersonation') ?? true;
@@ -78,7 +94,7 @@ final class FeatureGate
     }
 
     /**
-     * @return array{realtime: bool, registration: bool, impersonation: bool, ai: bool}
+     * @return array{realtime: bool, registration: bool, impersonation: bool, ai: bool, push: bool, social: bool}
      */
     public static function features(): array
     {
@@ -87,6 +103,8 @@ final class FeatureGate
             'registration' => self::registrationOpen(),
             'impersonation' => self::impersonationEnabled(),
             'ai' => self::aiEnabled(),
+            'push' => self::pushEnabled(),
+            'social' => self::socialEnabled(),
         ];
     }
 

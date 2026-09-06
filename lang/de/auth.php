@@ -27,6 +27,11 @@ return [
     'totp_setup_expired' => 'Die Einrichtung ist abgelaufen. Bitte neu starten.',
     'totp_disabled' => 'Die Zwei-Faktor-Authentifizierung wurde deaktiviert.',
 
+    'social_email_missing' => 'Dieser Anbieter hat keine E-Mail-Adresse übermittelt, deshalb lässt sie sich keinem Konto zuordnen.',
+    'social_link_required' => 'Ein Konto verwendet diese Adresse bereits. Melde dich mit deinem Passwort an und verbinde den Anbieter in den Sicherheitseinstellungen.',
+    'social_session_expired' => 'Die Anmeldung hat zu lange gedauert. Bitte erneut starten.',
+    'social_failed' => 'Die Anmeldung mit diesem Anbieter hat nicht geklappt. Bitte erneut versuchen.',
+
     'not_impersonating' => 'Diese Sitzung ist keine Impersonation.',
     'not_while_impersonating' => 'Während einer Impersonation nicht verfügbar.',
     'last_owner' => 'Der letzte Owner kann nicht entfernt oder herabgestuft werden.',

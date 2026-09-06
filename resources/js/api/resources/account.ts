@@ -53,6 +53,33 @@ export class AccountResource extends BaseResource {
     return this.client.get(`${this.basePath}/security-activity`, { page })
   }
 
+  socialLinks(): Promise<App.Data.SocialLinkData[]> {
+    return this.client.get(`${this.basePath}/social-links`)
+  }
+
+  unlinkSocial(provider: string): Promise<void> {
+    return this.client.delete(`${this.basePath}/social-links/${encodeURIComponent(provider)}`)
+  }
+
+  subscribeToPush(subscription: {
+    endpoint: string
+    keys: { p256dh: string; auth: string }
+  }): Promise<{ subscribed: boolean }> {
+    return this.client.post(`${this.basePath}/push-subscriptions`, subscription)
+  }
+
+  /** Without an endpoint the server drops every device this account signed up. */
+  unsubscribeFromPush(endpoint?: string): Promise<void> {
+    return this.client.request(`${this.basePath}/push-subscriptions`, {
+      method: 'DELETE',
+      body: { endpoint },
+    })
+  }
+
+  sendTestPush(): Promise<{ sent: boolean }> {
+    return this.client.post(`${this.basePath}/push-subscriptions/test`)
+  }
+
   /** The export URL, opened as a download rather than fetched into memory. */
   exportUrl(): string {
     return `${this.basePath}/export`

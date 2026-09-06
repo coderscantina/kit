@@ -10,36 +10,19 @@ const resourceWithSpy = () => {
 }
 
 describe('PeopleResource', () => {
-  it('leaves out the filters that mean "no filter"', async () => {
+  it('passes the table query bag through untouched', async () => {
     const { resource, get } = resourceWithSpy()
 
-    await resource.index({ search: '', role: '', status: 'all', page: 2 })
+    // Dropping the parameters that mean "no filter" is the table state's job,
+    // upstream of here; the resource must not second-guess what it is handed.
+    await resource.index({ page: 2, per_page: 50, sort: '-created_at', q: 'ada', role: 'admin' })
 
     expect(get).toHaveBeenCalledWith('/api/people', {
       page: 2,
-      per_page: undefined,
-      search: undefined,
-      role: undefined,
-      // `all` is the absence of a segment, not a value the server has to parse.
-      status: undefined,
-      sort: undefined,
-      direction: undefined,
+      per_page: 50,
+      sort: '-created_at',
+      q: 'ada',
+      role: 'admin',
     })
-  })
-
-  it('passes the segment and role through when they narrow the list', async () => {
-    const { resource, get } = resourceWithSpy()
-
-    await resource.index({ status: 'pending', role: 'admin', search: 'ada', sort: 'created_at' })
-
-    expect(get).toHaveBeenCalledWith(
-      '/api/people',
-      expect.objectContaining({
-        status: 'pending',
-        role: 'admin',
-        search: 'ada',
-        sort: 'created_at',
-      })
-    )
   })
 })

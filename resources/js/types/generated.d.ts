@@ -56,6 +56,14 @@ declare namespace App {
       level: number,
       abilities: string[],
     };
+    export type SavedViewData = {
+      id: string,
+      scope: string,
+      name: string,
+      params: Record<string, string>,
+      isDefault: boolean,
+      createdAt: string,
+    };
     export type SecurityEventData = {
       id: string,
       event: string,
@@ -71,6 +79,15 @@ declare namespace App {
       lastActiveAt: string,
       createdAt: string,
       current: boolean,
+    };
+    export type SocialLinkData = {
+      provider: string,
+      label: string,
+      icon: string,
+      nickname: string | null,
+      email: string | null,
+      lastUsedAt: string | null,
+      connectedAt: string,
     };
     export type UserData = {
       id: string,
@@ -115,10 +132,22 @@ declare namespace App {
         registration: boolean,
         impersonation: boolean,
         ai: boolean,
+        push: boolean,
+        social: boolean,
       },
       echo: App.Support.EchoConfigPayload | null,
       analytics: App.Support.AnalyticsPayload | null,
+      socialProviders: App.Support.SocialProviderPayload[],
+      vapidPublicKey: string | null,
     };
+    export type SocialProviderPayload = {
+      key: string,
+      label: string,
+      icon: string,
+    };
+    namespace Export {
+      export type ExportFormat = 'csv' | 'xlsx' | 'pdf';
+    }
   }
 }
 declare namespace Illuminate {

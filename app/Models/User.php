@@ -6,6 +6,7 @@ namespace App\Models;
 
 use App\Notifications\ResetPasswordNotification;
 use App\Notifications\VerifyEmailNotification;
+use CodersCantina\Filter\Filterable;
 use Database\Factories\UserFactory;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
@@ -19,6 +20,7 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Carbon;
 use Kit\Reactive\Invalidation\HasReactiveInvalidation;
+use NotificationChannels\WebPush\HasPushSubscriptions;
 
 /**
  * @property string $id
@@ -40,9 +42,12 @@ use Kit\Reactive\Invalidation\HasReactiveInvalidation;
 #[Hidden(['password', 'remember_token', 'two_factor_secret', 'two_factor_backup_codes'])]
 class User extends Authenticatable implements MustVerifyEmail
 {
+    use Filterable;
+
     /** @use HasFactory<UserFactory> */
     use HasFactory;
 
+    use HasPushSubscriptions;
     use HasReactiveInvalidation;
     use HasUlids;
     use Notifiable;
@@ -95,6 +100,26 @@ class User extends Authenticatable implements MustVerifyEmail
     public function sessions(): HasMany
     {
         return $this->hasMany(UserSession::class);
+    }
+
+    /**
+     * The named list states this user has saved.
+     *
+     * @return HasMany<SavedView, $this>
+     */
+    public function savedViews(): HasMany
+    {
+        return $this->hasMany(SavedView::class);
+    }
+
+    /**
+     * The identity providers this account can sign in with.
+     *
+     * @return HasMany<UserSocialLink, $this>
+     */
+    public function socialLinks(): HasMany
+    {
+        return $this->hasMany(UserSocialLink::class);
     }
 
     /**

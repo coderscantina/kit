@@ -1,5 +1,7 @@
 <script setup lang="ts">
+import { api } from '~/api'
 import AuthPanel from '~/components/app/AuthPanel.vue'
+import SocialSignIn from '~/components/auth/SocialSignIn.vue'
 import FormField from '~/components/FormField.vue'
 import { Alert } from '~/components/ui/alert'
 import { Button } from '~/components/ui/button'
@@ -28,9 +30,41 @@ const loading = ref(false)
 
 const verified = computed(() => route.query.verified === '1')
 
+/**
+ * The provider round trip ends here. `social_2fa` means the identity checked
+ * out but the account has a second factor, so the only thing left to ask for
+ * is the code; `social_error` means the attempt was refused, and deliberately
+ * does not say by which of the checks.
+ */
+const socialTotp = ref(route.query.social_2fa === '1')
+
+if (route.query.social_error === '1') errors.setMessage(t('auth.social.failed'))
+
+const showTotp = computed(() => requiresTotp.value || socialTotp.value)
+
 usePageMeta(() => ({ title: t('auth.login.title') }))
 
+const submitSocialTotp = async () => {
+  if (loading.value) return
+
+  loading.value = true
+  errors.clear()
+
+  try {
+    const { redirect } = await api.auth.socialTwoFactor(totp.value)
+    await auth.refresh()
+    await router.push(redirect)
+  } catch (error) {
+    totp.value = ''
+    errors.capture(error)
+  } finally {
+    loading.value = false
+  }
+}
+
 const submit = async () => {
+  if (socialTotp.value) return submitSocialTotp()
+
   if (loading.value) return
 
   loading.value = true
@@ -68,11 +102,11 @@ const submit = async () => {
 
 <template>
   <AuthPanel
-    :title="requiresTotp ? t('auth.login.totpTitle') : t('auth.login.title')"
-    :description="requiresTotp ? t('auth.login.totpDescription') : t('auth.login.description')"
+    :title="showTotp ? t('auth.login.totpTitle') : t('auth.login.title')"
+    :description="showTotp ? t('auth.login.totpDescription') : t('auth.login.description')"
   >
     <Alert
-      v-if="verified && !requiresTotp"
+      v-if="verified && !showTotp"
       color="success"
       variant="modern"
       icon="lucide:mail-check"
@@ -80,13 +114,18 @@ const submit = async () => {
       {{ t('auth.login.verified') }}
     </Alert>
 
+    <SocialSignIn
+      v-if="!showTotp"
+      :return-path="typeof route.query.return === 'string' ? route.query.return : undefined"
+    />
+
     <form
       class="grid gap-5"
       @submit.prevent="submit"
     >
       <!-- The credentials stay mounted through the TOTP step so the browser
            keeps the autofilled values; hiding them would drop the password. -->
-      <template v-if="!requiresTotp">
+      <template v-if="!showTotp">
         <FormField
           id="email"
           v-model="email"
@@ -149,6 +188,7 @@ const submit = async () => {
           </InputOTPGroup>
         </InputOTP>
         <button
+          v-if="!socialTotp"
           type="button"
           class="cursor-pointer text-sm text-muted hover:text-primary hover:underline"
           @click="((requiresTotp = false), (totp = ''), errors.clear())"
@@ -176,7 +216,7 @@ const submit = async () => {
     </form>
 
     <template
-      v-if="runtimeConfig.features.registration && !requiresTotp"
+      v-if="runtimeConfig.features.registration && !showTotp"
       #footer
     >
       {{ t('auth.login.noAccount') }}

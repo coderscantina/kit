@@ -108,7 +108,7 @@
   --sidebar-accent: var(--color-gray-200);
   --sidebar-accent-foreground: var(--color-gray-900);
   --sidebar-border: var(--color-gray-200);
-  --sidebar-ring: var(--color-blue-500);
+  --sidebar-ring: var(--ring);
 
   --destructive: var(--color-red-600);
   --destructive-foreground: var(--color-red-800);
@@ -135,6 +135,11 @@
   --shell-header-height: 3.5rem;
   --shell-rail-width: 3.5rem;
   --shell-gutter: 1.5rem;
+  /* The horizontal half of the gutter, separate so a phone can give the
+     content its two missing columns back without also squashing it
+     vertically. Reading length is set by the horizontal padding; breathing
+     room between blocks is not. */
+  --shell-gutter-x: 1.5rem;
   --shell-row-height: 2.25rem;
   --shell-row-gap: 0.125rem;
   /* The phone's bottom tab bar. Safe-area inset is added where it is used. */
@@ -150,8 +155,19 @@
 [data-density='compact'] {
   --shell-header-height: 3rem;
   --shell-gutter: 1rem;
+  --shell-gutter-x: 1rem;
   --shell-row-height: 1.875rem;
   --shell-row-gap: 0;
+}
+
+/* A phone is roughly 24 columns of text wide at this type size; a 24px gutter
+   on each side spends four of them on nothing. Horizontal only: the vertical
+   rhythm is what keeps a stack of sections readable, and cutting it makes the
+   page look crammed rather than roomy. */
+@media (width < 40rem) {
+  :root {
+    --shell-gutter-x: 1rem;
+  }
 }
 
 .dark {
@@ -196,7 +212,7 @@
   --sidebar-accent: var(--color-gray-850);
   --sidebar-accent-foreground: var(--color-gray-50);
   --sidebar-border: var(--color-gray-850);
-  --sidebar-ring: var(--color-blue-400);
+  --sidebar-ring: var(--ring);
 
   --destructive: var(--color-red-500);
   --destructive-foreground: var(--color-red-200);
@@ -217,6 +233,76 @@
   --ai: var(--color-purple-500);
   --ai-foreground: var(--color-purple-200);
   --ai-background: var(--color-purple-800);
+}
+
+/* The accent is a user preference, applied as `data-accent` on <html> by
+   resources/js/composables/useAccentColor.ts and by the inline script in
+   app.blade.php that runs before first paint. Blue is the default and needs no
+   block. Each accent moves three tokens and nothing else: the accent itself,
+   its hover step and the focus ring. Everything that is "the app's colour" —
+   buttons, links, selection, the sidebar's ring — already reads one of those,
+   so this is the whole feature.
+
+   Hover goes darker in light mode and lighter in dark mode, because contrast
+   against the surface is what a hover state has to keep. */
+
+html[data-accent='violet'] {
+  --accent: var(--color-violet-500);
+  --accent-hover: var(--color-violet-700);
+  --ring: var(--color-violet-500);
+}
+
+html[data-accent='violet'].dark {
+  --accent-hover: var(--color-violet-400);
+  --ring: var(--color-violet-400);
+}
+
+html[data-accent='emerald'] {
+  --accent: var(--color-emerald-500);
+  --accent-hover: var(--color-emerald-700);
+  --ring: var(--color-emerald-500);
+}
+
+html[data-accent='emerald'].dark {
+  --accent-hover: var(--color-emerald-400);
+  --ring: var(--color-emerald-400);
+}
+
+/* Amber is the one accent white text cannot sit on: 500 against white is
+   about 2:1. Its foreground flips to near-black instead, which is why the
+   components read `text-accent-foreground` rather than `text-white`. */
+html[data-accent='amber'] {
+  --accent: var(--color-amber-500);
+  --accent-hover: var(--color-amber-600);
+  --accent-foreground: var(--color-gray-950);
+  --ring: var(--color-amber-600);
+}
+
+html[data-accent='amber'].dark {
+  --accent-hover: var(--color-amber-400);
+  --ring: var(--color-amber-400);
+}
+
+html[data-accent='rose'] {
+  --accent: var(--color-rose-500);
+  --accent-hover: var(--color-rose-700);
+  --ring: var(--color-rose-500);
+}
+
+html[data-accent='rose'].dark {
+  --accent-hover: var(--color-rose-400);
+  --ring: var(--color-rose-400);
+}
+
+html[data-accent='cyan'] {
+  --accent: var(--color-cyan-500);
+  --accent-hover: var(--color-cyan-700);
+  --ring: var(--color-cyan-500);
+}
+
+html[data-accent='cyan'].dark {
+  --accent-hover: var(--color-cyan-400);
+  --ring: var(--color-cyan-400);
 }
 
 /* Flips foreground/primary so a light-on-dark island reads correctly inside a
@@ -293,6 +379,7 @@
   --spacing-shell-header: var(--shell-header-height);
   --spacing-shell-rail: var(--shell-rail-width);
   --spacing-shell-gutter: var(--shell-gutter);
+  --spacing-shell-gutter-x: var(--shell-gutter-x);
   --spacing-shell-row: var(--shell-row-height);
   --spacing-shell-gap: var(--shell-row-gap);
   --spacing-shell-tabbar: var(--shell-tabbar-height);
@@ -416,6 +503,71 @@
    at the edges. The fades are driven by the scroll position, so they only
    appear when there is content to scroll to on that side; browsers without
    scroll-timeline support get a plain scroller without fades. */
+/* A wide table on a phone is a sideways scroller, and a column that has
+   scrolled out of view is a column nobody reads. Below `sm` a `page` table
+   stacks: each row becomes a two-line record, with the subject on the first
+   line and every field that names a column wrapped underneath it.
+
+   `display: block` would strip the table semantics, so every primitive states
+   its ARIA role explicitly; the roles are what keep it a table for a screen
+   reader here. The header row is moved out of sight rather than removed, so it
+   is still announced and its sort buttons are still reachable. */
+@media (width < 40rem) {
+  .table-stacked,
+  .table-stacked thead,
+  .table-stacked tbody,
+  .table-stacked tfoot,
+  .table-stacked tr,
+  .table-stacked th,
+  .table-stacked td {
+    display: block;
+    width: auto;
+  }
+
+  .table-stacked thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+
+  /* A record, not a form: the subject holds the first line on its own, every
+     field that names a column shares the line under it, and a trailing cell
+     that names none carries the row's actions to the right. Rows keep the
+     table's hairline instead of becoming cards inside its border. */
+  .table-stacked tbody tr {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.125rem 0.625rem;
+    padding: 0.5rem 0.75rem;
+  }
+
+  .table-stacked tbody td {
+    display: flex;
+    align-items: center;
+    gap: 0.375rem;
+    min-width: 0;
+    white-space: normal;
+  }
+
+  /* The row carries the padding, so the fields inside it can sit on one line.
+     A cell that spans the row — the empty state, a skeleton — keeps its own. */
+  .table-stacked tbody td:not([colspan]) {
+    padding: 0;
+  }
+
+  .table-stacked tbody td:first-child {
+    flex: 1 1 100%;
+  }
+
+  .table-stacked tbody td:last-child:not([data-label]) {
+    margin-left: auto;
+  }
+}
+
 @utility scroll-fade-x {
   --scroll-fade-size: 1.5rem;
   overflow-x: auto;

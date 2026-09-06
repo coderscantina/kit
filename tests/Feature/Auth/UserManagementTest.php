@@ -53,22 +53,22 @@ final class UserManagementTest extends TestCase
         );
         $this->assignRole(User::factory()->create(['name' => 'Ada Lovelace', 'email' => 'ada@example.test']), 'member');
 
-        $this->getJson('/api/users?search=lovelace')
+        $this->getJson('/api/users?q=lovelace')
             ->assertOk()
             ->assertJsonCount(1, 'data')
             ->assertJsonPath('data.0.name', 'Ada Lovelace');
 
-        $this->getJson('/api/users?search=@example.test')
+        $this->getJson('/api/users?q=@example.test')
             ->assertOk()
             ->assertJsonCount(2, 'data');
 
-        $this->getJson('/api/users?sort=name&direction=desc')
+        $this->getJson('/api/users?sort=-name')
             ->assertOk()
             ->assertJsonPath('data.0.name', 'Zoe Zander');
 
         // Not on the allow list, so it falls back to the default rather than
         // reaching orderBy() with whatever the client sent.
-        $this->getJson('/api/users?sort=password')
+        $this->getJson('/api/users?sort=-password')
             ->assertOk()
             ->assertJsonPath('data.0.name', 'Ada Lovelace');
     }

@@ -239,7 +239,10 @@ const handleKeyPress = (event: KeyboardEvent): void => {
     :required="required"
   >
     <div class="space-y-4">
-      <Table class="overflow-hidden rounded-md bg-elevated">
+      <Table
+        variant="boxed"
+        class="bg-elevated"
+      >
         <TableHeader>
           <TableRow>
             <TableHead

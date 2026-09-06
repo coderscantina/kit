@@ -130,6 +130,11 @@
     "confirmPassword": {
       "title": "Passwort bestätigen",
       "description": "Für diese Aktion brauchen wir dein Passwort noch einmal."
+    },
+    "social": {
+      "continueWith": "Weiter mit {provider}",
+      "or": "oder",
+      "failed": "Die Anmeldung hat nicht geklappt. Bitte erneut versuchen oder das Passwort nutzen."
     }
   },
   "invites": {
@@ -281,11 +286,42 @@
     },
     "appearance": {
       "title": "Darstellung",
-      "description": "Dem System folgen oder eine Seite wählen. Wird in diesem Browser gespeichert."
+      "description": "Dem System folgen oder eine Seite wählen. Wird in diesem Browser gespeichert.",
+      "accent": "Akzentfarbe"
     },
     "data": {
       "title": "Deine Daten",
       "description": "Nimm eine Kopie dessen mit, was diese Installation über dich gespeichert hat, oder schließe das Konto."
+    },
+    "connected": {
+      "title": "Verbundene Konten",
+      "description": "Mit einem Anbieter anmelden, statt ein Passwort einzugeben.",
+      "connect": "Verbinden",
+      "disconnect": "Trennen",
+      "disconnectTitle": "Diesen Anbieter trennen?",
+      "disconnectConfirm": "Die Anmeldung mit {provider} ist danach nicht mehr möglich. Dein Passwort funktioniert weiterhin.",
+      "disconnected": "{provider} getrennt.",
+      "connected": "{provider} verbunden.",
+      "conflict": "Dieses {provider}-Konto gehört hier bereits jemand anderem.",
+      "linked": "Verbunden",
+      "notLinked": "Nicht verbunden",
+      "lastUsed": "zuletzt genutzt {when}",
+      "error": "Das hat nicht geklappt. Bitte erneut versuchen."
+    },
+    "notifications": {
+      "title": "Push-Benachrichtigungen",
+      "description": "Auf diesem Gerät benachrichtigt werden, auch wenn die App geschlossen ist.",
+      "thisDevice": "Dieses Gerät",
+      "on": "Für Benachrichtigungen angemeldet.",
+      "off": "Auf diesem Gerät nicht angemeldet.",
+      "enabled": "Benachrichtigungen sind für dieses Gerät aktiv.",
+      "disabled": "Benachrichtigungen sind für dieses Gerät aus.",
+      "blocked": "Dein Browser blockiert Benachrichtigungen für diese Seite. Erlaube sie in den Seiteneinstellungen und komm zurück.",
+      "blockedToast": "Dein Browser hat die Anfrage blockiert.",
+      "unsupported": "Dieser Browser kann keine Push-Benachrichtigungen empfangen.",
+      "test": "Test senden",
+      "testSent": "Gesendet. Sie sollte gleich ankommen.",
+      "error": "Das hat nicht geklappt. Bitte erneut versuchen."
     }
   },
   "users": {
@@ -337,7 +373,8 @@
         "declined": "abgelehnt",
         "expired": "abgelaufen"
       }
-    }
+    },
+    "rowActions": "Aktionen"
   },
   "mutations": {},
   "ai": {
@@ -389,6 +426,7 @@
     "moreInfo": "Mehr Infos",
     "noResults": "Keine Ergebnisse",
     "nothingToShow": "Nichts anzuzeigen",
+    "segment": "Anzeigen",
     "showingEntries": "Zeige {from}–{to} von {total}",
     "datasets": {
       "perPage": "Pro Seite"
@@ -478,6 +516,87 @@
       "share": "Tippe in Safari auf „Teilen“.",
       "add": "Wähle „Zum Home-Bildschirm“.",
       "confirm": "Tippe auf „Hinzufügen“."
+    }
+  },
+  "filters": {
+    "placeholder": "Suchen oder ein Feld zum Filtern wählen",
+    "pickOperator": "Wie soll {field} verglichen werden?",
+    "pickValue": "Welches {field}?",
+    "enterValue": "Wert für {field}",
+    "typeValue": "Wert eingeben und Enter drücken",
+    "noMatch": "Keine Treffer",
+    "clearAll": "Suche und Filter zurücksetzen",
+    "remove": "Filter {field} entfernen",
+    "edit": "Filter {field} bearbeiten",
+    "applied": "Filter {field} gesetzt",
+    "removed": "Filter {field} entfernt",
+    "fieldPicked": "{field} gewählt",
+    "editing": "Filter {field} wird bearbeitet",
+    "cleared": "Suche und Filter zurückgesetzt",
+    "wentBack": "Einen Schritt zurück",
+    "stages": {
+      "field": "Felder",
+      "operator": "Vergleiche",
+      "value": "Werte"
+    },
+    "operators": {
+      "eq": "ist",
+      "neq": "ist nicht",
+      "like": "enthält",
+      "!like": "enthält nicht",
+      "^like": "beginnt mit",
+      "like$": "endet auf",
+      "lt": "ist vor",
+      "lte": "ist am oder vor",
+      "gt": "ist nach",
+      "gte": "ist am oder nach",
+      "in": "ist eines von",
+      "!in": "ist keines von",
+      "null": "ist nicht gesetzt",
+      "!null": "ist gesetzt",
+      "empty": "ist leer",
+      "!empty": "ist nicht leer"
+    },
+    "chipCount": "{count} Filter aktiv. Zum Bearbeiten öffnen."
+  },
+  "sort": {
+    "column": "Sortieren nach",
+    "toAscending": "Aufsteigend sortieren",
+    "toDescending": "Absteigend sortieren"
+  },
+  "views": {
+    "title": "Gespeicherte Ansichten",
+    "trigger": "Gespeicherte Ansichten",
+    "empty": "Noch nichts gespeichert. Liste eingrenzen und hier sichern.",
+    "save": "Diese Ansicht speichern",
+    "saved": "„{name}“ gespeichert.",
+    "namePlaceholder": "Name der Ansicht",
+    "delete": "„{name}“ löschen",
+    "deleteTitle": "Diese Ansicht löschen?",
+    "deleteConfirm": "„{name}“ ist danach weg. Die Liste selbst bleibt unverändert.",
+    "deleted": "„{name}“ gelöscht.",
+    "makeDefault": "„{name}“ standardmäßig öffnen",
+    "error": "Diese Ansicht konnte nicht gespeichert werden.",
+    "triggerActive": "Gespeicherte Ansicht: {name}"
+  },
+  "accent": {
+    "blue": "Blau",
+    "violet": "Violett",
+    "emerald": "Smaragd",
+    "amber": "Bernstein",
+    "rose": "Rosé",
+    "cyan": "Cyan"
+  },
+  "exports": {
+    "title": "Diese Liste herunterladen",
+    "trigger": "Export",
+    "busy": "Download wird vorbereitet…",
+    "truncated": "Die Liste ist länger, als ein Export fasst. Die Datei endet vorzeitig.",
+    "error": "Dieser Export konnte nicht erstellt werden: {error}",
+    "formats": {
+      "csv": "CSV",
+      "xlsx": "Excel-Mappe",
+      "pdf": "PDF"
     }
   }
 }

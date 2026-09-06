@@ -60,7 +60,7 @@ final class PeopleTest extends TestCase
         $this->assignRole(User::factory()->create(['name' => 'Zoe']), 'member');
         $this->invite('bob@example.test');
 
-        $rows = $this->getJson('/api/people?sort=name&direction=asc')->assertOk()->json();
+        $rows = $this->getJson('/api/people?sort=%2Bname')->assertOk()->json();
 
         // Invitations have no name, so they sort by the address instead.
         $this->assertSame(
@@ -96,7 +96,7 @@ final class PeopleTest extends TestCase
         $this->invite('marina.b@example.test', 'member');
         $this->invite('other@example.test', 'admin');
 
-        $found = $this->getJson('/api/people?search=marina')->assertOk()->json('data');
+        $found = $this->getJson('/api/people?q=marina')->assertOk()->json('data');
         $this->assertSame(['marina@example.test', 'marina.b@example.test'], array_column($found, 'email'));
 
         $admins = $this->getJson('/api/people?role=admin')->assertOk()->json('data');

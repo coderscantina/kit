@@ -33,6 +33,9 @@ export default defineConfig(({ mode }) => ({
       base: '/',
       includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'icons/*.svg'],
       workbox: {
+        // Push and notification-click handlers, which cannot live in the file
+        // Workbox generates. Served unhashed from /public.
+        importScripts: ['/sw-push.js'],
         navigateFallback: '/',
         navigateFallbackDenylist: [/^\/(api|auth|rq|horizon|docs|build)(\/|$)/],
         // Assets are hashed, so precaching them is safe; everything else is

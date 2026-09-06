@@ -22,10 +22,16 @@ export function useFormErrors() {
     message.value = errorMessage(error)
   }
 
+  /** A message that did not come from a request, e.g. a failed redirect back. */
+  const setMessage = (text: string): void => {
+    fields.value = {}
+    message.value = text
+  }
+
   const clear = (): void => {
     fields.value = {}
     message.value = null
   }
 
-  return { fields, message, capture, clear }
+  return { fields, message, capture, setMessage, clear }
 }

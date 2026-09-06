@@ -16,7 +16,8 @@ use Spatie\TypeScriptTransformer\Attributes\TypeScript;
 class RuntimeConfigPayload extends Data
 {
     /**
-     * @param  array{realtime: bool, registration: bool, impersonation: bool, ai: bool}  $features
+     * @param  array{realtime: bool, registration: bool, impersonation: bool, ai: bool, push: bool, social: bool}  $features
+     * @param  array<int, SocialProviderPayload>  $socialProviders
      */
     public function __construct(
         public string $version,
@@ -25,6 +26,9 @@ class RuntimeConfigPayload extends Data
         public array $features,
         public ?EchoConfigPayload $echo,
         public ?AnalyticsPayload $analytics,
+        public array $socialProviders,
+        /** The VAPID public key the browser needs to subscribe. Null disables the opt-in. */
+        public ?string $vapidPublicKey,
     ) {}
 
     public static function build(): self
@@ -36,7 +40,31 @@ class RuntimeConfigPayload extends Data
             features: FeatureGate::features(),
             echo: self::echo(),
             analytics: self::analytics(),
+            socialProviders: self::socialProviders(),
+            vapidPublicKey: FeatureGate::pushEnabled() ? (string) config('webpush.vapid.public_key') : null,
         );
+    }
+
+    /**
+     * @return array<int, SocialProviderPayload>
+     */
+    private static function socialProviders(): array
+    {
+        if (! FeatureGate::socialEnabled()) {
+            return [];
+        }
+
+        $providers = [];
+
+        foreach (SocialProviders::enabled() as $key => $provider) {
+            $providers[] = new SocialProviderPayload(
+                key: $key,
+                label: $provider['label'],
+                icon: $provider['icon'],
+            );
+        }
+
+        return $providers;
     }
 
     /**

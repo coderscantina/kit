@@ -42,7 +42,7 @@ const items = computed(() => filterNavigationItems(accountNavigationItems, { me:
 
       <nav
         :aria-label="t('account.nav.label')"
-        class="scroll-fade-x -mx-shell-gutter flex snap-x gap-1 px-shell-gutter lg:mx-0 lg:grid lg:px-0"
+        class="scroll-fade-x -mx-shell-gutter-x flex snap-x gap-1 px-shell-gutter-x lg:mx-0 lg:grid lg:px-0"
       >
         <RouterLink
           v-for="item in items"

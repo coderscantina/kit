@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import SettingsSection from '~/components/account/SettingsSection.vue'
 import Icon from '~/components/Icon.vue'
+import { useAccentColor } from '~/composables/useAccentColor'
 import { type ColorMode, useColorMode } from '~/composables/useColorMode'
 import { appConfig } from '~/lib/app-config'
 import { useI18n } from '~/plugins/i18n'
@@ -9,9 +10,13 @@ import { useI18n } from '~/plugins/i18n'
  * The theme, as three swatches rather than a dropdown: what each option looks
  * like is the whole question, so the option should show it. Applies on click
  * and stays in this browser, which the description says out loud.
+ *
+ * The accent below it works the same way, and the swatches are painted in the
+ * colour they set rather than labelled with its name.
  */
 const { t } = useI18n()
 const { mode, setMode, colorModes } = useColorMode()
+const { accent, setAccent, accentColors, accentSwatch } = useAccentColor()
 
 const icons: Record<ColorMode, string> = {
   light: 'lucide:sun',
@@ -79,6 +84,40 @@ const swatch: Record<ColorMode, string> = {
           />
         </span>
       </button>
+    </div>
+
+    <div
+      v-if="appConfig.features.accentPicker"
+      class="grid gap-2 pt-2"
+    >
+      <p class="text-xs font-medium text-muted">{{ t('account.appearance.accent') }}</p>
+      <div
+        role="radiogroup"
+        :aria-label="t('account.appearance.accent')"
+        class="flex flex-wrap gap-2"
+      >
+        <button
+          v-for="option in accentColors"
+          :key="option"
+          type="button"
+          role="radio"
+          :aria-checked="accent === option"
+          :aria-label="t(`accent.${option}`)"
+          class="grid size-8 place-items-center rounded-full ring-offset-2 ring-offset-background transition-shadow duration-200 ease-butter aria-checked:ring-2 aria-checked:ring-current"
+          :class="accentSwatch[option]"
+          @click="setAccent(option)"
+        >
+          <!-- One check for six swatches: the shadow is what keeps it legible
+               on the light ones without a per-colour foreground. -->
+          <Icon
+            v-if="accent === option"
+            name="lucide:check"
+            size="15"
+            class="text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.55)]"
+            aria-hidden="true"
+          />
+        </button>
+      </div>
     </div>
   </SettingsSection>
 </template>

@@ -78,7 +78,7 @@ const emptyLabel = computed(() => {
 </script>
 
 <template>
-  <Table>
+  <Table :label="t('users.title')">
     <TableHeader>
       <TableRow>
         <TableSortableHead
@@ -95,7 +95,9 @@ const emptyLabel = computed(() => {
         >
           {{ t('users.joined') }}
         </TableSortableHead>
-        <TableHead />
+        <TableHead>
+          <span class="sr-only">{{ t('users.rowActions') }}</span>
+        </TableHead>
       </TableRow>
     </TableHeader>
 
@@ -142,7 +144,7 @@ const emptyLabel = computed(() => {
           </div>
         </TableCell>
 
-        <TableCell>
+        <TableCell :label="t('users.role')">
           <Select
             v-if="editingRole === person.id"
             :model-value="person.role ?? ''"
@@ -182,7 +184,7 @@ const emptyLabel = computed(() => {
           >
         </TableCell>
 
-        <TableCell>
+        <TableCell :label="t('users.status')">
           <Badge
             :variant="stateVariant(person.state)"
             size="sm"
@@ -191,7 +193,10 @@ const emptyLabel = computed(() => {
           </Badge>
         </TableCell>
 
-        <TableCell class="text-muted">
+        <TableCell
+          :label="t('users.joined')"
+          class="text-muted"
+        >
           <span
             v-if="person.kind === 'invite' && person.state === 'pending'"
             :title="dateTime(person.expiresAt)"
@@ -207,7 +212,7 @@ const emptyLabel = computed(() => {
         </TableCell>
 
         <TableCell>
-          <div class="flex justify-end gap-1">
+          <div class="flex grow justify-end gap-1">
             <SimpleTooltip
               v-if="person.canResend"
               :tooltip="t('users.invites.resend')"
@@ -215,6 +220,7 @@ const emptyLabel = computed(() => {
               <Button
                 variant="ghost"
                 size="icon"
+                class="max-sm:size-10"
                 :aria-label="t('users.invites.resend')"
                 @click="emit('resend', person)"
               >
@@ -228,7 +234,7 @@ const emptyLabel = computed(() => {
               <Button
                 variant="ghost"
                 size="icon"
-                class="text-destructive-foreground"
+                class="text-destructive-foreground max-sm:size-10"
                 :aria-label="person.kind === 'invite' ? t('actions.revoke') : t('actions.remove')"
                 @click="emit('remove', person)"
               >

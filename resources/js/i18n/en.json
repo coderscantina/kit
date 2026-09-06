@@ -130,6 +130,11 @@
     "confirmPassword": {
       "title": "Confirm your password",
       "description": "This action needs your password again."
+    },
+    "social": {
+      "continueWith": "Continue with {provider}",
+      "or": "or",
+      "failed": "That sign-in did not go through. Try again, or use your password."
     }
   },
   "invites": {
@@ -281,11 +286,42 @@
     },
     "appearance": {
       "title": "Appearance",
-      "description": "Follow the system, or pick a side. Stored in this browser."
+      "description": "Follow the system, or pick a side. Stored in this browser.",
+      "accent": "Accent colour"
     },
     "data": {
       "title": "Your data",
       "description": "Take a copy of what this installation holds about you, or close the account."
+    },
+    "connected": {
+      "title": "Connected accounts",
+      "description": "Sign in with a provider instead of typing a password.",
+      "connect": "Connect",
+      "disconnect": "Disconnect",
+      "disconnectTitle": "Disconnect this provider?",
+      "disconnectConfirm": "You will no longer be able to sign in with {provider}. Your password still works.",
+      "disconnected": "{provider} disconnected.",
+      "connected": "{provider} connected.",
+      "conflict": "That {provider} account already belongs to someone else here.",
+      "linked": "Connected",
+      "notLinked": "Not connected",
+      "lastUsed": "last used {when}",
+      "error": "That did not work. Try again."
+    },
+    "notifications": {
+      "title": "Push notifications",
+      "description": "Get notified on this device, even with the app closed.",
+      "thisDevice": "This device",
+      "on": "Signed up for notifications.",
+      "off": "Not signed up on this device.",
+      "enabled": "Notifications are on for this device.",
+      "disabled": "Notifications are off for this device.",
+      "blocked": "Your browser is blocking notifications for this site. Allow them in its site settings, then come back.",
+      "blockedToast": "Your browser blocked the request.",
+      "unsupported": "This browser cannot receive push notifications.",
+      "test": "Send a test",
+      "testSent": "Sent. It should arrive in a moment.",
+      "error": "That did not work. Try again."
     }
   },
   "users": {
@@ -337,7 +373,8 @@
         "declined": "declined",
         "expired": "expired"
       }
-    }
+    },
+    "rowActions": "Row actions"
   },
   "mutations": {},
   "ai": {
@@ -389,6 +426,7 @@
     "moreInfo": "More info",
     "noResults": "No results",
     "nothingToShow": "Nothing to show",
+    "segment": "Show",
     "showingEntries": "Showing {from}–{to} of {total}",
     "datasets": {
       "perPage": "Per page"
@@ -478,6 +516,87 @@
       "share": "Tap the Share button in Safari.",
       "add": "Choose “Add to Home Screen”.",
       "confirm": "Tap Add."
+    }
+  },
+  "filters": {
+    "placeholder": "Search, or pick a field to filter",
+    "pickOperator": "How should {field} match?",
+    "pickValue": "Which {field}?",
+    "enterValue": "Value for {field}",
+    "typeValue": "Type a value and press Enter",
+    "noMatch": "Nothing matches",
+    "clearAll": "Clear search and filters",
+    "remove": "Remove the {field} filter",
+    "edit": "Edit the {field} filter",
+    "applied": "{field} filter applied",
+    "removed": "{field} filter removed",
+    "fieldPicked": "{field} selected",
+    "editing": "Editing the {field} filter",
+    "cleared": "Search and filters cleared",
+    "wentBack": "Went back a step",
+    "stages": {
+      "field": "Fields",
+      "operator": "Comparisons",
+      "value": "Values"
+    },
+    "operators": {
+      "eq": "is",
+      "neq": "is not",
+      "like": "contains",
+      "!like": "does not contain",
+      "^like": "starts with",
+      "like$": "ends with",
+      "lt": "is before",
+      "lte": "is on or before",
+      "gt": "is after",
+      "gte": "is on or after",
+      "in": "is one of",
+      "!in": "is none of",
+      "null": "is unset",
+      "!null": "is set",
+      "empty": "is empty",
+      "!empty": "is not empty"
+    },
+    "chipCount": "{count} filters applied. Open to edit them."
+  },
+  "sort": {
+    "column": "Sort by",
+    "toAscending": "Sort ascending",
+    "toDescending": "Sort descending"
+  },
+  "views": {
+    "title": "Saved views",
+    "trigger": "Saved views",
+    "empty": "Nothing saved yet. Narrow the list, then save it here.",
+    "save": "Save this view",
+    "saved": "Saved “{name}”.",
+    "namePlaceholder": "Name this view",
+    "delete": "Delete “{name}”",
+    "deleteTitle": "Delete this view?",
+    "deleteConfirm": "“{name}” will be gone. The list itself is untouched.",
+    "deleted": "Deleted “{name}”.",
+    "makeDefault": "Open “{name}” by default",
+    "error": "That view could not be saved.",
+    "triggerActive": "Saved view: {name}"
+  },
+  "accent": {
+    "blue": "Blue",
+    "violet": "Violet",
+    "emerald": "Emerald",
+    "amber": "Amber",
+    "rose": "Rose",
+    "cyan": "Cyan"
+  },
+  "exports": {
+    "title": "Download this list",
+    "trigger": "Export",
+    "busy": "Preparing the download…",
+    "truncated": "The list is longer than an export carries, so the file stops early.",
+    "error": "That export could not be created: {error}",
+    "formats": {
+      "csv": "CSV",
+      "xlsx": "Excel workbook",
+      "pdf": "PDF"
     }
   }
 }
