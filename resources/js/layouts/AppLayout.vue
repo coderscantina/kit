@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import ColorModeToggle from '~/components/ColorModeToggle.vue'
 import Icon from '~/components/Icon.vue'
 import { Button } from '~/components/ui/button'
 import { useAuth } from '~/composables/useAuth'
@@ -64,10 +65,11 @@ const logout = async () => {
         >
           {{ t('auth.impersonating') }}
         </p>
+        <ColorModeToggle class="mt-1" />
         <Button
           variant="ghost"
           size="sm"
-          class="mt-1 w-full justify-start"
+          class="w-full justify-start"
           @click="logout"
         >
           <Icon name="lucide:log-out" />

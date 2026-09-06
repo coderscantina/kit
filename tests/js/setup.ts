@@ -22,6 +22,20 @@ globalThis.ResizeObserver ??= class {
   disconnect() {}
 } as unknown as typeof ResizeObserver
 
+// jsdom has no matchMedia; anything that reads a media query — the colour
+// mode composable, reduced-motion guards — throws without it.
+window.matchMedia ??= ((query: string) =>
+  ({
+    matches: false,
+    media: query,
+    onchange: null,
+    addEventListener: () => {},
+    removeEventListener: () => {},
+    addListener: () => {},
+    removeListener: () => {},
+    dispatchEvent: () => false,
+  }) as unknown as MediaQueryList) as typeof window.matchMedia
+
 // reka-ui listboxes drive pointer capture and scroll the active option into
 // view. jsdom implements none of it, and without these stubs the portalled
 // content never opens, so it cannot be asserted at all.

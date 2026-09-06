@@ -24,6 +24,12 @@
     "security": "Security",
     "assistant": "Assistant"
   },
+  "colorMode": {
+    "label": "Theme",
+    "light": "Light",
+    "dark": "Dark",
+    "system": "System"
+  },
   "auth": {
     "logout": "Sign out",
     "impersonating": "Impersonating",
