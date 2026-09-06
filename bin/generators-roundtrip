@@ -31,9 +31,20 @@ patched_files=(
   resources/js/types/generated.d.ts
 )
 
-# Paths the generators create and cleanup deletes outright.
+# Paths the generators create and cleanup deletes outright. The generators
+# spread a feature across the layer directories, so this is a list of files as
+# much as of folders.
 created_paths=(
-  app/Features/Fixture
+  app/Models/Fixture.php
+  app/Policies/FixturePolicy.php
+  app/Data/FixtureData.php
+  app/Data/CreateFixtureArgs.php
+  app/Data/SummarizeFixtureArgs.php
+  app/Queries/Fixture
+  app/Mutations/Fixture
+  app/Ai/Actions/SummarizeFixture.php
+  tests/Feature/Fixture
+  database/factories/FixtureFactory.php
   resources/js/pages/fixtures
   tests/js/pages/fixtures
 )
@@ -42,6 +53,7 @@ backup_dir="$(mktemp -d "${TMPDIR:-/tmp}/generators-roundtrip.XXXXXX")"
 
 cleanup() {
   rm -rf "${created_paths[@]}"
+  rm -f database/migrations/*_create_fixtures_table.php
   for file in "${patched_files[@]}"; do
     if [ -f "$backup_dir/$file" ]; then
       cp "$backup_dir/$file" "$file"
@@ -53,7 +65,7 @@ cleanup() {
 }
 trap cleanup EXIT
 
-for path in "${created_paths[@]}"; do
+for path in "${created_paths[@]}" database/migrations/*_create_fixtures_table.php; do
   if [ -e "$path" ]; then
     echo "generators: $path already exists; the run would delete it. Remove it first." >&2
     exit 1

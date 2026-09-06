@@ -48,9 +48,11 @@ return [
     // Where `reactive:cache` writes the name maps; `optimize` runs it.
     'cache_path' => base_path('bootstrap/cache/reactive.php'),
 
-    // namespace prefix => directory scanned for Queries/ and Mutations/.
+    // namespace prefix => directory scanned for #[ReactiveQuery] and
+    // #[ReactiveMutation] classes.
     'discovery' => [
-        'App\\Features\\' => app_path('Features'),
+        'App\\Queries\\' => app_path('Queries'),
+        'App\\Mutations\\' => app_path('Mutations'),
     ],
 
     // Classes registered outside discovery (tests).

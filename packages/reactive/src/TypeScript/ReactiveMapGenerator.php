@@ -87,7 +87,7 @@ final class ReactiveMapGenerator
     }
 
     /**
-     * `App\Features\Chat\Data\MessageData` → `App.Features.Chat.Data.MessageData`,
+     * `App\Data\MessageData` → `App.Data.MessageData`,
      * the name the GlobalNamespaceWriter gives it.
      */
     private function typeName(string $class): string

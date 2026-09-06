@@ -2,10 +2,9 @@
 
 declare(strict_types=1);
 
-namespace App\Features\{{ feature }}\Models;
+namespace App\Models;
 
-use App\Features\{{ feature }}\Database\Factories\{{ feature }}Factory;
-use App\Models\Model;
+use Database\Factories\{{ feature }}Factory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Support\Carbon;
@@ -21,11 +20,4 @@ class {{ feature }} extends Model
 {
     /** @use HasFactory<{{ feature }}Factory> */
     use HasFactory;
-
-    protected $table = '{{ table }}';
-
-    protected static function newFactory(): {{ feature }}Factory
-    {
-        return {{ feature }}Factory::new();
-    }
 }

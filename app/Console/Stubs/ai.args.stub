@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace App\Features\{{ feature }}\Data;
+namespace App\Data;
 
 use App\Rules\BoundedString;
 use Spatie\LaravelData\Attributes\Validation\Rule;

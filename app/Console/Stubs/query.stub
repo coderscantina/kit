@@ -2,10 +2,10 @@
 
 declare(strict_types=1);
 
-namespace App\Features\{{ feature }}\Queries;
+namespace App\Queries\{{ feature }};
 
-use App\Features\{{ feature }}\Data\{{ data }};
-use App\Features\{{ feature }}\Models\{{ feature }};
+use App\Data\{{ data }};
+use App\Models\{{ feature }};
 use Illuminate\Contracts\Auth\Authenticatable;
 use Kit\Reactive\Attributes\ReactiveQuery;
 use Kit\Reactive\NoArgs;
@@ -20,7 +20,7 @@ final class {{ class }} extends Query
 {
     /**
      * This query takes no arguments yet. To give it some, write a Data class
-     * (`php artisan make:data {{ feature }}/{{ args }}`), return it here and
+     * (`php artisan make:data {{ args }}`), return it here and
      * change the @extends above to `Query<{{ args }}>`. PHPStan checks the
      * two agree, and $args is typed from there on.
      */

@@ -14,10 +14,10 @@ use Spatie\LaravelData\Data;
 /**
  * The worked example: a plain question answered in prose, streamed.
  *
- * It is here to be read and then replaced. A real action belongs to a
- * feature (`app/Features/Post/Ai/SummarizePost.php`), pins its own model
- * when the default is wrong for the job, and hands the model tools when it
- * needs to look something up.
+ * It is here to be read and then replaced. A real action sits next to it
+ * (`php artisan make:ai-action posts.summarize`), pins its own model when the
+ * default is wrong for the job, and hands the model tools when it needs to
+ * look something up.
  *
  * @extends AiAction<AskAssistantArgs>
  */

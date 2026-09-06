@@ -39,7 +39,6 @@ class MakeQueryCommand extends Command
 
         $feature = $names['feature'];
         $class = Str::studly($verb).$feature;
-        $base = app_path("Features/{$feature}");
 
         $replacements = [
             ...$names,
@@ -47,14 +46,14 @@ class MakeQueryCommand extends Command
             'class' => $class,
             'data' => "{$feature}Data",
             'args' => "{$class}Args",
-            'namespace' => "App\\Features\\{$feature}\\Data",
+            'namespace' => 'App\\Data',
         ];
 
         // The feature's data class is shared by every query and mutation on
         // it; make:feature already wrote one, so this only fills a gap.
-        $this->writeStub($this->stub('data'), "{$base}/Data/{$feature}Data.php", [...$replacements, 'class' => "{$feature}Data"]);
-        $this->writeStub($this->stub('query'), "{$base}/Queries/{$class}.php", $replacements);
-        $this->writeStub($this->stub('query.test'), "{$base}/Tests/{$class}Test.php", $replacements);
+        $this->writeStub($this->stub('data'), app_path("Data/{$feature}Data.php"), [...$replacements, 'class' => "{$feature}Data"]);
+        $this->writeStub($this->stub('query'), app_path("Queries/{$feature}/{$class}.php"), $replacements);
+        $this->writeStub($this->stub('query.test'), base_path("tests/Feature/{$feature}/{$class}Test.php"), $replacements);
 
         $this->newLine();
         $this->components->info("Query {$name} created. Run `php artisan types:generate` to type it on the client.");

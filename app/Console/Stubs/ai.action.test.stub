@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-namespace App\Features\{{ feature }}\Tests;
+namespace Tests\Feature\{{ feature }};
 
-use App\Features\{{ feature }}\Ai\{{ class }};
+use App\Ai\Actions\{{ class }};
 use App\Services\Ai\Testing\FakeAiDriver;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use PHPUnit\Framework\Attributes\CoversClass;

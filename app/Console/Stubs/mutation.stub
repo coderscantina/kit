@@ -2,11 +2,11 @@
 
 declare(strict_types=1);
 
-namespace App\Features\{{ feature }}\Mutations;
+namespace App\Mutations\{{ feature }};
 
-use App\Features\{{ feature }}\Data\{{ args }};
-use App\Features\{{ feature }}\Data\{{ data }};
-use App\Features\{{ feature }}\Models\{{ feature }};
+use App\Data\{{ args }};
+use App\Data\{{ data }};
+use App\Models\{{ feature }};
 use Illuminate\Contracts\Auth\Authenticatable;
 use Kit\Reactive\Attributes\ReactiveMutation;
 use Kit\Reactive\Mutation;

@@ -39,7 +39,6 @@ class MakeMutationCommand extends Command
 
         $feature = $names['feature'];
         $class = Str::studly($verb).$feature;
-        $base = app_path("Features/{$feature}");
 
         $replacements = [
             ...$names,
@@ -47,15 +46,15 @@ class MakeMutationCommand extends Command
             'class' => $class,
             'data' => "{$feature}Data",
             'args' => "{$class}Args",
-            'namespace' => "App\\Features\\{$feature}\\Data",
+            'namespace' => 'App\\Data',
         ];
 
-        $this->writeStub($this->stub('data'), "{$base}/Data/{$feature}Data.php", [...$replacements, 'class' => "{$feature}Data"]);
+        $this->writeStub($this->stub('data'), app_path("Data/{$feature}Data.php"), [...$replacements, 'class' => "{$feature}Data"]);
         // One args class per mutation, not one per feature: two mutations on
         // the same model rarely take the same arguments.
-        $this->writeStub($this->stub('args'), "{$base}/Data/{$class}Args.php", [...$replacements, 'class' => "{$class}Args"]);
-        $this->writeStub($this->stub('mutation'), "{$base}/Mutations/{$class}.php", $replacements);
-        $this->writeStub($this->stub('mutation.test'), "{$base}/Tests/{$class}Test.php", $replacements);
+        $this->writeStub($this->stub('args'), app_path("Data/{$class}Args.php"), [...$replacements, 'class' => "{$class}Args"]);
+        $this->writeStub($this->stub('mutation'), app_path("Mutations/{$feature}/{$class}.php"), $replacements);
+        $this->writeStub($this->stub('mutation.test'), base_path("tests/Feature/{$feature}/{$class}Test.php"), $replacements);
 
         // useReactiveMutation always translates mutations.<name>.error, so a
         // missing key would echo the key back at the user.

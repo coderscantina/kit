@@ -2,13 +2,16 @@
 
 declare(strict_types=1);
 
-namespace App\Features\{{ feature }}\Database\Factories;
+namespace Database\Factories;
 
-use App\Features\{{ feature }}\Models\{{ feature }};
+use App\Models\{{ feature }};
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Str;
 
 /**
+ * Found by name: Laravel resolves App\Models\{{ feature }} to this class, so
+ * neither side needs to name the other.
+ *
  * Pins its own id and never defaults a relation to another factory: two
  * factories that default to each other recurse until the memory limit.
  *
@@ -16,8 +19,6 @@ use Illuminate\Support\Str;
  */
 class {{ feature }}Factory extends Factory
 {
-    protected $model = {{ feature }}::class;
-
     /**
      * @return array<string, mixed>
      */

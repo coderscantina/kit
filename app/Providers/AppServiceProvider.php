@@ -12,21 +12,6 @@ use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
 {
-    /**
-     * Feature providers are discovered rather than listed: a feature is a
-     * self-contained folder, and one more line in bootstrap/providers.php is
-     * one more thing make:feature can get wrong.
-     */
-    public function register(): void
-    {
-        foreach (glob(app_path('Features/*/*ServiceProvider.php')) ?: [] as $file) {
-            /** @var class-string<ServiceProvider> $provider */
-            $provider = 'App\\Features\\'.basename(dirname($file)).'\\'.basename($file, '.php');
-
-            $this->app->register($provider);
-        }
-    }
-
     public function boot(): void
     {
         $this->configureModels();

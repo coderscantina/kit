@@ -17,7 +17,6 @@ use Kit\Reactive\Registry\Catalog;
 use Kit\Reactive\Runtime\TableTracker;
 use Laravel\Horizon\Contracts\MasterSupervisorRepository;
 use ReflectionClass;
-use SplFileInfo;
 use Throwable;
 
 /**
@@ -153,10 +152,8 @@ class DoctorCommand extends Command
 
         $unattributed = [];
 
-        foreach ($this->featureFiles() as $file) {
-            $class = $this->classFromFile($file);
-
-            if ($class === null || ! class_exists($class)) {
+        foreach ($this->reactiveClasses() as $class) {
+            if (! class_exists($class)) {
                 continue;
             }
 
@@ -305,28 +302,37 @@ class DoctorCommand extends Command
     }
 
     /**
-     * @return array<int, SplFileInfo>
+     * Every class the catalog would scan, from the same config it scans, so
+     * this check cannot drift from what discovery actually looks at.
+     *
+     * @return array<int, class-string>
      */
-    private function featureFiles(): array
+    private function reactiveClasses(): array
     {
-        $directory = app_path('Features');
+        $classes = [];
 
-        if (! is_dir($directory)) {
-            return [];
+        /** @var array<string, string> $discovery */
+        $discovery = config('reactive.discovery', []);
+
+        foreach ($discovery as $namespace => $directory) {
+            if (! is_dir($directory)) {
+                continue;
+            }
+
+            foreach (File::allFiles($directory) as $file) {
+                if ($file->getExtension() !== 'php') {
+                    continue;
+                }
+
+                $relative = substr($file->getPathname(), strlen(rtrim($directory, '/')) + 1, -4);
+
+                /** @var class-string $class */
+                $class = rtrim($namespace, '\\').'\\'.str_replace('/', '\\', $relative);
+                $classes[] = $class;
+            }
         }
 
-        return array_values(array_filter(
-            File::allFiles($directory),
-            fn (SplFileInfo $file) => $file->getExtension() === 'php'
-                && (str_contains($file->getPathname(), '/Queries/') || str_contains($file->getPathname(), '/Mutations/')),
-        ));
-    }
-
-    private function classFromFile(SplFileInfo $file): ?string
-    {
-        $relative = substr($file->getPathname(), strlen(app_path('Features')) + 1, -4);
-
-        return $relative === '' ? null : 'App\\Features\\'.str_replace('/', '\\', $relative);
+        return $classes;
     }
 
     private function relative(string $path): string

@@ -11,7 +11,5 @@ parameters:
         - packages/reactive/src
         - routes
         - tests
-    excludePaths:
-        - app/Features/*/Tests/*
     tmpDir: storage/framework/cache/phpstan
     reportUnmatchedIgnoredErrors: false

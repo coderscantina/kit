@@ -14,9 +14,9 @@ use RuntimeException;
  * Creates a streamed AI action, the args class it validates through, and a
  * feature test that runs it against a faked model.
  *
- * The action lands in the feature that owns it, because an AI action is
- * feature code with a different output device. Actions that belong to no
- * feature go in app/Ai by hand.
+ * Every action lands in app/Ai/Actions, next to its args class in app/Data:
+ * an AI action is application code with a different output device, and there
+ * is one endpoint for all of them.
  */
 class MakeAiActionCommand extends Command
 {
@@ -42,7 +42,6 @@ class MakeAiActionCommand extends Command
 
         $feature = $names['feature'];
         $class = Str::studly($verb).$feature;
-        $base = app_path("Features/{$feature}");
 
         $replacements = [
             ...$names,
@@ -51,9 +50,9 @@ class MakeAiActionCommand extends Command
             'args' => "{$class}Args",
         ];
 
-        $this->writeStub($this->stub('ai.args'), "{$base}/Data/{$class}Args.php", [...$replacements, 'class' => "{$class}Args"]);
-        $this->writeStub($this->stub('ai.action'), "{$base}/Ai/{$class}.php", $replacements);
-        $this->writeStub($this->stub('ai.action.test'), "{$base}/Tests/{$class}Test.php", $replacements);
+        $this->writeStub($this->stub('ai.args'), app_path("Data/{$class}Args.php"), [...$replacements, 'class' => "{$class}Args"]);
+        $this->writeStub($this->stub('ai.action'), app_path("Ai/Actions/{$class}.php"), $replacements);
+        $this->writeStub($this->stub('ai.action.test'), base_path("tests/Feature/{$feature}/{$class}Test.php"), $replacements);
 
         $this->newLine();
         $this->components->info("AI action {$name} created. Run `php artisan types:generate` to type it on the client.");

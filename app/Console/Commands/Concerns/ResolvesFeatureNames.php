@@ -11,9 +11,10 @@ use RuntimeException;
  * One naming rule, shared by every generator, so `make:feature Post` and
  * `make:query posts.list` agree on where the files go.
  *
- * `Post` / `posts` / `Posts` all resolve to the feature `Post`, whose model
- * is `Post`, table `posts`, ability prefix `posts` and page directory
- * `resources/js/pages/posts`.
+ * `Post` / `posts` / `Posts` all resolve to the feature `Post`, whose model is
+ * `App\Models\Post`, table `posts`, ability prefix `posts`, domain folder
+ * `Post` under `app/Queries`, `app/Mutations` and `tests/Feature`, and page
+ * directory `resources/js/pages/posts`.
  */
 trait ResolvesFeatureNames
 {
@@ -36,8 +37,9 @@ trait ResolvesFeatureNames
 
     /**
      * Resolve the `feature` half of a `feature.name` argument against the
-     * directories that exist, so a missing feature fails with the list
-     * instead of writing a query into a namespace nobody loads.
+     * models that exist, so a missing feature fails with the list instead of
+     * writing a query against a model nobody wrote. The model is the anchor:
+     * it is the one file every feature has.
      *
      * @return array{feature: string, table: string, resource: string, page: string, title: string}
      */
@@ -45,9 +47,9 @@ trait ResolvesFeatureNames
     {
         $names = $this->featureNames($segment);
 
-        if (! is_dir(app_path('Features/'.$names['feature']))) {
+        if (! is_file(app_path('Models/'.$names['feature'].'.php'))) {
             throw new RuntimeException(
-                "No feature '{$names['feature']}' in app/Features. Run `php artisan make:feature {$names['feature']}` first"
+                "No model '{$names['feature']}' in app/Models. Run `php artisan make:feature {$names['feature']}` first"
                     .($this->existingFeatures() === [] ? '.' : '; existing: '.implode(', ', $this->existingFeatures()).'.')
             );
         }
@@ -76,8 +78,11 @@ trait ResolvesFeatureNames
      */
     private function existingFeatures(): array
     {
-        $directories = glob(app_path('Features/*'), GLOB_ONLYDIR) ?: [];
+        $files = glob(app_path('Models/*.php')) ?: [];
 
-        return array_map(basename(...), $directories);
+        return array_values(array_diff(array_map(
+            fn (string $file) => basename($file, '.php'),
+            $files,
+        ), ['Model']));
     }
 }

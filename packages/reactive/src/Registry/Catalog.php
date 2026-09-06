@@ -15,11 +15,10 @@ use Spatie\LaravelData\Data;
 
 /**
  * Name → class map, discovered from the #[ReactiveQuery] / #[ReactiveMutation]
- * attributes under the configured feature directories. Memoised for the
- * life of the process; the class list is static data, so that is safe under
- * Octane.
+ * attributes under the configured directories. Memoised for the life of the
+ * process; the class list is static data, so that is safe under Octane.
  *
- * Scanning every feature file on boot costs a directory walk per request
+ * Scanning every file on boot costs a directory walk per request
  * outside Octane, so `php artisan reactive:cache` writes the two maps to a
  * file and this reads it when it is there. `optimize` and `optimize:clear`
  * run it.
@@ -220,10 +219,6 @@ final class Catalog
                 }
 
                 $relative = substr($file->getPathname(), strlen(rtrim($directory, '/')) + 1);
-
-                if (! str_contains($relative, '/Queries/') && ! str_contains($relative, '/Mutations/')) {
-                    continue;
-                }
 
                 /** @var class-string $class */
                 $class = rtrim($namespace, '\\').'\\'.str_replace('/', '\\', substr($relative, 0, -4));

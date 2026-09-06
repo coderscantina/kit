@@ -10,10 +10,11 @@ use Illuminate\Console\Command;
 use Illuminate\Filesystem\Filesystem;
 
 /**
- * Scaffolds a feature folder and wires it into everything that has to know
- * about it: the ability registry, the router, the access map, the sidebar
- * and both message files. The service provider is discovered from the folder
- * by AppServiceProvider, so there is no list to keep in sync.
+ * Scaffolds a feature across the layers it touches and wires it into
+ * everything that has to know about it: the ability registry, the router, the
+ * access map, the sidebar and both message files. The model, the policy and
+ * the factory find each other by name, so there is no registration to keep in
+ * sync.
  *
  * It finishes by running make:query for `<resource>.list` and types:generate,
  * so what you get is a page that renders real rows, not a placeholder.
@@ -35,7 +36,7 @@ class MakeFeatureCommand extends Command
         $names = $this->featureNames((string) $this->argument('name'));
         ['feature' => $feature, 'table' => $table, 'resource' => $resource, 'page' => $page, 'title' => $title] = $names;
 
-        if ($files->isDirectory(app_path("Features/{$feature}"))) {
+        if ($files->exists(app_path("Models/{$feature}.php"))) {
             $this->components->warn("Feature {$feature} already exists; only missing files are created.");
         }
 
@@ -46,29 +47,20 @@ class MakeFeatureCommand extends Command
             'page' => $page,
             'title' => $title,
             'class' => "{$feature}Data",
-            'namespace' => "App\\Features\\{$feature}\\Data",
+            'namespace' => 'App\\Data',
             'data' => "{$feature}Data",
         ];
 
-        $base = app_path("Features/{$feature}");
-
-        // Mutations/ stays empty until make:mutation runs; the directory
-        // exists so the shape of a feature is visible.
-        foreach (['Queries', 'Mutations'] as $directory) {
-            $files->ensureDirectoryExists("{$base}/{$directory}");
-        }
-
-        $this->writeStub($this->stub('feature.model'), "{$base}/Models/{$feature}.php", $replacements);
-        $this->writeStub($this->stub('feature.factory'), "{$base}/Database/Factories/{$feature}Factory.php", $replacements);
+        $this->writeStub($this->stub('feature.model'), app_path("Models/{$feature}.php"), $replacements);
+        $this->writeStub($this->stub('feature.factory'), database_path("factories/{$feature}Factory.php"), $replacements);
         // Keyed on the table, not the timestamp: a second run must not add a
         // second migration that creates a table the first one already has.
-        if (glob("{$base}/Database/Migrations/*_create_{$table}_table.php") === []) {
-            $this->writeStub($this->stub('feature.migration'), "{$base}/Database/Migrations/".date('Y_m_d_His')."_create_{$table}_table.php", $replacements);
+        if (glob(database_path("migrations/*_create_{$table}_table.php")) === []) {
+            $this->writeStub($this->stub('feature.migration'), database_path('migrations/'.date('Y_m_d_His')."_create_{$table}_table.php"), $replacements);
         }
-        $this->writeStub($this->stub('data'), "{$base}/Data/{$feature}Data.php", $replacements);
-        $this->writeStub($this->stub('feature.policy'), "{$base}/Policies/{$feature}Policy.php", $replacements);
-        $this->writeStub($this->stub('feature.provider'), "{$base}/{$feature}ServiceProvider.php", $replacements);
-        $this->writeStub($this->stub('feature.test'), "{$base}/Tests/{$feature}PolicyTest.php", $replacements);
+        $this->writeStub($this->stub('data'), app_path("Data/{$feature}Data.php"), $replacements);
+        $this->writeStub($this->stub('feature.policy'), app_path("Policies/{$feature}Policy.php"), $replacements);
+        $this->writeStub($this->stub('feature.test'), base_path("tests/Feature/{$feature}/{$feature}PolicyTest.php"), $replacements);
         $this->writeStub($this->stub('feature.page'), resource_path("js/pages/{$page}/Index.vue"), $replacements);
         $this->writeStub($this->stub('feature.vitest'), base_path("tests/js/pages/{$page}/Index.test.ts"), $replacements);
 

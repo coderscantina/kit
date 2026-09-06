@@ -2,12 +2,12 @@
 
 declare(strict_types=1);
 
-namespace App\Features\{{ feature }}\Policies;
-
-use App\Policies\ResourcePolicy;
+namespace App\Policies;
 
 /**
  * `{{ resource }}.view` for viewAny/view, `{{ resource }}.manage` for create/update/delete.
+ * Found by name: App\Models\{{ feature }} resolves to this class with no
+ * registration.
  *
  * Stop extending ResourcePolicy the moment a rule depends on the model
  * (ownership, state): write every method out instead, because an inherited

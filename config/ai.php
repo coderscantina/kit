@@ -80,13 +80,11 @@ return [
     | Action discovery
     |--------------------------------------------------------------------------
     |
-    | namespace prefix => directory scanned for #[AiStream] classes. Features
-    | own their actions; app/Ai holds the ones that belong to no feature.
+    | namespace prefix => directory scanned for #[AiStream] classes.
     |
     */
 
     'discovery' => [
-        'App\\Features\\' => app_path('Features'),
         'App\\Ai\\' => app_path('Ai'),
     ],
 

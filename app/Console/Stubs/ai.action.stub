@@ -2,10 +2,10 @@
 
 declare(strict_types=1);
 
-namespace App\Features\{{ feature }}\Ai;
+namespace App\Ai\Actions;
 
-use App\Features\{{ feature }}\Data\{{ args }};
-use App\Features\{{ feature }}\Models\{{ feature }};
+use App\Data\{{ args }};
+use App\Models\{{ feature }};
 use App\Services\Ai\AiAction;
 use App\Services\Ai\Attributes\AiStream;
 use App\Services\Ai\Support\Prompt;

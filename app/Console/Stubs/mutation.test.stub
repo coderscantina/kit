@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-namespace App\Features\{{ feature }}\Tests;
+namespace Tests\Feature\{{ feature }};
 
-use App\Features\{{ feature }}\Mutations\{{ class }};
+use App\Mutations\{{ feature }}\{{ class }};
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Kit\Reactive\Facades\Reactive;
 use Kit\Reactive\Invalidation\Invalidate;
