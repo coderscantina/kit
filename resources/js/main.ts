@@ -6,6 +6,7 @@ import { api } from '~/api'
 import App from '~/app.vue'
 import { useVersionCheck } from '~/composables/useVersionCheck'
 import { appConfig } from '~/lib/app-config'
+import { registerServiceWorker } from '~/lib/pwa'
 import { installAuthHandler } from '~/plugins/auth'
 import { installI18n } from '~/plugins/i18n'
 import { installVueQuery } from '~/plugins/vue-query'
@@ -43,6 +44,9 @@ installAuthHandler()
 
 const versionCheck = useVersionCheck()
 api.client.observe((response) => versionCheck.check(response.headers.get('x-app-version')))
+// Same toast as the version header: one "reload" offer, whichever side
+// notices the new build first.
+registerServiceWorker((reload) => versionCheck.offerReload(reload))
 
 app.use(router)
 app.mount('#app')

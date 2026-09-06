@@ -19,7 +19,7 @@
       "~/*": ["resources/js/*"],
       "@kit/reactive-vue": ["packages/reactive-vue/src/index.ts"]
     },
-    "types": ["vite/client"]
+    "types": ["vite/client", "vite-plugin-pwa/client"]
   },
   "include": [
     "resources/js/**/*.ts",

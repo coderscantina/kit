@@ -21,24 +21,63 @@ export default defineConfig(({ mode }) => ({
     }),
     vue(),
     tailwindcss(),
-    // Included but off: set VITE_PWA=1 to register the service worker.
+    // On for production builds; in dev set VITE_PWA=1 to register the worker
+    // and test the install flow. The manifest link and the icons are in
+    // resources/views/app.blade.php and public/icons, because Laravel serves
+    // the HTML, not Vite.
     VitePWA({
-      disable: process.env.VITE_PWA !== '1',
-      registerType: 'autoUpdate',
+      disable: mode !== 'production' && process.env.VITE_PWA !== '1',
+      registerType: 'prompt',
       buildBase: '/build/',
       scope: '/',
       base: '/',
+      includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'icons/*.svg'],
       workbox: {
         navigateFallback: '/',
-        navigateFallbackDenylist: [/^\/(api|auth|rq|horizon|docs)(\/|$)/],
+        navigateFallbackDenylist: [/^\/(api|auth|rq|horizon|docs|build)(\/|$)/],
+        // Assets are hashed, so precaching them is safe; everything else is
+        // fetched live, because a stale API answer is worse than no answer.
+        globPatterns: ['**/*.{js,css,woff2}'],
+        cleanupOutdatedCaches: true,
       },
       manifest: {
+        id: '/',
         name: 'Kit',
         short_name: 'Kit',
+        description: 'Kit',
         start_url: '/',
+        scope: '/',
         display: 'standalone',
-        theme_color: '#ffffff',
-        background_color: '#ffffff',
+        display_override: ['standalone', 'minimal-ui'],
+        orientation: 'any',
+        lang: 'en',
+        theme_color: '#f0f1f4',
+        background_color: '#f0f1f4',
+        categories: ['productivity', 'business'],
+        icons: [
+          { src: '/icons/icon.svg', sizes: 'any', type: 'image/svg+xml', purpose: 'any' },
+          { src: '/icons/icon-192.png', sizes: '192x192', type: 'image/png', purpose: 'any' },
+          { src: '/icons/icon-512.png', sizes: '512x512', type: 'image/png', purpose: 'any' },
+          {
+            src: '/icons/icon-maskable-512.png',
+            sizes: '512x512',
+            type: 'image/png',
+            purpose: 'maskable',
+          },
+        ],
+        // Long-press targets on the home screen icon.
+        shortcuts: [
+          {
+            name: 'Users',
+            url: '/users',
+            icons: [{ src: '/icons/shortcut-users.png', sizes: '96x96' }],
+          },
+          {
+            name: 'Account',
+            url: '/account/profile',
+            icons: [{ src: '/icons/shortcut-account.png', sizes: '96x96' }],
+          },
+        ],
       },
     }),
   ],
