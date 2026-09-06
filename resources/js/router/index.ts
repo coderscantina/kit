@@ -66,7 +66,7 @@ const routes: RouteRecordRaw[] = [
   {
     path: '/users',
     name: 'users',
-    component: () => import('~/pages/users/Index.vue'),
+    component: () => import('~/pages/people/Index.vue'),
     meta: { layout: 'app' },
   },
   {

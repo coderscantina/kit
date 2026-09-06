@@ -19,6 +19,11 @@ export class InvitesResource extends BaseResource {
     return this.client.post(this.basePath, payload)
   }
 
+  /** A new token and a fresh expiry; the token that was mailed before stops working. */
+  resend(id: string): Promise<App.Data.InviteData> {
+    return this.client.post(this.idPath(id, '/resend'))
+  }
+
   destroy(id: string): Promise<void> {
     return this.client.delete(this.idPath(id))
   }

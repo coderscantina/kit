@@ -6,6 +6,7 @@ use App\Http\Controllers\Account\AvatarController;
 use App\Http\Controllers\Account\DataExportController;
 use App\Http\Controllers\Account\EmailChangeController;
 use App\Http\Controllers\Account\InviteController;
+use App\Http\Controllers\Account\PeopleController;
 use App\Http\Controllers\Account\ProfileController;
 use App\Http\Controllers\Account\SecurityActivityController;
 use App\Http\Controllers\Account\SessionController;
@@ -48,7 +49,11 @@ Route::prefix('api')->name('api.')->middleware('web')->group(function (): void {
 
         Route::get('invites', [InviteController::class, 'index'])->name('invites.index');
         Route::post('invites', [InviteController::class, 'store'])->name('invites.store');
+        Route::post('invites/{invite}/resend', [InviteController::class, 'resend'])->name('invites.resend');
         Route::delete('invites/{invite}', [InviteController::class, 'destroy'])->name('invites.destroy');
+
+        // Accounts and outstanding invitations as one list.
+        Route::get('people', [PeopleController::class, 'index'])->name('people.index');
 
         // Its own limiter: an AI request costs money and seconds, so it is
         // counted apart from the 300/minute the rest of the API allows.

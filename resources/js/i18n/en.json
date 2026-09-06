@@ -266,20 +266,47 @@
     }
   },
   "users": {
-    "title": "Users",
+    "title": "People",
+    "person": "Person",
     "role": "Role",
-    "lastLogin": "Last login",
-    "created": "Created",
-    "neverLoggedIn": "Never",
-    "searchPlaceholder": "Search by name or email…",
+    "status": "Status",
+    "joined": "Joined",
+    "allRoles": "All roles",
+    "changeRole": "Change role",
     "roleChanged": "Role updated.",
+    "removed": "Account removed.",
     "removeConfirm": "Remove {name}?",
-    "removeTitle": "Remove user",
+    "removeTitle": "Remove account",
+    "twoFactorOn": "Two-factor authentication is on",
+    "invitedPerson": "Invited, not signed up yet",
+    "expires": "Expires {when}",
+    "searchPlaceholder": "Search by name or email…",
     "error": "Something went wrong: {error}",
+    "segments": {
+      "all": "All",
+      "active": "Members",
+      "pending": "Invited"
+    },
+    "states": {
+      "active": "Active",
+      "pending": "Pending",
+      "expired": "Expired"
+    },
+    "empty": {
+      "all": "Nobody here yet. Invite someone to get started.",
+      "pending": "No invitations are waiting to be answered.",
+      "filtered": "Nobody matches these filters."
+    },
     "invites": {
-      "title": "Invitations",
+      "title": "Invite someone",
+      "description": "They get a mail with a link that signs them up with the role you pick.",
       "send": "Invite",
-      "sent": "Invitation sent.",
+      "sent": "Invitation sent to {email}.",
+      "resend": "Send again",
+      "resent": "Invitation sent to {email} again.",
+      "revoked": "Invitation revoked.",
+      "revokeTitle": "Revoke invitation",
+      "revokeConfirm": "Revoke the invitation for {email}? The link stops working.",
       "error": "Could not update the invitation: {error}",
       "status": {
         "pending": "pending",

@@ -266,23 +266,50 @@
     }
   },
   "users": {
-    "title": "Benutzer",
+    "title": "Personen",
+    "person": "Person",
     "role": "Rolle",
-    "lastLogin": "Letzte Anmeldung",
-    "created": "Erstellt",
-    "neverLoggedIn": "Nie",
-    "searchPlaceholder": "Nach Name oder E-Mail suchen…",
+    "status": "Status",
+    "joined": "Dabei seit",
+    "allRoles": "Alle Rollen",
+    "changeRole": "Rolle ändern",
     "roleChanged": "Rolle aktualisiert.",
+    "removed": "Konto entfernt.",
     "removeConfirm": "{name} entfernen?",
-    "removeTitle": "Benutzer entfernen",
+    "removeTitle": "Konto entfernen",
+    "twoFactorOn": "Zwei-Faktor-Authentifizierung ist aktiv",
+    "invitedPerson": "Eingeladen, noch nicht registriert",
+    "expires": "Läuft ab {when}",
+    "searchPlaceholder": "Nach Name oder E-Mail suchen…",
     "error": "Etwas ist schiefgelaufen: {error}",
+    "segments": {
+      "all": "Alle",
+      "active": "Mitglieder",
+      "pending": "Eingeladen"
+    },
+    "states": {
+      "active": "Aktiv",
+      "pending": "Ausstehend",
+      "expired": "Abgelaufen"
+    },
+    "empty": {
+      "all": "Noch niemand hier. Lade jemanden ein, um loszulegen.",
+      "pending": "Es warten keine Einladungen auf eine Antwort.",
+      "filtered": "Niemand passt zu diesen Filtern."
+    },
     "invites": {
-      "title": "Einladungen",
+      "title": "Jemanden einladen",
+      "description": "Die Person bekommt eine Mail mit einem Link, der sie mit der gewählten Rolle registriert.",
       "send": "Einladen",
-      "sent": "Einladung gesendet.",
-      "error": "Die Einladung konnte nicht aktualisiert werden: {error}",
+      "sent": "Einladung an {email} verschickt.",
+      "resend": "Erneut senden",
+      "resent": "Einladung erneut an {email} verschickt.",
+      "revoked": "Einladung zurückgezogen.",
+      "revokeTitle": "Einladung zurückziehen",
+      "revokeConfirm": "Die Einladung für {email} zurückziehen? Der Link wird ungültig.",
+      "error": "Die Einladung ließ sich nicht ändern: {error}",
       "status": {
-        "pending": "offen",
+        "pending": "ausstehend",
         "accepted": "angenommen",
         "declined": "abgelehnt",
         "expired": "abgelaufen"

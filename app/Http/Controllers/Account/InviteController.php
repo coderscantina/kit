@@ -7,6 +7,7 @@ namespace App\Http\Controllers\Account;
 use App\Actions\Invites\AcceptInvite;
 use App\Actions\Invites\CreateInvite;
 use App\Actions\Invites\DeclineInvite;
+use App\Actions\Invites\ResendInvite;
 use App\Data\InviteData;
 use App\Data\PublicInviteData;
 use App\Data\UserData;
@@ -51,6 +52,19 @@ class InviteController extends Controller
         $invite = $createInvite->execute($request->string('email')->toString(), $role, $actor);
 
         return response()->json(InviteData::fromModel($invite->load(['role', 'inviter'])), 201);
+    }
+
+    /**
+     * Re-mails a pending invitation with a new token and a new expiry. Not a
+     * creation, so 200 with the refreshed invitation rather than 201.
+     */
+    public function resend(Invite $invite, ResendInvite $resendInvite): JsonResponse
+    {
+        $this->authorize('update', $invite);
+
+        abort_unless($invite->accepted_at === null && $invite->declined_at === null, 422, __('auth.invite_invalid'));
+
+        return response()->json(InviteData::fromModel($resendInvite->execute($invite)->load(['role', 'inviter'])));
     }
 
     public function destroy(Invite $invite): Response
