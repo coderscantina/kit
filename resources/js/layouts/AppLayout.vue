@@ -1,79 +1,112 @@
 <script setup lang="ts">
-import ColorModeToggle from '~/components/ColorModeToggle.vue'
+import AppHeader from '~/components/app/AppHeader.vue'
+import AppMobileSidebar from '~/components/app/AppMobileSidebar.vue'
+import AppSidebar from '~/components/app/AppSidebar.vue'
+import ImpersonationBanner from '~/components/app/ImpersonationBanner.vue'
+import SkipLink from '~/components/app/SkipLink.vue'
 import ErrorBoundary from '~/components/ErrorBoundary.vue'
-import Icon from '~/components/Icon.vue'
-import { Button } from '~/components/ui/button'
-import { useAuth } from '~/composables/useAuth'
-import { useRoutePreload } from '~/composables/useRoutePreload'
-import { filterNavigationItems, navigationIcons, navigationItems } from '~/lib/access-control'
+import { useCurrentPageMeta } from '~/composables/usePageMeta'
+import { useShortcut } from '~/composables/useShortcuts'
+import { useSidebar } from '~/composables/useSidebar'
+import { appConfig } from '~/lib/app-config'
 import { useI18n } from '~/plugins/i18n'
 
 const { t } = useI18n()
-const auth = useAuth()
 const router = useRouter()
-const { preloadRoute, cancelPreload } = useRoutePreload()
+const sidebar = useSidebar()
+const { title } = useCurrentPageMeta()
 
-// The nav never shows a page the user cannot open.
-const items = computed(() => filterNavigationItems(navigationItems, { me: auth.me.value }))
+/** Read by the live region, so a route change is announced, not just painted. */
+const announcement = ref('')
 
-const logout = async () => {
-  await auth.logout()
-  await router.push({ name: 'login' })
-}
+/**
+ * A single-page navigation leaves focus on the link that is now gone, which
+ * drops screen-reader and keyboard users back at the top of the document. Move
+ * focus to the new page instead. Skipped for the first render: stealing focus
+ * on load is its own bug.
+ */
+let navigated = false
+
+router.afterEach((to, from) => {
+  if (!navigated) {
+    navigated = true
+    return
+  }
+
+  // A hash link is a jump inside the page the user is already reading.
+  if (to.path === from.path && to.hash) return
+
+  void nextTick(() => {
+    document.getElementById('main-content')?.focus({ preventScroll: true })
+    announcement.value = title.value
+  })
+})
+
+useShortcut({
+  keys: 'mod+b',
+  description: () => t('shortcuts.toggleSidebar'),
+  enabled: () => sidebar.collapsible,
+  handler: () => sidebar.toggle(),
+})
+
+/**
+ * `/` jumps to the page's own search field. Pages opt in by marking it with
+ * `data-shortcut-search`; `input[type=search]` is picked up for free.
+ */
+useShortcut({
+  keys: '/',
+  description: () => t('shortcuts.search'),
+  enabled: () => appConfig.features.pageSearchShortcut,
+  handler: () => {
+    const root = document.getElementById('main-content')
+    if (!root) return
+
+    const candidates = root.querySelectorAll<HTMLInputElement>(
+      '[data-shortcut-search], input[type="search"]'
+    )
+
+    for (const input of candidates) {
+      if (input.disabled || input.offsetParent === null) continue
+      input.focus()
+      input.select()
+      return
+    }
+  },
+})
 </script>
 
 <template>
-  <div class="flex min-h-full">
-    <aside
-      class="flex w-56 shrink-0 flex-col border-r border-sidebar-border bg-sidebar text-sidebar-foreground"
+  <div class="flex min-h-svh">
+    <SkipLink />
+    <!-- Sticky rather than scrolling with the page: the window scrolls, and a
+         nav that leaves the screen is a nav you have to scroll back for. -->
+    <AppSidebar class="sticky top-0 h-svh" />
+    <AppMobileSidebar />
+
+    <div class="flex min-w-0 flex-1 flex-col">
+      <AppHeader />
+      <ImpersonationBanner />
+
+      <!-- overflow-x-clip, not overflow-hidden: hidden breaks every sticky element inside. -->
+      <!-- Inside the shell, not around it: a page that fails to render leaves the
+           sidebar usable, so navigating away is still a way out. -->
+      <main
+        id="main-content"
+        tabindex="-1"
+        class="min-w-0 flex-1 overflow-x-clip p-shell-gutter focus:outline-none"
+      >
+        <ErrorBoundary>
+          <slot />
+        </ErrorBoundary>
+      </main>
+    </div>
+
+    <span
+      aria-live="polite"
+      aria-atomic="true"
+      class="sr-only"
     >
-      <div class="px-4 py-5 text-lg font-semibold">Kit</div>
-      <nav class="flex-1 space-y-1 px-2">
-        <RouterLink
-          v-for="item in items"
-          :key="item.routeName"
-          :to="{ name: item.routeName }"
-          class="flex items-center gap-2 rounded-md px-2 py-1.5 text-sm text-sidebar-muted hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
-          active-class="bg-sidebar-accent text-sidebar-accent-foreground"
-          @mouseenter="preloadRoute({ name: item.routeName })"
-          @focusin="preloadRoute({ name: item.routeName })"
-          @mouseleave="cancelPreload({ name: item.routeName })"
-          @focusout="cancelPreload({ name: item.routeName })"
-        >
-          <Icon
-            :name="navigationIcons[item.icon]"
-            class="size-4"
-          />
-          {{ t(item.labelKey) }}
-        </RouterLink>
-      </nav>
-      <div class="border-t border-sidebar-border p-3">
-        <p class="truncate px-2 text-xs text-sidebar-muted">{{ auth.user.value?.email }}</p>
-        <p
-          v-if="auth.me.value?.impersonating"
-          class="px-2 text-xs text-destructive"
-        >
-          {{ t('auth.impersonating') }}
-        </p>
-        <ColorModeToggle class="mt-1" />
-        <Button
-          variant="ghost"
-          size="sm"
-          class="w-full justify-start"
-          @click="logout"
-        >
-          <Icon name="lucide:log-out" />
-          {{ t('auth.logout') }}
-        </Button>
-      </div>
-    </aside>
-    <!-- overflow-x-clip, not overflow-hidden: hidden breaks every sticky element inside. -->
-    <!-- Inside the shell, not around it: a page that fails to render leaves the
-         sidebar usable, so navigating away is still a way out. -->
-    <main class="min-w-0 flex-1 overflow-x-clip p-6">
-      <ErrorBoundary>
-        <slot />
-      </ErrorBoundary>
-    </main>
+      {{ announcement }}
+    </span>
   </div>
 </template>

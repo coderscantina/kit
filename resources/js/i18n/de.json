@@ -18,11 +18,24 @@
     "dragToReorder": "Zum Sortieren ziehen"
   },
   "nav": {
+    "label": "Hauptnavigation",
     "dashboard": "Übersicht",
     "users": "Benutzer",
     "profile": "Profil",
     "security": "Sicherheit",
-    "assistant": "Assistent"
+    "assistant": "Assistent",
+    "sections": {
+      "manage": "Verwalten",
+      "account": "Konto"
+    }
+  },
+  "shell": {
+    "skipToContent": "Zum Inhalt springen",
+    "openNavigation": "Navigation öffnen",
+    "toggleSidebar": "Seitenleiste ein-/ausklappen",
+    "resizeSidebar": "Breite der Seitenleiste ändern",
+    "userMenu": "Kontomenü",
+    "language": "Sprache"
   },
   "colorMode": {
     "label": "Erscheinungsbild",
@@ -31,9 +44,16 @@
     "system": "System"
   },
   "commandPalette": {
-    "placeholder": "Seiten durchsuchen…",
-    "empty": "Keine Seite passt.",
-    "navigation": "Navigation"
+    "placeholder": "Seiten und Befehle durchsuchen…",
+    "empty": "Nichts gefunden.",
+    "navigation": "Navigation",
+    "open": "Befehlspalette öffnen",
+    "trigger": "Suchen",
+    "actions": {
+      "heading": "Befehle",
+      "light": "Zum hellen Design wechseln",
+      "dark": "Zum dunklen Design wechseln"
+    }
   },
   "auth": {
     "logout": "Abmelden",
@@ -184,6 +204,15 @@
     "maxItems": "Höchstens {max} erlaubt."
   },
   "shortcuts": {
+    "title": "Tastenkürzel",
+    "description": "Alle aktuell belegten Kürzel, gruppiert nach Gültigkeitsbereich.",
+    "empty": "Zurzeit ist kein Kürzel belegt.",
+    "help": "Tastenkürzel anzeigen",
+    "search": "Diese Seite durchsuchen",
+    "toggleSidebar": "Seitenleiste ein-/ausklappen",
+    "scopes": {
+      "global": "Global"
+    },
     "dialog": {
       "submit": "Absenden"
     }

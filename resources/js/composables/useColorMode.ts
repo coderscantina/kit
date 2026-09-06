@@ -1,6 +1,7 @@
 import { createSharedComposable } from '@vueuse/core'
 import { computed, ref, watchEffect } from 'vue'
 
+import { appConfig } from '~/lib/app-config'
 import { isClient } from '~/lib/env'
 
 export const colorModes = ['light', 'dark', 'system'] as const
@@ -17,14 +18,20 @@ export const COLOR_MODE_STORAGE_KEY = 'kit:color-mode'
 const isColorMode = (value: unknown): value is ColorMode => colorModes.includes(value as ColorMode)
 
 const readStoredMode = (): ColorMode => {
-  if (!isClient) return 'system'
+  // `appConfig.defaultColorMode` only applies before the visitor has chosen.
+  // Setting it to anything but `system` also means updating the inline script
+  // in `resources/views/app.blade.php`, or the first paint flashes the wrong
+  // theme; the script runs before this module exists.
+  const fallback = appConfig.defaultColorMode
+
+  if (!isClient) return fallback
 
   try {
     const stored = window.localStorage.getItem(COLOR_MODE_STORAGE_KEY)
-    return isColorMode(stored) ? stored : 'system'
+    return isColorMode(stored) ? stored : fallback
   } catch {
     // Private-mode Safari throws on access rather than returning null.
-    return 'system'
+    return fallback
   }
 }
 

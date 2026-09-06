@@ -18,11 +18,24 @@
     "dragToReorder": "Drag to reorder"
   },
   "nav": {
+    "label": "Main navigation",
     "dashboard": "Dashboard",
     "users": "Users",
     "profile": "Profile",
     "security": "Security",
-    "assistant": "Assistant"
+    "assistant": "Assistant",
+    "sections": {
+      "manage": "Manage",
+      "account": "Account"
+    }
+  },
+  "shell": {
+    "skipToContent": "Skip to content",
+    "openNavigation": "Open navigation",
+    "toggleSidebar": "Toggle sidebar",
+    "resizeSidebar": "Resize sidebar",
+    "userMenu": "Account menu",
+    "language": "Language"
   },
   "colorMode": {
     "label": "Theme",
@@ -31,9 +44,16 @@
     "system": "System"
   },
   "commandPalette": {
-    "placeholder": "Search pages…",
-    "empty": "No page matches.",
-    "navigation": "Navigation"
+    "placeholder": "Search pages and commands…",
+    "empty": "Nothing matches.",
+    "navigation": "Navigation",
+    "open": "Open command palette",
+    "trigger": "Search",
+    "actions": {
+      "heading": "Commands",
+      "light": "Switch to light theme",
+      "dark": "Switch to dark theme"
+    }
   },
   "auth": {
     "logout": "Sign out",
@@ -184,6 +204,15 @@
     "maxItems": "At most {max} allowed."
   },
   "shortcuts": {
+    "title": "Keyboard shortcuts",
+    "description": "Every shortcut currently bound, grouped by where it applies.",
+    "empty": "No shortcuts are bound right now.",
+    "help": "Show keyboard shortcuts",
+    "search": "Search this page",
+    "toggleSidebar": "Toggle the sidebar",
+    "scopes": {
+      "global": "Global"
+    },
     "dialog": {
       "submit": "Submit"
     }

@@ -5,6 +5,7 @@ import { createApp } from 'vue'
 import { api } from '~/api'
 import App from '~/app.vue'
 import { useVersionCheck } from '~/composables/useVersionCheck'
+import { appConfig } from '~/lib/app-config'
 import { installAuthHandler } from '~/plugins/auth'
 import { installI18n } from '~/plugins/i18n'
 import { installVueQuery } from '~/plugins/vue-query'
@@ -24,6 +25,12 @@ import '~/assets/css/app.css'
  * being worth it.
  */
 addCollection(lucideIcons)
+
+/**
+ * Density is a shell-wide switch rather than a per-component prop, so it is
+ * one attribute on <html> that the CSS reads. See `docs/app-shell.md`.
+ */
+document.documentElement.dataset.density = appConfig.density
 
 const app = createApp(App)
 

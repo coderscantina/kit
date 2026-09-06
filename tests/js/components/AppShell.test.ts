@@ -1,0 +1,139 @@
+import { mount } from '@vue/test-utils'
+import { afterEach, describe, expect, it } from 'vitest'
+import { defineComponent, h } from 'vue'
+import { createMemoryHistory, createRouter } from 'vue-router'
+
+import PageActions from '~/components/app/PageActions.vue'
+import { useAuth } from '~/composables/useAuth'
+import { useSidebar } from '~/composables/useSidebar'
+import AppLayout from '~/layouts/AppLayout.vue'
+
+const stub = { template: '<div />' }
+
+const router = createRouter({
+  history: createMemoryHistory(),
+  routes: [
+    { path: '/', name: 'dashboard', component: stub },
+    { path: '/users', name: 'users', component: stub },
+    { path: '/assistant', name: 'assistant', component: stub },
+    { path: '/account/profile', name: 'account-profile', component: stub },
+    { path: '/account/security', name: 'account-security', component: stub },
+    { path: '/login', name: 'login', component: stub },
+  ],
+})
+
+const root: App.Data.MeData = {
+  user: {
+    id: 'u',
+    name: 'Mike Wallner',
+    email: 'm@example.test',
+    locale: 'en',
+    role: 'owner',
+    isRoot: true,
+    emailVerified: true,
+    twoFactorEnabled: false,
+    lastLoginAt: null,
+    createdAt: '',
+    avatarUrl: null,
+    pendingEmail: null,
+  },
+  abilities: [],
+  impersonating: false,
+}
+
+const mountShell = async () => {
+  const auth = useAuth()
+  auth.me.value = root
+  auth.ready.value = true
+
+  await router.push('/')
+  await router.isReady()
+
+  return mount(
+    defineComponent({
+      setup: () => () => h(AppLayout, null, { default: () => h('p', 'page body') }),
+    }),
+    { global: { plugins: [router] } }
+  )
+}
+
+afterEach(() => {
+  const auth = useAuth()
+  auth.me.value = null
+  auth.ready.value = false
+})
+
+describe('the app shell', () => {
+  it('renders the landmarks a keyboard user navigates by', async () => {
+    const wrapper = await mountShell()
+
+    expect(wrapper.find('a[href="#main-content"]').exists()).toBe(true)
+    expect(wrapper.find('main#main-content').attributes('tabindex')).toBe('-1')
+    expect(wrapper.find('nav[aria-label="Main navigation"]').exists()).toBe(true)
+    expect(wrapper.find('header').exists()).toBe(true)
+    expect(wrapper.find('[aria-live="polite"]').exists()).toBe(true)
+
+    wrapper.unmount()
+  })
+
+  it('marks the current page on its nav link', async () => {
+    const wrapper = await mountShell()
+
+    const current = wrapper.find('nav a[aria-current="page"]')
+    expect(current.exists()).toBe(true)
+    expect(current.text()).toContain('Dashboard')
+
+    wrapper.unmount()
+  })
+
+  it('renders the page inside the shell, not instead of it', async () => {
+    const wrapper = await mountShell()
+
+    expect(wrapper.find('main#main-content').text()).toContain('page body')
+
+    wrapper.unmount()
+  })
+
+  it('teleports a page action into the header', async () => {
+    const auth = useAuth()
+    auth.me.value = root
+    auth.ready.value = true
+
+    await router.push('/')
+    await router.isReady()
+
+    const wrapper = mount(
+      defineComponent({
+        setup: () => () =>
+          h(AppLayout, null, {
+            default: () => h(PageActions, null, { default: () => h('button', 'New post') }),
+          }),
+      }),
+      { global: { plugins: [router] }, attachTo: document.body }
+    )
+
+    await wrapper.vm.$nextTick()
+
+    expect(document.querySelector('#app-header-actions')?.textContent).toBe('New post')
+
+    wrapper.unmount()
+  })
+
+  it('collapses the sidebar to the rail width', async () => {
+    const wrapper = await mountShell()
+    const sidebar = useSidebar()
+
+    const aside = () => wrapper.find('aside#app-sidebar')
+    expect(aside().attributes('style')).toContain(`${sidebar.width.value}px`)
+
+    sidebar.collapsed.value = true
+    await wrapper.vm.$nextTick()
+
+    expect(aside().attributes('style')).toContain('56px')
+    // The label survives as an accessible name even when it is not painted.
+    expect(aside().find('nav a[aria-current="page"]').text()).toContain('Dashboard')
+
+    sidebar.collapsed.value = false
+    wrapper.unmount()
+  })
+})

@@ -1,6 +1,4 @@
 <script setup lang="ts">
-import { useEventListener } from '@vueuse/core'
-
 import Icon from '~/components/Icon.vue'
 import {
   CommandDialog,
@@ -9,39 +7,99 @@ import {
   CommandInput,
   CommandItem,
   CommandList,
+  CommandShortcut,
 } from '~/components/ui/command'
 import { useAuth } from '~/composables/useAuth'
-import { filterNavigationItems, navigationIcons, navigationItems } from '~/lib/access-control'
+import { useColorMode } from '~/composables/useColorMode'
+import { useCommandPalette } from '~/composables/useCommandPalette'
+import { useNavigation } from '~/composables/useNavigation'
+import { useShortcut, useShortcutHelp } from '~/composables/useShortcuts'
+import { useSidebar } from '~/composables/useSidebar'
+import { navigationIcons } from '~/lib/access-control'
+import { appConfig } from '~/lib/app-config'
 import { useI18n } from '~/plugins/i18n'
 
 const { t } = useI18n()
 const auth = useAuth()
 const router = useRouter()
-
-const open = ref(false)
+const palette = useCommandPalette()
+const sidebar = useSidebar()
+const { isDark, setMode } = useColorMode()
+const shortcutHelp = useShortcutHelp()
 
 // The same filter the sidebar uses, so the palette never offers a page the
 // user would only be bounced off.
-const items = computed(() => filterNavigationItems(navigationItems, { me: auth.me.value }))
+const { items } = useNavigation()
 
-useEventListener(window, 'keydown', (event: KeyboardEvent) => {
-  if (event.key !== 'k' || !(event.metaKey || event.ctrlKey)) return
-  // Chrome focuses the address bar on Ctrl+K otherwise.
-  event.preventDefault()
+interface Command {
+  id: string
+  label: string
+  icon: string
+  run: () => void
+}
 
-  if (!auth.isAuthenticated.value) return
+const commands = computed<Command[]>(() => {
+  const list: Command[] = [
+    {
+      id: 'theme',
+      label: isDark.value ? t('commandPalette.actions.light') : t('commandPalette.actions.dark'),
+      icon: isDark.value ? 'lucide:sun' : 'lucide:moon',
+      run: () => setMode(isDark.value ? 'light' : 'dark'),
+    },
+  ]
 
-  open.value = !open.value
+  if (sidebar.collapsible) {
+    list.push({
+      id: 'sidebar',
+      label: t('shortcuts.toggleSidebar'),
+      icon: 'lucide:panel-left',
+      run: () => sidebar.toggle(),
+    })
+  }
+
+  if (appConfig.features.shortcutsHelp) {
+    list.push({
+      id: 'shortcuts',
+      label: t('shortcuts.title'),
+      icon: 'lucide:keyboard',
+      run: () => shortcutHelp.show(),
+    })
+  }
+
+  list.push({
+    id: 'logout',
+    label: t('auth.logout'),
+    icon: 'lucide:log-out',
+    run: () => {
+      void auth.logout().then(() => router.push({ name: 'login' }))
+    },
+  })
+
+  return list
 })
 
-const go = async (routeName: string) => {
-  open.value = false
-  await router.push({ name: routeName })
+// allowInInput/allowInOverlay: the palette is a text field over a dialog, and
+// the same key has to close it again from inside.
+useShortcut({
+  keys: 'mod+k',
+  description: () => t('commandPalette.open'),
+  allowInInput: true,
+  allowInOverlay: true,
+  enabled: () => appConfig.features.commandPalette && auth.isAuthenticated.value,
+  handler: () => palette.toggle(),
+})
+
+const run = (action: () => void) => {
+  palette.close()
+  action()
 }
 </script>
 
 <template>
-  <CommandDialog v-model:open="open">
+  <CommandDialog
+    v-if="appConfig.features.commandPalette"
+    v-model:open="palette.isOpen.value"
+  >
     <CommandInput :placeholder="t('commandPalette.placeholder')" />
     <CommandList>
       <CommandEmpty>{{ t('commandPalette.empty') }}</CommandEmpty>
@@ -49,11 +107,23 @@ const go = async (routeName: string) => {
         <CommandItem
           v-for="item in items"
           :key="item.routeName"
-          :value="item.routeName"
-          @select="go(item.routeName)"
+          :value="`${t(item.labelKey)} ${item.routeName}`"
+          @select="run(() => router.push({ name: item.routeName }))"
         >
           <Icon :name="navigationIcons[item.icon]" />
           {{ t(item.labelKey) }}
+        </CommandItem>
+      </CommandGroup>
+      <CommandGroup :heading="t('commandPalette.actions.heading')">
+        <CommandItem
+          v-for="command in commands"
+          :key="command.id"
+          :value="command.label"
+          @select="run(command.run)"
+        >
+          <Icon :name="command.icon" />
+          {{ command.label }}
+          <CommandShortcut v-if="command.id === 'sidebar'">⌘B</CommandShortcut>
         </CommandItem>
       </CommandGroup>
     </CommandList>

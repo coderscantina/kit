@@ -13,6 +13,7 @@ export default defineConfig({
     nav: [
       { text: 'Architecture', link: '/architecture' },
       { text: 'Adding a feature', link: '/adding-a-feature' },
+      { text: 'App shell', link: '/app-shell' },
       { text: 'AI', link: '/ai' },
       { text: 'Release', link: '/release' },
     ],
@@ -23,6 +24,7 @@ export default defineConfig({
           { text: 'Overview', link: '/' },
           { text: 'Architecture', link: '/architecture' },
           { text: 'Adding a feature', link: '/adding-a-feature' },
+          { text: 'App shell', link: '/app-shell' },
           { text: 'AI', link: '/ai' },
           { text: 'Runtime contract', link: '/runtime-contract' },
           { text: 'Release procedure', link: '/release' },

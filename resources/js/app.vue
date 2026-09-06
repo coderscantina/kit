@@ -6,6 +6,7 @@ import { Toaster } from 'vue-sonner'
 
 import CommandPalette from '~/components/CommandPalette.vue'
 import ConfirmDialog from '~/components/ConfirmDialog.vue'
+import KeyboardShortcutsDialog from '~/components/KeyboardShortcutsDialog.vue'
 import AppLayout from '~/layouts/AppLayout.vue'
 import UnauthenticatedLayout from '~/layouts/UnauthenticatedLayout.vue'
 
@@ -22,8 +23,14 @@ const layout = computed(() =>
   </component>
   <CommandPalette />
   <ConfirmDialog />
+  <KeyboardShortcutsDialog />
+  <!-- Three at a time, four seconds, dismissible. A toast is a receipt, not a
+       log: anything that has to be read twice belongs on the page. -->
   <Toaster
     position="bottom-right"
+    :duration="4000"
+    :visible-toasts="3"
+    close-button
     rich-colors
   />
 </template>
