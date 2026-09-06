@@ -9,6 +9,7 @@ import { Card } from '~/components/ui/card'
 import { Input } from '~/components/ui/input'
 import TableLoadingRow from '~/components/ui/TableLoadingRow.vue'
 import { useAuth } from '~/composables/useAuth'
+import { useConfirm } from '~/composables/useConfirm'
 import { useStepUp } from '~/composables/useStepUp'
 import { hasAbilityRequirement } from '~/lib/access-control'
 import { queryKeys } from '~/lib/query-keys'
@@ -19,6 +20,7 @@ const { t } = useI18n()
 const auth = useAuth()
 const queryClient = useQueryClient()
 const stepUp = useStepUp()
+const { confirm } = useConfirm()
 
 const page = ref(1)
 const users = useQuery({
@@ -66,7 +68,15 @@ const changeRole = async (user: App.Data.UserData, role: string) => {
 }
 
 const removeUser = async (user: App.Data.UserData) => {
-  if (!window.confirm(t('users.removeConfirm', { name: user.name }))) return
+  const confirmed = await confirm({
+    title: t('users.removeTitle'),
+    message: t('users.removeConfirm', { name: user.name }),
+    confirmLabel: t('actions.remove'),
+    variant: 'destructive',
+  })
+
+  if (!confirmed) return
+
   try {
     await stepUp.run(() => api.users.destroy(user.id))
     await queryClient.invalidateQueries({ queryKey: ['users'] })

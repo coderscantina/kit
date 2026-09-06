@@ -4,6 +4,7 @@
 // not imported and no per-part class overrides are needed here.
 import { Toaster } from 'vue-sonner'
 
+import ConfirmDialog from '~/components/ConfirmDialog.vue'
 import AppLayout from '~/layouts/AppLayout.vue'
 import UnauthenticatedLayout from '~/layouts/UnauthenticatedLayout.vue'
 
@@ -18,6 +19,7 @@ const layout = computed(() =>
   <component :is="layout">
     <RouterView />
   </component>
+  <ConfirmDialog />
   <Toaster
     position="bottom-right"
     rich-colors

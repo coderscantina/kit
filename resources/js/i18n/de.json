@@ -122,6 +122,7 @@
     "role": "Rolle",
     "roleChanged": "Rolle aktualisiert.",
     "removeConfirm": "{name} entfernen?",
+    "removeTitle": "Benutzer entfernen",
     "error": "Etwas ist schiefgelaufen: {error}",
     "invites": {
       "title": "Einladungen",

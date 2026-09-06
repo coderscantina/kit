@@ -122,6 +122,7 @@
     "role": "Role",
     "roleChanged": "Role updated.",
     "removeConfirm": "Remove {name}?",
+    "removeTitle": "Remove user",
     "error": "Something went wrong: {error}",
     "invites": {
       "title": "Invitations",
