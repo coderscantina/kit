@@ -88,7 +88,15 @@ const routes: RouteRecordRaw[] = [
     meta: { layout: 'app' },
   },
   // kit:routes
-  { path: '/:pathMatch(.*)*', name: 'not-found', redirect: '/' },
+  // A real page, not a redirect to `/`: silently landing on the dashboard
+  // hides typos and broken links instead of reporting them. Still behind the
+  // guard, so a signed-out visitor goes to login like anywhere else.
+  {
+    path: '/:pathMatch(.*)*',
+    name: 'not-found',
+    component: () => import('~/pages/NotFound.vue'),
+    meta: { layout: 'app' },
+  },
 ]
 
 export const router = createRouter({

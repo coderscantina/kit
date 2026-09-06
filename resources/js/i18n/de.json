@@ -95,6 +95,12 @@
     },
     "back": "Zur ersten Seite, die du öffnen kannst"
   },
+  "notFound": {
+    "title": "Seite nicht gefunden",
+    "description": "Unter dieser Adresse liegt nichts.",
+    "home": "Zur ersten Seite, die du öffnen kannst",
+    "back": "Zurück"
+  },
   "account": {
     "profile": {
       "title": "Profil",

@@ -95,6 +95,12 @@
     },
     "back": "Go to the first page you can open"
   },
+  "notFound": {
+    "title": "Page not found",
+    "description": "Nothing lives at this address.",
+    "home": "Go to the first page you can open",
+    "back": "Go back"
+  },
   "account": {
     "profile": {
       "title": "Profile",
