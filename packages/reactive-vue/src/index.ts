@@ -9,8 +9,10 @@ export type {
   ReactiveQueryReturn,
 } from './createReactive'
 export { createConnectionMonitor } from './connection'
+export { useReactiveForm } from './form'
+export type { ReactiveForm, ReactiveFormOptions } from './form'
 export type { ConnectionMonitor } from './connection'
-export { ForbiddenError, ValidationError, normalizeError } from './errors'
+export { ConflictError, ForbiddenError, ValidationError, normalizeError } from './errors'
 export * from './reconcile'
 export { SubscriptionManager } from './subscriptions'
 export { createHttpTransport } from './transport'

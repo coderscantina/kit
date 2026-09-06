@@ -1,4 +1,4 @@
-import { createHttpTransport, createReactive } from '@kit/reactive-vue'
+import { createHttpTransport, createReactive, useReactiveForm } from '@kit/reactive-vue'
 import { toast } from 'vue-sonner'
 
 import { api } from '~/api'
@@ -29,3 +29,5 @@ export const reactive = createReactive<Kit.ReactiveMap>({
 })
 
 export const { useReactiveQuery, useReactiveMutation } = reactive
+
+export { useReactiveForm }
