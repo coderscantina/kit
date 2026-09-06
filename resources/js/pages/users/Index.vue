@@ -7,10 +7,22 @@ import PasswordConfirmDialog from '~/components/PasswordConfirmDialog.vue'
 import { Button } from '~/components/ui/button'
 import { Card } from '~/components/ui/card'
 import { Input } from '~/components/ui/input'
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+  TableSortableHead,
+} from '~/components/ui/table'
+import TableEmptyRow from '~/components/ui/TableEmptyRow.vue'
 import TableLoadingRow from '~/components/ui/TableLoadingRow.vue'
+import TablePaginationFooter from '~/components/ui/TablePaginationFooter.vue'
 import { useAuth } from '~/composables/useAuth'
 import { useConfirm } from '~/composables/useConfirm'
 import { useStepUp } from '~/composables/useStepUp'
+import { useTableQueryState } from '~/composables/useTableQueryState'
 import { hasAbilityRequirement } from '~/lib/access-control'
 import { queryKeys } from '~/lib/query-keys'
 import { toastError } from '~/lib/toast-error'
@@ -22,10 +34,21 @@ const queryClient = useQueryClient()
 const stepUp = useStepUp()
 const { confirm } = useConfirm()
 
-const page = ref(1)
+// Page, per-page, sort and search live in the URL, so a filtered list can be
+// linked, reloaded and walked back through with the browser's own buttons.
+const table = useTableQueryState({ defaultSort: { column: 'name', direction: 'asc' } })
+
+const listQuery = computed(() => ({
+  page: table.params.value.page,
+  perPage: table.params.value.perPage,
+  search: table.params.value.search,
+  sort: table.params.value.sort.column,
+  direction: table.params.value.sort.direction,
+}))
+
 const users = useQuery({
-  queryKey: computed(() => queryKeys.users(page.value)),
-  queryFn: () => api.users.index(page.value),
+  queryKey: computed(() => queryKeys.users(listQuery.value)),
+  queryFn: () => api.users.index(listQuery.value),
   placeholderData: keepPreviousData,
 })
 const roles = useQuery({ queryKey: queryKeys.roles(), queryFn: () => api.users.roles() })
@@ -38,6 +61,8 @@ const invites = useQuery({
 const canManageRoles = computed(() => hasAbilityRequirement(auth.me.value, 'roles.manage'))
 const canManageUsers = computed(() => hasAbilityRequirement(auth.me.value, 'users.manage'))
 const canInvite = computed(() => hasAbilityRequirement(auth.me.value, 'invites.manage'))
+
+const rows = computed(() => users.data.value?.data ?? [])
 
 const inviteForm = reactive({ email: '', role: 'member' })
 
@@ -90,18 +115,37 @@ const removeUser = async (user: App.Data.UserData) => {
   <div class="space-y-6">
     <h1 class="text-2xl font-semibold">{{ t('users.title') }}</h1>
 
-    <Card class="overflow-x-auto">
-      <table class="w-full text-sm">
-        <thead class="border-b text-left text-muted">
-          <tr>
-            <th class="px-3 py-2 font-medium">{{ t('auth.fields.name') }}</th>
-            <th class="px-3 py-2 font-medium">{{ t('auth.fields.email') }}</th>
-            <th class="px-3 py-2 font-medium">{{ t('users.role') }}</th>
-            <th class="px-3 py-2" />
-          </tr>
-        </thead>
+    <div class="flex items-center gap-2">
+      <Input
+        v-model="table.search.value"
+        type="search"
+        class="max-w-xs"
+        :placeholder="t('users.searchPlaceholder')"
+      />
+    </div>
+
+    <Card class="overflow-hidden">
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableSortableHead
+              v-model="table.sort.value"
+              column="name"
+            >
+              {{ t('auth.fields.name') }}
+            </TableSortableHead>
+            <TableSortableHead
+              v-model="table.sort.value"
+              column="email"
+            >
+              {{ t('auth.fields.email') }}
+            </TableSortableHead>
+            <TableHead>{{ t('users.role') }}</TableHead>
+            <TableHead />
+          </TableRow>
+        </TableHeader>
         <!-- Dim while refetching with data present; skeleton rows only when there is nothing yet. -->
-        <tbody
+        <TableBody
           :class="[
             'transition-opacity',
             users.isFetching.value && users.data.value ? 'opacity-50' : '',
@@ -112,18 +156,21 @@ const removeUser = async (user: App.Data.UserData) => {
             :colspan="4"
             :rows="5"
           />
-          <tr
-            v-for="user in users.data.value?.data ?? []"
+          <TableEmptyRow
+            v-else-if="rows.length === 0"
+            :colspan="4"
+          />
+          <TableRow
+            v-for="user in rows"
             :key="user.id"
-            class="border-b last:border-0"
           >
-            <td class="px-3 py-2">{{ user.name }}</td>
-            <td class="px-3 py-2">{{ user.email }}</td>
-            <td class="px-3 py-2">
+            <TableCell>{{ user.name }}</TableCell>
+            <TableCell>{{ user.email }}</TableCell>
+            <TableCell>
               <select
                 v-if="canManageRoles && user.id !== auth.user.value?.id"
                 :value="user.role ?? ''"
-                class="rounded-md border border-input bg-background px-2 py-1"
+                class="rounded-md border border-input-border bg-input px-2 py-1"
                 @change="changeRole(user, ($event.target as HTMLSelectElement).value)"
               >
                 <option
@@ -135,8 +182,8 @@ const removeUser = async (user: App.Data.UserData) => {
                 </option>
               </select>
               <span v-else>{{ user.role ?? '–' }}</span>
-            </td>
-            <td class="px-3 py-2 text-right">
+            </TableCell>
+            <TableCell class="text-right">
               <Button
                 v-if="canManageUsers && user.id !== auth.user.value?.id"
                 variant="ghost"
@@ -145,32 +192,17 @@ const removeUser = async (user: App.Data.UserData) => {
               >
                 {{ t('actions.remove') }}
               </Button>
-            </td>
-          </tr>
-        </tbody>
-      </table>
-      <div
-        v-if="users.data.value && users.data.value.last_page > 1"
-        class="flex items-center justify-end gap-2 border-t p-3 text-sm"
-      >
-        <Button
-          variant="outline"
-          size="sm"
-          :disabled="page <= 1"
-          @click="page--"
-        >
-          {{ t('actions.previous') }}
-        </Button>
-        <span>{{ page }} / {{ users.data.value.last_page }}</span>
-        <Button
-          variant="outline"
-          size="sm"
-          :disabled="page >= users.data.value.last_page"
-          @click="page++"
-        >
-          {{ t('actions.next') }}
-        </Button>
-      </div>
+            </TableCell>
+          </TableRow>
+        </TableBody>
+      </Table>
+      <TablePaginationFooter
+        v-if="users.data.value"
+        v-model:current-page="table.page.value"
+        v-model:per-page="table.perPage.value"
+        :meta="users.data.value"
+        :page-size-options="[10, 20, 50, 100]"
+      />
     </Card>
 
     <Card
@@ -192,7 +224,7 @@ const removeUser = async (user: App.Data.UserData) => {
         />
         <select
           v-model="inviteForm.role"
-          class="rounded-md border border-input bg-background px-2"
+          class="rounded-md border border-input-border bg-input px-2"
         >
           <option
             v-for="role in roles.data.value ?? []"

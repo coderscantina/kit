@@ -138,6 +138,7 @@
   "users": {
     "title": "Users",
     "role": "Role",
+    "searchPlaceholder": "Search by name or email…",
     "roleChanged": "Role updated.",
     "removeConfirm": "Remove {name}?",
     "removeTitle": "Remove user",

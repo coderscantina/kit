@@ -44,6 +44,36 @@ final class UserManagementTest extends TestCase
     }
 
     #[Test]
+    public function the_user_list_filters_by_search_and_sorts_only_by_allowed_columns(): void
+    {
+        $this->seedRoles();
+        $this->createAndActAs(
+            User::factory()->create(['name' => 'Zoe Zander', 'email' => 'zoe@example.test']),
+            role: 'admin'
+        );
+        $this->assignRole(User::factory()->create(['name' => 'Ada Lovelace', 'email' => 'ada@example.test']), 'member');
+
+        $this->getJson('/api/users?search=lovelace')
+            ->assertOk()
+            ->assertJsonCount(1, 'data')
+            ->assertJsonPath('data.0.name', 'Ada Lovelace');
+
+        $this->getJson('/api/users?search=@example.test')
+            ->assertOk()
+            ->assertJsonCount(2, 'data');
+
+        $this->getJson('/api/users?sort=name&direction=desc')
+            ->assertOk()
+            ->assertJsonPath('data.0.name', 'Zoe Zander');
+
+        // Not on the allow list, so it falls back to the default rather than
+        // reaching orderBy() with whatever the client sent.
+        $this->getJson('/api/users?sort=password')
+            ->assertOk()
+            ->assertJsonPath('data.0.name', 'Ada Lovelace');
+    }
+
+    #[Test]
     public function role_changes_are_step_up_protected_and_respect_the_last_owner(): void
     {
         $this->seedRoles();

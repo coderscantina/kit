@@ -18,16 +18,37 @@ use Illuminate\Http\Response;
 class UserController extends Controller
 {
     /**
+     * Columns the client may sort by. An allow list, not the request's word:
+     * the value reaches orderBy() and would otherwise be an injection point.
+     *
+     * @var list<string>
+     */
+    private const SORTABLE = ['name', 'email', 'created_at', 'last_login_at'];
+
+    /**
      * @return array<string, mixed>
      */
     public function index(Request $request): array
     {
         $this->authorize('viewAny', User::class);
 
+        $search = trim($request->string('search')->toString());
+        $sort = $request->string('sort')->toString();
+        $sort = in_array($sort, self::SORTABLE, true) ? $sort : 'name';
+        $direction = $request->string('direction')->toString() === 'desc' ? 'desc' : 'asc';
+
         $users = User::query()
             ->with('role')
-            ->orderBy('name')
-            ->paginate($this->perPage($request));
+            ->when($search !== '', function ($query) use ($search): void {
+                $term = '%'.addcslashes($search, '%_\\').'%';
+
+                $query->where(function ($query) use ($term): void {
+                    $query->where('name', 'like', $term)->orWhere('email', 'like', $term);
+                });
+            })
+            ->orderBy($sort, $direction)
+            ->paginate($this->perPage($request))
+            ->withQueryString();
 
         return UserData::collect($users)->toArray();
     }
