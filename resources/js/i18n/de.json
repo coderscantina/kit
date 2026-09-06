@@ -11,7 +11,11 @@
     "remove": "Entfernen",
     "revoke": "Zurückziehen",
     "previous": "Zurück",
-    "next": "Weiter"
+    "next": "Weiter",
+    "clear": "Leeren",
+    "close": "Schließen",
+    "moreOptions": "Weitere Optionen",
+    "dragToReorder": "Zum Sortieren ziehen"
   },
   "nav": {
     "dashboard": "Übersicht",
@@ -140,5 +144,88 @@
     "ask": "Fragen",
     "stop": "Stoppen",
     "empty": "Die Antwort erscheint hier, während sie geschrieben wird."
+  },
+  "common": {
+    "select": "Auswählen…",
+    "search": "Suchen…",
+    "loading": "Lädt…",
+    "no_results": "Keine Ergebnisse"
+  },
+  "validation": {
+    "minItems": "Mindestens {min} erforderlich, bisher {current}.",
+    "maxItems": "Höchstens {max} erlaubt."
+  },
+  "shortcuts": {
+    "dialog": {
+      "submit": "Absenden"
+    }
+  },
+  "notifications": {
+    "inputField": {
+      "copied": "In die Zwischenablage kopiert"
+    }
+  },
+  "components": {
+    "fileDropZone": {
+      "selectFileAction": "Datei auswählen",
+      "dropFileAction": "Datei hier ablegen",
+      "orDragDrop": "oder per Drag & Drop",
+      "unsupportedFileError": "Dieser Dateityp wird nicht unterstützt."
+    }
+  },
+  "labels": {
+    "moreInfo": "Mehr Infos",
+    "noResults": "Keine Ergebnisse",
+    "nothingToShow": "Nichts anzuzeigen",
+    "showingEntries": "Zeige {from}–{to} von {total}",
+    "datasets": {
+      "perPage": "Pro Seite"
+    },
+    "icons": {
+      "iconPickerPlaceholder": "Icons suchen…"
+    },
+    "emojis": {
+      "pick": "Emoji auswählen",
+      "groups": {
+        "smileys_people": "Smileys & Menschen",
+        "animals_nature": "Tiere & Natur",
+        "food_drink": "Essen & Trinken",
+        "activities": "Aktivitäten",
+        "travel_places": "Reisen & Orte",
+        "objects": "Objekte",
+        "symbols": "Symbole",
+        "flags": "Flaggen"
+      },
+      "skinTones": {
+        "neutral": "Standard",
+        "1f3fb": "Hell",
+        "1f3fc": "Mittelhell",
+        "1f3fd": "Mittel",
+        "1f3fe": "Mitteldunkel",
+        "1f3ff": "Dunkel"
+      }
+    },
+    "dateRange": {
+      "label": "Zeitraum",
+      "placeholder": "Zeitraum wählen",
+      "clear": "Zeitraum leeren",
+      "apply": "Übernehmen",
+      "cancel": "Abbrechen",
+      "from": "Von",
+      "to": "Bis",
+      "fromDate": "Startdatum",
+      "fromTime": "Startzeit",
+      "toDate": "Enddatum",
+      "toTime": "Endzeit",
+      "presets": {
+        "last15m": "Letzte 15 Minuten",
+        "last1h": "Letzte Stunde",
+        "last3h": "Letzte 3 Stunden",
+        "last24h": "Letzte 24 Stunden",
+        "last3d": "Letzte 3 Tage",
+        "last7d": "Letzte 7 Tage",
+        "last30d": "Letzte 30 Tage"
+      }
+    }
   }
 }

@@ -1,0 +1,43 @@
+<script setup lang="ts">
+import type { HTMLAttributes } from 'vue'
+
+import Tooltip from './Tooltip.vue'
+import TooltipContent from './TooltipContent.vue'
+import TooltipProvider from './TooltipProvider.vue'
+import TooltipTrigger from './TooltipTrigger.vue'
+
+const props = withDefaults(
+  defineProps<{
+    tooltip: string
+    delayDuration?: number
+    side?: 'top' | 'right' | 'bottom' | 'left'
+    disabled?: boolean
+    class?: HTMLAttributes['class']
+  }>(),
+  {
+    delayDuration: 300,
+    side: 'top',
+    disabled: false,
+    class: '',
+  }
+)
+</script>
+
+<template>
+  <TooltipProvider :delay-duration="delayDuration">
+    <Tooltip>
+      <TooltipTrigger
+        type="button"
+        :class="props.class"
+      >
+        <slot />
+      </TooltipTrigger>
+      <TooltipContent
+        v-if="!disabled"
+        :side="side"
+      >
+        <p>{{ tooltip }}</p>
+      </TooltipContent>
+    </Tooltip>
+  </TooltipProvider>
+</template>

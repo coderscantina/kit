@@ -1,12 +1,16 @@
-/** Laravel's paginator envelope, as `Data::collect($paginator)` returns it. */
-export interface Paginated<T> {
-  data: T[]
+/** The counters Laravel's paginator reports, without the rows. */
+export interface PaginationMeta {
   current_page: number
   last_page: number
   per_page: number
   total: number
   from: number | null
   to: number | null
+}
+
+/** Laravel's paginator envelope, as `Data::collect($paginator)` returns it. */
+export interface Paginated<T> extends PaginationMeta {
+  data: T[]
 }
 
 export interface HttpError extends Error {

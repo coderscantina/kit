@@ -11,7 +11,11 @@
     "remove": "Remove",
     "revoke": "Revoke",
     "previous": "Previous",
-    "next": "Next"
+    "next": "Next",
+    "clear": "Clear",
+    "close": "Close",
+    "moreOptions": "More options",
+    "dragToReorder": "Drag to reorder"
   },
   "nav": {
     "dashboard": "Dashboard",
@@ -140,5 +144,88 @@
     "ask": "Ask",
     "stop": "Stop",
     "empty": "The answer appears here as it is written."
+  },
+  "common": {
+    "select": "Select…",
+    "search": "Search…",
+    "loading": "Loading…",
+    "no_results": "No results"
+  },
+  "validation": {
+    "minItems": "At least {min} required, {current} so far.",
+    "maxItems": "At most {max} allowed."
+  },
+  "shortcuts": {
+    "dialog": {
+      "submit": "Submit"
+    }
+  },
+  "notifications": {
+    "inputField": {
+      "copied": "Copied to clipboard"
+    }
+  },
+  "components": {
+    "fileDropZone": {
+      "selectFileAction": "Choose a file",
+      "dropFileAction": "Drop the file here",
+      "orDragDrop": "or drag and drop",
+      "unsupportedFileError": "That file type is not supported."
+    }
+  },
+  "labels": {
+    "moreInfo": "More info",
+    "noResults": "No results",
+    "nothingToShow": "Nothing to show",
+    "showingEntries": "Showing {from}–{to} of {total}",
+    "datasets": {
+      "perPage": "Per page"
+    },
+    "icons": {
+      "iconPickerPlaceholder": "Search icons…"
+    },
+    "emojis": {
+      "pick": "Pick an emoji",
+      "groups": {
+        "smileys_people": "Smileys & people",
+        "animals_nature": "Animals & nature",
+        "food_drink": "Food & drink",
+        "activities": "Activities",
+        "travel_places": "Travel & places",
+        "objects": "Objects",
+        "symbols": "Symbols",
+        "flags": "Flags"
+      },
+      "skinTones": {
+        "neutral": "Default",
+        "1f3fb": "Light",
+        "1f3fc": "Medium light",
+        "1f3fd": "Medium",
+        "1f3fe": "Medium dark",
+        "1f3ff": "Dark"
+      }
+    },
+    "dateRange": {
+      "label": "Date range",
+      "placeholder": "Pick a range",
+      "clear": "Clear range",
+      "apply": "Apply",
+      "cancel": "Cancel",
+      "from": "From",
+      "to": "To",
+      "fromDate": "From date",
+      "fromTime": "From time",
+      "toDate": "To date",
+      "toTime": "To time",
+      "presets": {
+        "last15m": "Last 15 minutes",
+        "last1h": "Last hour",
+        "last3h": "Last 3 hours",
+        "last24h": "Last 24 hours",
+        "last3d": "Last 3 days",
+        "last7d": "Last 7 days",
+        "last30d": "Last 30 days"
+      }
+    }
   }
 }
