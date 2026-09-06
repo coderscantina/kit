@@ -9,8 +9,8 @@ import {
 } from '~/components/ui/tooltip/index'
 import { cn } from '~/lib/utils'
 
-import Avatar from './Avatar.vue'
-import type { AvatarVariants } from './variants'
+import UserAvatar from './UserAvatar.vue'
+import type { AvatarVariants, PresenceStatus } from './variants'
 import { avatarVariants } from './variants'
 
 /** The shape a list entry needs, not a particular app's user model. */
@@ -19,6 +19,8 @@ interface AvatarListUser {
   name: string
   avatar?: string | null
   color?: string | null
+  /** Omitted on every entry, this list looks exactly as it always has. */
+  status?: PresenceStatus | null
 }
 
 const props = withDefaults(
@@ -93,12 +95,13 @@ const placeholderSizeClass = computed(() => {
           leave-from-class="transform scale-100 opacity-100"
           leave-to-class="transform scale-10 opacity-0"
         >
-          <Avatar
+          <UserAvatar
             v-for="user in displayUsers"
             :key="user.id"
             :name="user.name"
             :avatar="user.avatar"
             :border-color="user.color"
+            :status="user.status"
             :size="size"
             class="ring-2 ring-background"
           />

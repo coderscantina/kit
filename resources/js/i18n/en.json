@@ -598,5 +598,16 @@
       "xlsx": "Excel workbook",
       "pdf": "PDF"
     }
+  },
+  "presence": {
+    "status": {
+      "online": "{name} is online",
+      "offline": "{name} is offline",
+      "unavailable": "{name} is unavailable"
+    },
+    "field": {
+      "editing": "{name} is in this field",
+      "changing": "{name} has unsaved changes here"
+    }
   }
 }

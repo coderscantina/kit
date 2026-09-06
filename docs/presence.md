@@ -73,6 +73,44 @@ const { members } = usePresence(() => `posts.${route.params.id}`)
 Two components asking for the same resource share one Echo channel; the last
 one to unmount leaves it.
 
+## Showing a status
+
+`UserAvatar` is `Avatar` plus an optional indicator. Without a `status` it
+renders exactly what `Avatar` renders, because a dot that is always there
+says nothing:
+
+```vue
+<UserAvatar
+  :name="member.name"
+  :avatar="member.avatarUrl"
+  :border-color="member.color"
+  :status="statusOf(member.id)"
+/>
+```
+
+Three states, three tokens: `online` is `success`, `offline` is the muted
+`input` grey, `unavailable` is `destructive`. Each carries an announced
+sentence, so the state does not live in the colour alone. Pass `statusLabel`
+when the app knows better than "unavailable" does.
+
+`usePresenceStatus` is the roster as a lookup, so a list does not rebuild the
+same filter per row:
+
+```ts
+const { statusOf, members } = usePresenceStatus('users', {
+  unavailable: () => awayIds.value,
+})
+```
+
+`unavailable` is never derived. Away, in a meeting and do not disturb are the
+application's words, and presence has no opinion about them; the caller passes
+the ids. `online` and `offline` come off the roster, and with realtime off
+`statusOf` returns null: an empty roster is not evidence that anyone is
+offline, and the indicator renders nothing rather than lie.
+
+`AvatarList` passes a `status` on an entry straight through, so a roster can
+show the same three states without a second component.
+
 ## Whispers
 
 A whisper goes client to client through Reverb without touching PHP. That

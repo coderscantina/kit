@@ -598,5 +598,16 @@
       "xlsx": "Excel-Mappe",
       "pdf": "PDF"
     }
+  },
+  "presence": {
+    "status": {
+      "online": "{name} ist online",
+      "offline": "{name} ist offline",
+      "unavailable": "{name} ist nicht verfügbar"
+    },
+    "field": {
+      "editing": "{name} ist in diesem Feld",
+      "changing": "{name} hat hier ungespeicherte Änderungen"
+    }
   }
 }
