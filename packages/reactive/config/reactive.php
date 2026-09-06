@@ -19,6 +19,16 @@ return [
     // Bursts within this window coalesce into one recompute.
     'debounce_ms' => 50,
 
+    // A write that wakes at most this many computations recomputes and
+    // pushes them inside its own request, before the response returns; more
+    // than that goes to the queue as one Invalidate job. 0 sends everything
+    // to the queue.
+    'inline_recomputes' => 4,
+
+    // How long an inline recompute waits for the per-computation lock before
+    // handing the key to the queue. Short: it is inside a request.
+    'inline_lock_wait_ms' => 200,
+
     // How long a recompute waits for the per-computation lock before it
     // gives up and lets the worker that holds it do the push.
     'lock_wait_ms' => 5000,

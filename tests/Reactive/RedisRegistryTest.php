@@ -27,10 +27,11 @@ final class RedisRegistryTest extends ReactiveTestCase
         $registry->put($this->subscription('s1', 'c1', 'u1'));
 
         $stored = $registry->computation('c1');
-        $this->assertSame('notes.list', $stored?->query);
-        $this->assertSame(['ownerId' => 'u1'], $stored?->args);
-        $this->assertSame('owner_id', $stored?->deps[0]->column);
-        $this->assertSame([['title' => 'first']], $stored?->decodedResult());
+        $this->assertNotNull($stored);
+        $this->assertSame('notes.list', $stored->query);
+        $this->assertSame(['ownerId' => 'u1'], $stored->args);
+        $this->assertSame('owner_id', $stored->deps[0]->column);
+        $this->assertSame([['title' => 'first']], $stored->decodedResult());
 
         $this->assertSame('c1', $registry->get('s1')?->computationKey);
         $this->assertSame(['s1'], $registry->subscribersOf('c1'));

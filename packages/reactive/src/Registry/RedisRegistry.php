@@ -229,11 +229,11 @@ final class RedisRegistry implements Registry
         $this->redis()->del("rq:debounce:{$key}");
     }
 
-    public function withLock(string $key, callable $callback): mixed
+    public function withLock(string $key, callable $callback, ?int $waitMs = null): mixed
     {
-        // A short exclusive lock around the compare-and-store in the worker,
-        // so two recomputes of the same computation cannot interleave their
-        // hash writes and pushes.
+        // A short exclusive lock around the compare-and-store, so two
+        // recomputes of the same computation cannot interleave their hash
+        // writes and pushes.
         //
         // The value is a token unique to this caller. Running the callback
         // without the lock would defeat the point, and deleting the key
@@ -241,7 +241,7 @@ final class RedisRegistry implements Registry
         // caller that loses the race gets null and does nothing.
         $lock = "rq:lock:{$key}";
         $token = bin2hex(random_bytes(16));
-        $deadline = microtime(true) + $this->lockWaitMs / 1000;
+        $deadline = microtime(true) + ($waitMs ?? $this->lockWaitMs) / 1000;
 
         // The lock outlives the wait, so a worker that gave up cannot come
         // back to find the holder's lock already expired under it.

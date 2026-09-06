@@ -71,7 +71,11 @@ return [
             'connection' => env('REDIS_QUEUE_CONNECTION', 'default'),
             'queue' => env('REDIS_QUEUE', 'default'),
             'retry_after' => (int) env('REDIS_QUEUE_RETRY_AFTER', 90),
-            'block_for' => null,
+            // A blocking pop, so a worker picks a push up when it lands rather
+            // than on its next poll. The `reactive` queue is what makes this
+            // matter: a recompute the request handed off should not wait on
+            // the worker's sleep.
+            'block_for' => 2,
             'after_commit' => false,
         ],
 

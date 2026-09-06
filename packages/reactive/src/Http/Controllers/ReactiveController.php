@@ -140,6 +140,8 @@ final class ReactiveController
             ],
             'worker' => [
                 'recomputes' => $recomputes,
+                // Recomputed inside the writer's request rather than on the queue.
+                'inline' => $metrics['inline'] ?? 0,
                 'unchanged_ratio' => $recomputes > 0 ? round(($metrics['unchanged'] ?? 0) / $recomputes, 3) : 0,
                 'discarded' => $metrics['discarded'] ?? 0,
                 'coalesced' => $metrics['coalesced'] ?? 0,

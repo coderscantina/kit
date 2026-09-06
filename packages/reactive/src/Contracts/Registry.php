@@ -102,9 +102,10 @@ interface Registry
      * @template T
      *
      * @param  callable(): T  $callback
+     * @param  int|null  $waitMs  how long to wait for the lock; the configured default when null
      * @return T|null
      */
-    public function withLock(string $key, callable $callback): mixed;
+    public function withLock(string $key, callable $callback, ?int $waitMs = null): mixed;
 
     /**
      * Drop dep-set members whose computation has expired, subscriptions whose

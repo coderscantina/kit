@@ -10,10 +10,10 @@ use Illuminate\Support\Facades\DB;
 use Kit\Reactive\Contracts\Registry;
 
 /**
- * Collects row changes for the current transaction and flushes them as one
- * Invalidate batch when the outermost transaction commits. A rollback drops
- * them. Outside a transaction (a plain save in a controller or job) the
- * change is dispatched immediately.
+ * Collects row changes for the current transaction and hands them to the
+ * Invalidator as one batch when the outermost transaction commits. A
+ * rollback drops them. Outside a transaction (a plain save in a controller
+ * or job) the change is handed over immediately.
  *
  * Listens to the connection's transaction events rather than requiring the
  * caller to register afterCommit hooks, so the invariant holds for every
@@ -35,7 +35,6 @@ final class ChangeBuffer
 
     public function __construct(
         private readonly Registry $registry,
-        private readonly string $queue,
     ) {}
 
     public function record(Change $change): void
@@ -104,11 +103,13 @@ final class ChangeBuffer
      */
     private function dispatch(array $changes): int
     {
-        // Taken after commit and before the job exists, so any recompute this
+        // Taken after commit and before any recompute, so a recompute this
         // batch triggers reads a counter that already covers the commit.
         $mutationId = $this->registry->nextMutationId();
 
-        Invalidate::dispatch($changes, $mutationId)->onQueue($this->queue);
+        // Resolved here rather than held: `Reactive::fake()` swaps bindings
+        // after this singleton may already exist.
+        app(Invalidator::class)->invalidate($changes, $mutationId);
 
         return $mutationId;
     }

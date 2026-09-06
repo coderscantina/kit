@@ -198,7 +198,7 @@ final class ArrayRegistry implements Registry
      * Nothing is concurrent in a single process, so the lock is always free
      * and the callback always runs.
      */
-    public function withLock(string $key, callable $callback): mixed
+    public function withLock(string $key, callable $callback, ?int $waitMs = null): mixed
     {
         return $callback();
     }

@@ -79,10 +79,7 @@ class ReactiveServiceProvider extends ServiceProvider
         // Per-request state under Octane: both are flushed before every
         // request through the octane.flush list below.
         $this->app->singleton(TableTracker::class);
-        $this->app->singleton(ChangeBuffer::class, fn ($app) => new ChangeBuffer(
-            $app->make(Registry::class),
-            (string) $app['config']->get('reactive.queue', 'reactive'),
-        ));
+        $this->app->singleton(ChangeBuffer::class, fn ($app) => new ChangeBuffer($app->make(Registry::class)));
 
         $this->app->bind(Pusher::class, BroadcastPusher::class);
 

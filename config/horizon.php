@@ -232,6 +232,9 @@ return [
             'tries' => 3,
             'timeout' => 15,
             'nice' => 0,
+            // Between empty blocking pops; three seconds of blindness would
+            // be most of the push budget.
+            'sleep' => 1,
         ],
     ],
 

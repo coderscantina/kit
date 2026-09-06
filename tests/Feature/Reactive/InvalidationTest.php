@@ -8,15 +8,13 @@ use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Kit\Reactive\Contracts\Metrics;
-use Kit\Reactive\Contracts\Pusher;
 use Kit\Reactive\Contracts\Registry;
 use Kit\Reactive\Facades\Reactive;
 use Kit\Reactive\Invalidation\ChangeBuffer;
 use Kit\Reactive\Invalidation\HasReactiveInvalidation;
 use Kit\Reactive\Invalidation\Invalidate;
 use Kit\Reactive\Jobs\RecomputeComputation;
-use Kit\Reactive\Registry\Catalog;
-use Kit\Reactive\Runtime\QueryRunner;
+use Kit\Reactive\Runtime\Recomputer;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\Fixtures\Reactive\Note;
@@ -134,7 +132,7 @@ final class InvalidationTest extends TestCase
         $this->assertSame(1, app(Metrics::class)->snapshot()['metrics']['coalesced']);
 
         // The recompute runs, releases the marker first, and pushes.
-        (new RecomputeComputation($subscription->computationKey, 1))->handle($registry, app(Metrics::class), app(Catalog::class), app(QueryRunner::class), app(Pusher::class));
+        (new RecomputeComputation($subscription->computationKey, 1))->handle(app(Recomputer::class));
         Reactive::assertPushed('notes.list');
 
         Note::query()->create(['owner_id' => $this->user->id, 'title' => 'after']);
@@ -149,7 +147,7 @@ final class InvalidationTest extends TestCase
         $registry = app(Registry::class);
         $registry->updateComputation($subscription->computationKey, 'stale', 'null', 10);
 
-        (new RecomputeComputation($subscription->computationKey, 3))->handle($registry, app(Metrics::class), app(Catalog::class), app(QueryRunner::class), app(Pusher::class));
+        (new RecomputeComputation($subscription->computationKey, 3))->handle(app(Recomputer::class));
 
         Reactive::assertNotPushed();
         $this->assertSame(1, app(Metrics::class)->snapshot()['metrics']['discarded']);

@@ -122,7 +122,16 @@ final class ReactiveFake
     {
         $fake = Queue::fake([Invalidate::class]);
 
-        $callback();
+        // Small writes are recomputed inside the request and never become a
+        // job; force the queued path so the batch is something to capture.
+        $inline = config('reactive.inline_recomputes');
+        config(['reactive.inline_recomputes' => 0]);
+
+        try {
+            $callback();
+        } finally {
+            config(['reactive.inline_recomputes' => $inline]);
+        }
 
         $jobs = [];
         foreach ($fake->pushed(Invalidate::class) as $job) {
