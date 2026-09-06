@@ -30,6 +30,11 @@
     "dark": "Dark",
     "system": "System"
   },
+  "commandPalette": {
+    "placeholder": "Search pages…",
+    "empty": "No page matches.",
+    "navigation": "Navigation"
+  },
   "auth": {
     "logout": "Sign out",
     "impersonating": "Impersonating",

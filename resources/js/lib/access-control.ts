@@ -26,6 +26,21 @@ export interface NavigationItem {
 }
 
 /**
+ * Iconify names for the `icon` keys above. Shared by the sidebar and the
+ * command palette, so a new nav item is named once. `box` is what
+ * make:feature gives a generated page; swap it for something that says what
+ * the feature is.
+ */
+export const navigationIcons: Record<string, string> = {
+  home: 'lucide:house',
+  users: 'lucide:users',
+  user: 'lucide:user',
+  shield: 'lucide:shield',
+  sparkles: 'lucide:sparkles',
+  box: 'lucide:box',
+}
+
+/**
  * Sidebar order doubles as the access-denied fallback: the first item the
  * user may open is where a denial sends them.
  */

@@ -5,24 +5,13 @@ import Icon from '~/components/Icon.vue'
 import { Button } from '~/components/ui/button'
 import { useAuth } from '~/composables/useAuth'
 import { useRoutePreload } from '~/composables/useRoutePreload'
-import { filterNavigationItems, navigationItems } from '~/lib/access-control'
+import { filterNavigationItems, navigationIcons, navigationItems } from '~/lib/access-control'
 import { useI18n } from '~/plugins/i18n'
 
 const { t } = useI18n()
 const auth = useAuth()
 const router = useRouter()
 const { preloadRoute, cancelPreload } = useRoutePreload()
-
-// `box` is what make:feature gives a generated page; swap it for something
-// that says what the feature is.
-const icons = {
-  home: 'lucide:house',
-  users: 'lucide:users',
-  user: 'lucide:user',
-  shield: 'lucide:shield',
-  sparkles: 'lucide:sparkles',
-  box: 'lucide:box',
-} as const
 
 // The nav never shows a page the user cannot open.
 const items = computed(() => filterNavigationItems(navigationItems, { me: auth.me.value }))
@@ -52,7 +41,7 @@ const logout = async () => {
           @focusout="cancelPreload({ name: item.routeName })"
         >
           <Icon
-            :name="icons[item.icon as keyof typeof icons]"
+            :name="navigationIcons[item.icon]"
             class="size-4"
           />
           {{ t(item.labelKey) }}

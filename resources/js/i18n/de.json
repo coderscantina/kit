@@ -30,6 +30,11 @@
     "dark": "Dunkel",
     "system": "System"
   },
+  "commandPalette": {
+    "placeholder": "Seiten durchsuchen…",
+    "empty": "Keine Seite passt.",
+    "navigation": "Navigation"
+  },
   "auth": {
     "logout": "Abmelden",
     "impersonating": "Impersonation aktiv",
