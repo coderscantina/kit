@@ -46,7 +46,7 @@ watch([() => modelValue.value, () => props.autoSize], () => {
     v-model="modelValue"
     :class="
       cn(
-        'flex min-h-16 w-full rounded-md border border-input-border bg-input px-3 py-2 text-sm text-primary shadow-sm placeholder:text-muted focus-visible:ring-1 focus-visible:ring-ring focus-visible:outline-none  disabled:text-foreground disabled:opacity-50',
+        'flex min-h-16 w-full rounded-md border border-input-border bg-input px-3 py-2 text-sm text-primary shadow-sm placeholder:text-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring  disabled:text-foreground disabled:opacity-50',
         props.class
       )
     "
