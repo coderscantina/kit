@@ -3,69 +3,270 @@
 
 @custom-variant dark (&:where(.dark, .dark *));
 
-/* Design tokens, oklch. Use `bg-primary` etc.; never `hsl(var(--x))`. */
-:root {
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0 0);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.205 0 0);
-  --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.97 0 0);
-  --secondary-foreground: oklch(0.205 0 0);
-  --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
-  --accent: oklch(0.97 0 0);
-  --accent-foreground: oklch(0.205 0 0);
-  --destructive: oklch(0.577 0.245 27.325);
-  --destructive-foreground: oklch(0.985 0 0);
-  --border: oklch(0.922 0 0);
-  --input: oklch(0.922 0 0);
-  --ring: oklch(0.708 0 0);
-  --radius: 0.5rem;
+@theme {
+  --font-sans:
+    ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol',
+    'Noto Color Emoji';
+
+  --radius: 8px;
+
+  --color-blue-50: oklch(97.76% 0.011 234.81);
+  --color-blue-100: oklch(95.25% 0.023 237.64);
+  --color-blue-200: oklch(89.37% 0.053 237.01);
+  --color-blue-300: oklch(82.72% 0.086 238.13);
+  --color-blue-400: oklch(75.76% 0.121 240.02);
+  --color-blue-500: oklch(66.71% 0.161 245.54);
+  --color-blue-600: oklch(61.5% 0.156 246.57);
+  --color-blue-700: oklch(56.55% 0.143 246.33);
+  --color-blue-800: oklch(49.47% 0.123 246.18);
+  --color-blue-900: oklch(38.84% 0.094 245.39);
+  --color-blue-950: oklch(30.91% 0.071 243.7);
+
+  --color-gray-50: oklch(95.82% 0.004 271.37);
+  --color-gray-100: oklch(91.68% 0.008 278.63);
+  --color-gray-150: oklch(87.56% 0.01 279.37);
+  --color-gray-200: oklch(82.89% 0.012 279);
+  --color-gray-250: oklch(78.21% 0.017 279.73);
+  --color-gray-300: oklch(74.2% 0.024 278.9);
+  --color-gray-400: oklch(65.24% 0.032 278.37);
+  --color-gray-500: oklch(55.99% 0.04 277.73);
+  --color-gray-600: oklch(47.78% 0.032 277.85);
+  --color-gray-700: oklch(39.21% 0.024 278.04);
+  --color-gray-750: oklch(34.21% 0.024 277.8);
+  --color-gray-800: oklch(30.43% 0.018 277.6);
+  --color-gray-850: oklch(23.53% 0.012 277.72);
+  --color-gray-900: oklch(20.63% 0.008 277.83);
+  --color-gray-950: oklch(15.15% 0.004 285.34);
+
+  --ease-default: cubic-bezier(0.25, 0.1, 0.25, 1);
+  --ease-butter: cubic-bezier(0.42, 0, 0.28, 0.99);
+  --ease-micro-bounce: cubic-bezier(0, 0.44, 0.6, 1);
+  --ease-mini-bounce: cubic-bezier(0.17, 0.89, 0.47, 1.13);
+  --ease-bounce: cubic-bezier(0.8, -0.4, 0.219, 1.429);
+  --ease-embellishment: cubic-bezier(0.42, 0, 0, 1);
+
+  --text-2xs: 10px;
+  --text-xs: 11px;
+  --text-sm: 13px;
+  --text-base: 15px;
+
+  /* Elevation ladder (light): surface (canvas) < background (panel) < card/popover.
+     Depth convention:
+       L0 canvas   bg-surface, no shadow
+       L1 panel    bg-background
+       L2 card     bg-card shadow-soft
+       L3 popover  bg-popover border-popover-border shadow-soft-lg
+       L4 modal    bg-background shadow-soft-lg over bg-overlay scrim */
+  --surface: var(--color-gray-100);
+  --background: var(--color-gray-50);
+  --elevated: var(--color-gray-150);
+  --foreground: var(--color-gray-700);
+
+  --primary: var(--color-gray-900);
+  --primary-foreground: var(--color-gray-50);
+  --secondary: var(--color-gray-150);
+  --secondary-foreground: var(--color-gray-800);
+
+  --card: var(--color-white);
+  --card-foreground: var(--color-gray-700);
+  --accent: var(--color-blue-500);
+  --accent-hover: var(--color-blue-700);
+  --accent-foreground: var(--color-white);
+  /* --muted is a TEXT color (app-wide convention); --muted-background is the surface pair */
+  --muted: var(--color-gray-600);
+  --muted-background: var(--color-gray-150);
+
+  --input: var(--color-white);
+  --input-border: var(--color-gray-200);
+
+  --border: var(--color-gray-200);
+  --border-strong: var(--color-gray-250);
+  --ring: var(--color-blue-500);
+  --popover: var(--color-white);
+  --popover-foreground: var(--color-gray-700);
+  --popover-border: var(--color-gray-200);
+
+  --overlay: oklch(20.63% 0.008 277.83 / 0.45);
+
+  --sidebar: var(--color-gray-100);
+  --sidebar-foreground: var(--color-gray-700);
+  --sidebar-muted: var(--color-gray-600);
+  --sidebar-accent: var(--color-gray-200);
+  --sidebar-accent-foreground: var(--color-gray-900);
+  --sidebar-border: var(--color-gray-200);
+  --sidebar-ring: var(--color-blue-500);
+
+  --destructive: var(--color-red-600);
+  --destructive-foreground: var(--color-red-800);
+  --destructive-background: var(--color-red-200);
+
+  --success: var(--color-green-600);
+  --success-foreground: var(--color-green-50);
+  --success-background: var(--color-green-600);
+
+  --info: var(--color-blue-600);
+  --info-foreground: var(--color-blue-50);
+  --info-background: var(--color-blue-600);
+
+  --warning: var(--color-yellow-600);
+  --warning-foreground: var(--color-yellow-50);
+  --warning-background: var(--color-yellow-600);
+
+  --ai: var(--color-purple-600);
+  --ai-foreground: var(--color-purple-50);
+  --ai-background: var(--color-purple-600);
 }
 
 .dark {
-  --background: oklch(0.145 0 0);
-  --foreground: oklch(0.985 0 0);
-  --card: oklch(0.205 0 0);
-  --card-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.922 0 0);
-  --primary-foreground: oklch(0.205 0 0);
-  --secondary: oklch(0.269 0 0);
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.269 0 0);
-  --muted-foreground: oklch(0.708 0 0);
-  --accent: oklch(0.269 0 0);
-  --accent-foreground: oklch(0.985 0 0);
-  --destructive: oklch(0.704 0.191 22.216);
-  --destructive-foreground: oklch(0.985 0 0);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.556 0 0);
+  /* Elevation ladder (dark): surface 950 < background 900 < card 850 < elevated/popover 800.
+     Depth comes from lighter surfaces + borders. */
+  --surface: var(--color-gray-950);
+  --background: var(--color-gray-900);
+  --elevated: var(--color-gray-800);
+  --foreground: var(--color-gray-300);
+
+  --primary: var(--color-gray-50);
+  --primary-foreground: var(--color-gray-950);
+  --secondary: var(--color-gray-800);
+  --secondary-foreground: var(--color-gray-200);
+
+  --card: var(--color-gray-850);
+  --card-foreground: var(--color-gray-300);
+  --accent: var(--color-blue-500);
+  --accent-hover: var(--color-blue-400);
+  --accent-foreground: var(--color-white);
+  --muted: var(--color-gray-400);
+  --muted-background: var(--color-gray-800);
+
+  --input: var(--color-gray-800);
+  --input-border: var(--color-gray-750);
+
+  --border: var(--color-gray-800);
+  --border-strong: var(--color-gray-750);
+  --ring: var(--color-blue-500);
+
+  --popover: var(--color-gray-800);
+  --popover-foreground: var(--color-gray-300);
+  --popover-border: var(--color-gray-750);
+
+  --overlay: oklch(0% 0 0 / 0.6);
+
+  --sidebar: var(--color-gray-950);
+  --sidebar-foreground: var(--color-gray-400);
+  --sidebar-muted: var(--color-gray-500);
+  --sidebar-accent: var(--color-gray-850);
+  --sidebar-accent-foreground: var(--color-gray-50);
+  --sidebar-border: var(--color-gray-850);
+  --sidebar-ring: var(--color-blue-500);
+
+  --destructive: var(--color-red-500);
+  --destructive-foreground: var(--color-red-200);
+  --destructive-background: var(--color-red-800);
+
+  --success: var(--color-green-600);
+  --success-foreground: var(--color-green-200);
+  --success-background: var(--color-green-800);
+
+  --info: var(--color-blue-600);
+  --info-foreground: var(--color-blue-200);
+  --info-background: var(--color-blue-800);
+
+  --warning: var(--color-yellow-600);
+  --warning-foreground: var(--color-yellow-200);
+  --warning-background: var(--color-yellow-800);
+
+  --ai: var(--color-purple-500);
+  --ai-foreground: var(--color-purple-200);
+  --ai-background: var(--color-purple-800);
+}
+
+/* Flips foreground/primary so a light-on-dark island reads correctly inside a
+   light page, and the reverse in dark mode. */
+.inverse {
+  --foreground: var(--color-gray-400);
+  --primary: var(--color-gray-50);
+  --primary-foreground: var(--color-gray-950);
+}
+
+.dark .inverse {
+  --foreground: var(--color-gray-700);
+  --primary: var(--color-gray-950);
+  --primary-foreground: var(--color-gray-50);
 }
 
 @theme inline {
+  --color-surface: var(--surface);
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --color-card: var(--card);
-  --color-card-foreground: var(--card-foreground);
+  --color-elevated: var(--elevated);
+
   --color-primary: var(--primary);
   --color-primary-foreground: var(--primary-foreground);
   --color-secondary: var(--secondary);
   --color-secondary-foreground: var(--secondary-foreground);
-  --color-muted: var(--muted);
-  --color-muted-foreground: var(--muted-foreground);
+
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
   --color-accent: var(--accent);
+  --color-accent-hover: var(--accent-hover);
   --color-accent-foreground: var(--accent-foreground);
+  --color-text-muted: var(--muted);
+  --color-muted: var(--muted);
+  --color-muted-background: var(--muted-background);
+  --color-input: var(--input);
+  --color-input-border: var(--input-border);
+  --color-border: var(--border);
+  --color-border-strong: var(--border-strong);
+  --color-ring: var(--ring);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-popover-border: var(--popover-border);
+  --color-overlay: var(--overlay);
+
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-muted: var(--sidebar-muted);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+
   --color-destructive: var(--destructive);
   --color-destructive-foreground: var(--destructive-foreground);
-  --color-border: var(--border);
-  --color-input: var(--input);
-  --color-ring: var(--ring);
-  --radius-sm: calc(var(--radius) - 2px);
-  --radius-md: var(--radius);
-  --radius-lg: calc(var(--radius) + 2px);
+  --color-destructive-background: var(--destructive-background);
+
+  --color-success: var(--success);
+  --color-success-foreground: var(--success-foreground);
+  --color-success-background: var(--success-background);
+
+  --color-warning: var(--warning);
+  --color-warning-foreground: var(--warning-foreground);
+  --color-warning-background: var(--warning-background);
+
+  --color-ai: var(--ai);
+  --color-ai-foreground: var(--ai-foreground);
+  --color-ai-background: var(--ai-background);
+
+  --color-info: var(--info);
+  --color-info-foreground: var(--info-foreground);
+  --color-info-background: var(--info-background);
+
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+
+  --shadow-soft-sm:
+    0px 2px 4px rgba(3, 7, 18, 0.02), 0px 7px 15px rgba(3, 7, 18, 0.04),
+    0px 16px 33px rgba(3, 7, 18, 0.06);
+  --shadow-soft:
+    0px 1px 1px rgba(3, 7, 18, 0.01), 0px 3px 5px rgba(3, 7, 18, 0.02),
+    0px 6px 12px rgba(3, 7, 18, 0.04), 0px 10px 21px rgba(3, 7, 18, 0.05),
+    0px 16px 33px rgba(3, 7, 18, 0.06);
+  --shadow-soft-lg:
+    0px 1px 1px rgba(3, 7, 18, 0.01), 0px 3px 4px rgba(3, 7, 18, 0.02),
+    0px 6px 8px rgba(3, 7, 18, 0.03), 0px 11px 15px rgba(3, 7, 18, 0.04),
+    0px 17px 23px rgba(3, 7, 18, 0.05), 0px 24px 33px rgba(3, 7, 18, 0.06);
 }
 
 @layer base {
@@ -74,6 +275,123 @@
   }
 
   body {
-    @apply bg-background text-foreground;
+    @apply h-full bg-surface text-base text-foreground antialiased;
+  }
+
+  ::selection {
+    background-color: var(--color-accent);
+    color: var(--color-primary);
+  }
+
+  @keyframes textShine {
+    0% {
+      background-position: 0% 50%;
+    }
+    100% {
+      background-position: 100% 50%;
+    }
+  }
+
+  .ai-animate-text {
+    background: linear-gradient(
+      to right,
+      var(--ai) 20%,
+      var(--accent) 30%,
+      var(--accent) 70%,
+      var(--ai) 80%
+    );
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    text-fill-color: transparent;
+    background-size: 300% auto;
+    animation: textShine 5s ease-in-out infinite;
+  }
+}
+
+@layer components {
+  @import './vue-sonner.css';
+}
+
+/* Horizontal scroller that hides its scrollbar and fades out clipped content
+   at the edges. The fades are driven by the scroll position, so they only
+   appear when there is content to scroll to on that side; browsers without
+   scroll-timeline support get a plain scroller without fades. */
+@utility scroll-fade-x {
+  --scroll-fade-size: 1.5rem;
+  overflow-x: auto;
+  scrollbar-width: none;
+  &::-webkit-scrollbar {
+    display: none;
+  }
+  @supports (animation-timeline: scroll(self x)) {
+    animation: scroll-fade-x linear both;
+    animation-timeline: scroll(self x);
+  }
+}
+
+@keyframes scroll-fade-x {
+  0% {
+    mask-image: linear-gradient(
+      to right,
+      black,
+      black var(--scroll-fade-size, 1.5rem),
+      black calc(100% - var(--scroll-fade-size, 1.5rem)),
+      transparent
+    );
+  }
+  15%,
+  85% {
+    mask-image: linear-gradient(
+      to right,
+      transparent,
+      black var(--scroll-fade-size, 1.5rem),
+      black calc(100% - var(--scroll-fade-size, 1.5rem)),
+      transparent
+    );
+  }
+  100% {
+    mask-image: linear-gradient(
+      to right,
+      transparent,
+      black var(--scroll-fade-size, 1.5rem),
+      black calc(100% - var(--scroll-fade-size, 1.5rem)),
+      black
+    );
+  }
+}
+
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.15s ease;
+}
+
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+}
+
+.slide-down-enter-active,
+.slide-down-leave-active {
+  transition:
+    opacity 0.15s ease,
+    max-height 0.2s ease;
+  max-height: 300px;
+  overflow: hidden;
+}
+
+.slide-down-enter-from,
+.slide-down-leave-to {
+  opacity: 0;
+  max-height: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-pulse {
+    animation: none;
+  }
+
+  .ai-animate-text {
+    animation: none;
   }
 }

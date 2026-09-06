@@ -10,7 +10,7 @@
     <script>window.__APP_CONFIG__ = @json($config);</script>
     @vite(['resources/js/main.ts'])
 </head>
-<body class="h-full bg-background text-foreground antialiased">
+<body class="h-full bg-surface text-foreground antialiased">
     <div id="app"></div>
 </body>
 </html>
