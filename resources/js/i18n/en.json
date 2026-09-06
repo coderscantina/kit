@@ -138,6 +138,9 @@
   "users": {
     "title": "Users",
     "role": "Role",
+    "lastLogin": "Last login",
+    "created": "Created",
+    "neverLoggedIn": "Never",
     "searchPlaceholder": "Search by name or email…",
     "roleChanged": "Role updated.",
     "removeConfirm": "Remove {name}?",

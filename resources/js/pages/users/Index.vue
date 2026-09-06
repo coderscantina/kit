@@ -21,6 +21,7 @@ import TableLoadingRow from '~/components/ui/TableLoadingRow.vue'
 import TablePaginationFooter from '~/components/ui/TablePaginationFooter.vue'
 import { useAuth } from '~/composables/useAuth'
 import { useConfirm } from '~/composables/useConfirm'
+import { useFormat } from '~/composables/useFormat'
 import { useStepUp } from '~/composables/useStepUp'
 import { useTableQueryState } from '~/composables/useTableQueryState'
 import { hasAbilityRequirement } from '~/lib/access-control'
@@ -33,6 +34,7 @@ const auth = useAuth()
 const queryClient = useQueryClient()
 const stepUp = useStepUp()
 const { confirm } = useConfirm()
+const { date, relative } = useFormat()
 
 // Page, per-page, sort and search live in the URL, so a filtered list can be
 // linked, reloaded and walked back through with the browser's own buttons.
@@ -141,6 +143,18 @@ const removeUser = async (user: App.Data.UserData) => {
               {{ t('auth.fields.email') }}
             </TableSortableHead>
             <TableHead>{{ t('users.role') }}</TableHead>
+            <TableSortableHead
+              v-model="table.sort.value"
+              column="last_login_at"
+            >
+              {{ t('users.lastLogin') }}
+            </TableSortableHead>
+            <TableSortableHead
+              v-model="table.sort.value"
+              column="created_at"
+            >
+              {{ t('users.created') }}
+            </TableSortableHead>
             <TableHead />
           </TableRow>
         </TableHeader>
@@ -153,12 +167,12 @@ const removeUser = async (user: App.Data.UserData) => {
         >
           <TableLoadingRow
             v-if="users.isPending.value"
-            :colspan="4"
+            :colspan="6"
             :rows="5"
           />
           <TableEmptyRow
             v-else-if="rows.length === 0"
-            :colspan="4"
+            :colspan="6"
           />
           <TableRow
             v-for="user in rows"
@@ -183,6 +197,12 @@ const removeUser = async (user: App.Data.UserData) => {
               </select>
               <span v-else>{{ user.role ?? '–' }}</span>
             </TableCell>
+            <TableCell class="text-muted">
+              <span :title="user.lastLoginAt ? date(user.lastLoginAt) : undefined">
+                {{ user.lastLoginAt ? relative(user.lastLoginAt) : t('users.neverLoggedIn') }}
+              </span>
+            </TableCell>
+            <TableCell class="text-muted">{{ date(user.createdAt) }}</TableCell>
             <TableCell class="text-right">
               <Button
                 v-if="canManageUsers && user.id !== auth.user.value?.id"
