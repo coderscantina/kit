@@ -1,3 +1,5 @@
+import { icons as lucideIcons } from '@iconify-json/lucide'
+import { addCollection } from '@iconify/vue'
 import { createApp } from 'vue'
 
 import { api } from '~/api'
@@ -9,6 +11,19 @@ import { installVueQuery } from '~/plugins/vue-query'
 import { router } from '~/router'
 
 import '~/assets/css/app.css'
+
+/**
+ * Without this the Iconify runtime fetches every icon from api.iconify.design
+ * on first render. Registering the bundled set keeps rendering local, offline
+ * and free of a third-party request.
+ *
+ * The whole lucide set costs ~97 kB gzipped and rides in its own `icons` chunk,
+ * so it is cached across deploys. It is registered eagerly on purpose: the icon
+ * picker takes an arbitrary name, and a lazy collection makes every icon in the
+ * app shell pop in a tick late. Swap it for a curated subset if that trade stops
+ * being worth it.
+ */
+addCollection(lucideIcons)
 
 const app = createApp(App)
 

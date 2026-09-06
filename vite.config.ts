@@ -64,6 +64,7 @@ export default defineConfig(({ mode }) => ({
             { name: 'vue', test: /node_modules[\\/](vue|@vue|vue-router|vue-i18n)[\\/]/ },
             { name: 'query', test: /node_modules[\\/]@tanstack[\\/]/ },
             { name: 'reka', test: /node_modules[\\/]reka-ui[\\/]/ },
+            { name: 'icons', test: /node_modules[\\/]@iconify(-json)?[\\/]/ },
             { name: 'echo', test: /node_modules[\\/](laravel-echo|pusher-js)[\\/]/ },
           ],
         },
