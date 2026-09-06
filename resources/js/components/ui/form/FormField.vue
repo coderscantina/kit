@@ -5,6 +5,7 @@ import FieldPresence from '~/components/ui/form/FieldPresence.vue'
 import Label from '~/components/ui/form/Label.vue'
 import { TooltipIcon } from '~/components/ui/tooltip'
 import { useFieldPresence } from '~/composables/useFieldPresence'
+import { useI18n } from '~/plugins/i18n'
 
 const props = defineProps<{
   id?: string
@@ -28,8 +29,15 @@ const uniqueId = computed(
 )
 const hasError = computed(() => !!props.error)
 
+const { t } = useI18n()
+
 // Inert, down to the listeners, unless a form called provideFieldPresence.
 const presence = useFieldPresence(() => props.name)
+
+/** Editors whose value came along: only on a form that opted in. */
+const typing = computed(() =>
+  presence.editors.value.filter((editor) => editor.value !== undefined && editor.value !== '')
+)
 
 watch(
   () => props.dirty,
@@ -67,6 +75,18 @@ watch(
       }"
       :has-error="hasError"
     />
+    <p
+      v-for="editor in typing"
+      :key="editor.member.id"
+      class="truncate text-xs text-text-muted"
+      :title="t('presence.field.typing', { name: editor.member.name })"
+    >
+      <span
+        class="font-medium"
+        :style="{ color: editor.member.color }"
+        >{{ editor.member.name }}</span
+      >: {{ editor.value }}
+    </p>
     <p
       v-if="hasError"
       class="mt-1 text-sm leading-tight whitespace-pre-line text-destructive"

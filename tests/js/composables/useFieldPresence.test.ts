@@ -21,15 +21,22 @@ const Combobox = defineComponent({
   setup: () => () => h('div', { tabindex: 0, class: 'combobox' }, 'pick one'),
 })
 
-const form = (control: Component | null = null, dirty = ref(false)) =>
+type FieldPresenceOptions = Parameters<typeof provideFieldPresence>[1]
+
+const form = (
+  control: Component | null = null,
+  dirty = ref(false),
+  options: FieldPresenceOptions = {},
+  inputType = 'text'
+) =>
   mount(
     defineComponent({
       setup() {
-        provideFieldPresence('users')
+        provideFieldPresence('users', options)
 
         return () =>
           h(FormField, { name: 'email', label: 'Email', dirty: dirty.value }, () => [
-            control ? h(control) : h('input', { id: 'email' }),
+            control ? h(control) : h('input', { id: 'email', type: inputType }),
           ])
       },
     })
@@ -74,6 +81,85 @@ describe('field presence', () => {
     expect(whispers().at(-1)).toEqual(['field', { field: null, dirty: false, senderId: 'me' }])
 
     wrapper.unmount()
+  })
+
+  it('carries the value only on a form that opted in, and shows the other side what is typed', async () => {
+    const wrapper = form(null, ref(false), { values: true })
+    const input = wrapper.find('input').element
+
+    fire(input, 'focusin')
+    await vi.advanceTimersByTimeAsync(60)
+
+    input.value = 'ada@'
+    fire(input, 'input')
+    await vi.advanceTimersByTimeAsync(60)
+
+    expect(whispers().at(-1)).toEqual([
+      'field',
+      { field: 'email', dirty: true, value: 'ada@', senderId: 'me' },
+    ])
+
+    // Typing on with the same dirty state is still worth a whisper: the value moved.
+    input.value = 'ada@kit'
+    fire(input, 'input')
+    await vi.advanceTimersByTimeAsync(60)
+
+    expect(whispers().at(-1)?.[1]).toMatchObject({ value: 'ada@kit' })
+
+    channels[0]?.here([member('me', 'Me'), member('grace', 'Grace')])
+    channels[0]?.emitWhisper('field', {
+      senderId: 'grace',
+      field: 'email',
+      dirty: true,
+      value: 'grace@',
+    })
+    await wrapper.vm.$nextTick()
+
+    expect(wrapper.text()).toContain('Grace: grace@')
+    // The preview is next to the input, never in it.
+    expect(input.value).toBe('ada@kit')
+
+    wrapper.unmount()
+  })
+
+  it('never sends a password or a field the form marked secret, and caps a long value', async () => {
+    const password = form(null, ref(false), { values: true }, 'password')
+    const input = password.find('input').element
+
+    fire(input, 'focusin')
+    input.value = 'hunter2'
+    fire(input, 'input')
+    await vi.advanceTimersByTimeAsync(60)
+
+    expect(JSON.stringify(whispers())).not.toContain('hunter2')
+    expect(whispers().at(-1)).toEqual(['field', { field: 'email', dirty: true, senderId: 'me' }])
+    password.unmount()
+    resetEcho()
+
+    const secret = form(null, ref(false), { values: true, secret: ['email'] })
+    const secretInput = secret.find('input').element
+
+    fire(secretInput, 'focusin')
+    secretInput.value = 'private'
+    fire(secretInput, 'input')
+    await vi.advanceTimersByTimeAsync(60)
+
+    expect(JSON.stringify(whispers())).not.toContain('private')
+    secret.unmount()
+    resetEcho()
+
+    const long = form(null, ref(false), { values: true })
+    const longInput = long.find('input').element
+
+    fire(longInput, 'focusin')
+    longInput.value = 'x'.repeat(5000)
+    fire(longInput, 'input')
+    await vi.advanceTimersByTimeAsync(60)
+
+    const last = whispers().at(-1)?.[1] as { value?: string } | undefined
+
+    expect(last?.value).toHaveLength(1000)
+    long.unmount()
   })
 
   it('collapses a burst of changes into one whisper per throttle window', async () => {

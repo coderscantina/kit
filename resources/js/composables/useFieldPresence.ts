@@ -17,22 +17,52 @@ import { usePresence, type PresenceMember, type UsePresenceReturn } from '~/comp
 /** Someone else with this field open right now. */
 export interface FieldEditor {
   member: PresenceMember
-  /** They have changed it since focusing it. Never what they changed it to. */
+  /** They have changed it since focusing it. */
   dirty: boolean
+  /**
+   * What they have typed so far, only on a form that opted in with
+   * `values: true`, and never for a secret field. Undefined otherwise.
+   */
+  value?: string
 }
 
-/** What goes over the wire: who, which field, changed or not. No value, ever. */
+/**
+ * What goes over the wire: who, which field, changed or not, and on an
+ * opted-in form the value as typed. A whisper never reaches the server, so
+ * a value here is a preview and nothing more.
+ */
 interface Claim {
   field: string | null
   dirty: boolean
+  value?: string
 }
 
 interface FieldPresenceContext {
   editorsOf: (field: string) => FieldEditor[]
   claim: (field: string) => void
   release: (field: string) => void
-  setDirty: (field: string, dirty: boolean) => void
+  setDirty: (field: string, dirty: boolean, value?: string) => void
+  /** Whether this form sends values for the field; false for a secret one. */
+  sendsValue: (field: string) => boolean
 }
+
+export interface FieldPresenceOptions {
+  /**
+   * Whisper the value as it is typed, so the other person sees what is
+   * coming, not only that something is. Off by default: a value on a
+   * whisper is a different promise from a value in a mutation. It is
+   * never sent for a `type="password"` control or a field in `secret`.
+   */
+  values?: boolean
+  /** Field names whose value stays on this screen whatever `values` says. */
+  secret?: readonly string[]
+}
+
+/**
+ * The most of a value one whisper carries. Reverb drops frames over 10 KB
+ * and a textarea can hold more; the head is what the other person reads.
+ */
+const VALUE_MAX_LENGTH = 1000
 
 /** Absent unless a form provided one, which is how the feature stays off. */
 const contextKey: InjectionKey<FieldPresenceContext> = Symbol('field-presence')
@@ -56,14 +86,22 @@ const WHISPER = 'field'
  *
  * ```ts
  * provideFieldPresence('users')
+ * provideFieldPresence('users', { values: true, secret: ['password'] })
  * ```
+ *
+ * With `values` the other person also sees what is being typed, under the
+ * field, as a preview. Their own input is never written to.
  *
  * The resource is the presence channel, so it takes the ability that channel
  * takes. A form nobody else can open needs none of this.
  */
-export function provideFieldPresence(resource: MaybeRefOrGetter<string | null>): UsePresenceReturn {
+export function provideFieldPresence(
+  resource: MaybeRefOrGetter<string | null>,
+  options: FieldPresenceOptions = {}
+): UsePresenceReturn {
   /** Sender id → the field they hold. Absent means they hold none. */
   const claims = ref(new Map<string, Claim>())
+  const secret = new Set(options.secret ?? [])
 
   /** This session's own claim, which is not reactive: only the wire reads it. */
   let mine: Claim | null = null
@@ -83,7 +121,11 @@ export function provideFieldPresence(resource: MaybeRefOrGetter<string | null>):
   const presence = usePresence(resource)
 
   const flush = (): void => {
-    presence.whisper(WHISPER, { field: mine?.field ?? null, dirty: mine?.dirty ?? false })
+    const claim: Claim = { field: mine?.field ?? null, dirty: mine?.dirty ?? false }
+
+    if (mine?.value !== undefined) claim.value = mine.value
+
+    presence.whisper(WHISPER, claim)
   }
 
   const push = useThrottleFn(flush, THROTTLE_MS, true)
@@ -100,26 +142,45 @@ export function provideFieldPresence(resource: MaybeRefOrGetter<string | null>):
         .filter((entry): entry is { member: PresenceMember; claim: Claim } =>
           Boolean(entry.claim && entry.claim.field === field)
         )
-        .map(({ member, claim }) => ({ member, dirty: claim.dirty })),
+        .map(({ member, claim }) =>
+          claim.value === undefined
+            ? { member, dirty: claim.dirty }
+            : { member, dirty: claim.dirty, value: claim.value }
+        ),
     claim: (field) => write({ field, dirty: false }),
     release: (field) => {
       if (mine?.field !== field) return
 
       write(null)
     },
-    setDirty: (field, dirty) => {
-      if (mine?.field !== field || mine.dirty === dirty) return
+    setDirty: (field, dirty, value) => {
+      if (mine?.field !== field) return
 
-      write({ field, dirty })
+      const next: Claim = { field, dirty }
+
+      if (value !== undefined && context.sendsValue(field)) {
+        next.value = value.slice(0, VALUE_MAX_LENGTH)
+      }
+
+      if (mine.dirty === next.dirty && mine.value === next.value) return
+
+      write(next)
     },
+    sendsValue: (field) => options.values === true && !secret.has(field),
   }
 
   if (presence.supported) {
-    presence.onWhisper<Claim>(WHISPER, ({ senderId, field, dirty }) => {
+    presence.onWhisper<Claim>(WHISPER, ({ senderId, field, dirty, value }) => {
       const next = new Map(claims.value)
 
-      if (field) next.set(senderId, { field, dirty: dirty === true })
-      else next.delete(senderId)
+      if (field) {
+        next.set(
+          senderId,
+          typeof value === 'string'
+            ? { field, dirty: dirty === true, value }
+            : { field, dirty: dirty === true }
+        )
+      } else next.delete(senderId)
 
       claims.value = next
     })
@@ -170,6 +231,10 @@ const valueOf = (target: EventTarget | null): string | null =>
   target instanceof HTMLSelectElement
     ? target.value
     : null
+
+/** A password never leaves the screen, whatever the form opted into. */
+const isSecretControl = (target: EventTarget | null): boolean =>
+  target instanceof HTMLInputElement && target.type === 'password'
 
 /**
  * The field half of `provideFieldPresence`, which `FormField` calls for you.
@@ -229,10 +294,15 @@ export function useFieldPresence(
     if (!name.value) return
 
     const value = valueOf(event.target)
+    const dirty = baseline === null || value === null ? true : value !== baseline
 
     // A control with no value of its own, a combobox or a date picker, has
     // nothing to compare against, so anything it emits counts as a change.
-    context.setDirty(name.value, baseline === null || value === null ? true : value !== baseline)
+    context.setDirty(
+      name.value,
+      dirty,
+      value !== null && !isSecretControl(event.target) ? value : undefined
+    )
   }
 
   watch(name, (_next, previous) => {

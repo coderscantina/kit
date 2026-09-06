@@ -607,7 +607,8 @@
     },
     "field": {
       "editing": "{name} is in this field",
-      "changing": "{name} has unsaved changes here"
+      "changing": "{name} has unsaved changes here",
+      "typing": "{name} is typing here"
     }
   }
 }

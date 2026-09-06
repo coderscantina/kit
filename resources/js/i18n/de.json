@@ -607,7 +607,8 @@
     },
     "field": {
       "editing": "{name} ist in diesem Feld",
-      "changing": "{name} hat hier ungespeicherte Änderungen"
+      "changing": "{name} hat hier ungespeicherte Änderungen",
+      "typing": "{name} tippt hier gerade"
     }
   }
 }
