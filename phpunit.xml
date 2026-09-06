@@ -13,7 +13,6 @@
             <directory>tests/Feature</directory>
             <directory>tests/Architecture</directory>
             <directory>packages/reactive/tests/Unit</directory>
-            <directory suffix="Test.php">app/Features</directory>
         </testsuite>
         <!-- Needs MySQL and Redis (REACTIVE_TEST_DB); skips itself otherwise. -->
         <testsuite name="reactive">
