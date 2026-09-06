@@ -17,8 +17,9 @@ const fallback = computed(() => firstAllowedRoute({ me: auth.me.value }))
 <template>
   <Card class="mx-auto max-w-md p-6">
     <h1 class="mb-2 text-xl font-semibold">{{ t(`accessDenied.${scope}.title`) }}</h1>
-    <p class="mb-4 text-sm text-muted-foreground">{{ t(`accessDenied.${scope}.description`) }}</p>
+    <p class="mb-4 text-sm text-muted">{{ t(`accessDenied.${scope}.description`) }}</p>
     <Button
+      variant="primary"
       v-if="fallback"
       as-child
     >

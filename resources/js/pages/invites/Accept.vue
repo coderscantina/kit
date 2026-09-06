@@ -71,13 +71,13 @@ const decline = async () => {
     <Alert v-if="declined">{{ t('invites.accept.declined') }}</Alert>
     <Alert
       v-else-if="invite.isError.value"
-      variant="destructive"
+      color="destructive"
     >
       {{ t('invites.accept.invalid') }}
     </Alert>
     <p
       v-else-if="invite.isPending.value"
-      class="text-sm text-muted-foreground"
+      class="text-sm text-muted"
     >
       {{ t('app.loading') }}
     </p>
@@ -124,12 +124,13 @@ const decline = async () => {
       </template>
       <Alert
         v-if="errors.message.value"
-        variant="destructive"
+        color="destructive"
       >
         {{ errors.message.value }}
       </Alert>
       <div class="flex gap-2">
         <Button
+          variant="primary"
           type="submit"
           class="flex-1"
           :loading="loading"

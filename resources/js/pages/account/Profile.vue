@@ -89,6 +89,7 @@ const saveEmail = async () => {
           </select>
         </div>
         <Button
+          variant="primary"
           type="submit"
           :loading="saving"
         >
@@ -112,13 +113,13 @@ const saveEmail = async () => {
         />
         <p
           v-if="auth.user.value && !auth.user.value.emailVerified"
-          class="text-sm text-muted-foreground"
+          class="text-sm text-muted"
         >
           {{ t('account.profile.unverified') }}
         </p>
         <Button
           type="submit"
-          variant="secondary"
+          variant="default"
           :loading="savingEmail"
         >
           {{ t('account.profile.changeEmail') }}
@@ -127,7 +128,7 @@ const saveEmail = async () => {
     </Card>
     <Alert
       v-if="errors.message.value"
-      variant="destructive"
+      color="destructive"
     >
       {{ errors.message.value }}
     </Alert>

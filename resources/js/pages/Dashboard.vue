@@ -15,8 +15,8 @@ const connection = reactive.connection.state
       {{ t('dashboard.title', { name: auth.user.value?.name ?? '' }) }}
     </h1>
     <Card class="p-6">
-      <p class="text-sm text-muted-foreground">{{ t('dashboard.empty') }}</p>
-      <p class="mt-2 text-xs text-muted-foreground">
+      <p class="text-sm text-muted">{{ t('dashboard.empty') }}</p>
+      <p class="mt-2 text-xs text-muted">
         {{ t('dashboard.connection', { state: connection }) }}
       </p>
     </Card>

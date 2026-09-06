@@ -28,8 +28,9 @@ const resend = async () => {
 <template>
   <Card class="p-6">
     <h1 class="mb-2 text-xl font-semibold">{{ t('auth.verify.title') }}</h1>
-    <p class="mb-4 text-sm text-muted-foreground">{{ t('auth.verify.description') }}</p>
+    <p class="mb-4 text-sm text-muted">{{ t('auth.verify.description') }}</p>
     <Button
+      variant="primary"
       v-if="auth.isAuthenticated.value"
       :loading="loading"
       @click="resend"

@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { api } from '~/api'
 import { Button } from '~/components/ui/button'
-import { Dialog } from '~/components/ui/dialog'
+import { Dialog, DialogContent, DialogHeaderCombined } from '~/components/ui/dialog'
 import { Input } from '~/components/ui/input'
 import { Label } from '~/components/ui/label'
 import { errorMessage } from '~/lib/toast-error'
@@ -36,46 +36,49 @@ const submit = async () => {
 </script>
 
 <template>
-  <Dialog
-    v-model:open="open"
-    :title="t('auth.confirmPassword.title')"
-  >
-    <form
-      class="space-y-4"
-      @submit.prevent="submit"
-    >
-      <p class="text-sm text-muted-foreground">{{ t('auth.confirmPassword.description') }}</p>
-      <div class="space-y-2">
-        <Label for="confirm-password">{{ t('auth.fields.password') }}</Label>
-        <Input
-          id="confirm-password"
-          v-model="password"
-          type="password"
-          autocomplete="current-password"
-          required
-        />
-      </div>
-      <p
-        v-if="error"
-        class="text-sm text-destructive"
+  <Dialog v-model:open="open">
+    <DialogContent class="max-w-md">
+      <DialogHeaderCombined
+        :title="t('auth.confirmPassword.title')"
+        :description="t('auth.confirmPassword.description')"
+      />
+      <form
+        class="space-y-4"
+        @submit.prevent="submit"
       >
-        {{ error }}
-      </p>
-      <div class="flex justify-end gap-2">
-        <Button
-          type="button"
-          variant="ghost"
-          @click="open = false"
+        <div class="space-y-2">
+          <Label for="confirm-password">{{ t('auth.fields.password') }}</Label>
+          <Input
+            id="confirm-password"
+            v-model="password"
+            type="password"
+            autocomplete="current-password"
+            required
+          />
+        </div>
+        <p
+          v-if="error"
+          class="text-sm text-destructive"
         >
-          {{ t('actions.cancel') }}
-        </Button>
-        <Button
-          type="submit"
-          :loading="loading"
-        >
-          {{ t('actions.confirm') }}
-        </Button>
-      </div>
-    </form>
+          {{ error }}
+        </p>
+        <div class="flex justify-end gap-2">
+          <Button
+            type="button"
+            variant="ghost"
+            @click="open = false"
+          >
+            {{ t('actions.cancel') }}
+          </Button>
+          <Button
+            variant="primary"
+            type="submit"
+            :loading="loading"
+          >
+            {{ t('actions.confirm') }}
+          </Button>
+        </div>
+      </form>
+    </DialogContent>
   </Dialog>
 </template>

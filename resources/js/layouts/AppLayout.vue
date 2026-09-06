@@ -1,6 +1,5 @@
 <script setup lang="ts">
-import { Box, Home, LogOut, Shield, Sparkles, User, Users } from 'lucide-vue-next'
-
+import Icon from '~/components/Icon.vue'
 import { Button } from '~/components/ui/button'
 import { useAuth } from '~/composables/useAuth'
 import { useRoutePreload } from '~/composables/useRoutePreload'
@@ -15,12 +14,12 @@ const { preloadRoute, cancelPreload } = useRoutePreload()
 // `box` is what make:feature gives a generated page; swap it for something
 // that says what the feature is.
 const icons = {
-  home: Home,
-  users: Users,
-  user: User,
-  shield: Shield,
-  sparkles: Sparkles,
-  box: Box,
+  home: 'lucide:house',
+  users: 'lucide:users',
+  user: 'lucide:user',
+  shield: 'lucide:shield',
+  sparkles: 'lucide:sparkles',
+  box: 'lucide:box',
 } as const
 
 // The nav never shows a page the user cannot open.
@@ -34,29 +33,31 @@ const logout = async () => {
 
 <template>
   <div class="flex min-h-full">
-    <aside class="flex w-56 shrink-0 flex-col border-r bg-card">
+    <aside
+      class="flex w-56 shrink-0 flex-col border-r border-sidebar-border bg-sidebar text-sidebar-foreground"
+    >
       <div class="px-4 py-5 text-lg font-semibold">Kit</div>
       <nav class="flex-1 space-y-1 px-2">
         <RouterLink
           v-for="item in items"
           :key="item.routeName"
           :to="{ name: item.routeName }"
-          class="flex items-center gap-2 rounded-md px-2 py-1.5 text-sm text-muted-foreground hover:bg-accent hover:text-accent-foreground"
-          active-class="bg-accent text-accent-foreground"
+          class="flex items-center gap-2 rounded-md px-2 py-1.5 text-sm text-sidebar-muted hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+          active-class="bg-sidebar-accent text-sidebar-accent-foreground"
           @mouseenter="preloadRoute({ name: item.routeName })"
           @focusin="preloadRoute({ name: item.routeName })"
           @mouseleave="cancelPreload({ name: item.routeName })"
           @focusout="cancelPreload({ name: item.routeName })"
         >
-          <component
-            :is="icons[item.icon as keyof typeof icons]"
+          <Icon
+            :name="icons[item.icon as keyof typeof icons]"
             class="size-4"
           />
           {{ t(item.labelKey) }}
         </RouterLink>
       </nav>
-      <div class="border-t p-3">
-        <p class="truncate px-2 text-xs text-muted-foreground">{{ auth.user.value?.email }}</p>
+      <div class="border-t border-sidebar-border p-3">
+        <p class="truncate px-2 text-xs text-sidebar-muted">{{ auth.user.value?.email }}</p>
         <p
           v-if="auth.me.value?.impersonating"
           class="px-2 text-xs text-destructive"
@@ -69,7 +70,7 @@ const logout = async () => {
           class="mt-1 w-full justify-start"
           @click="logout"
         >
-          <LogOut />
+          <Icon name="lucide:log-out" />
           {{ t('auth.logout') }}
         </Button>
       </div>

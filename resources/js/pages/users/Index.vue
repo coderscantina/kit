@@ -7,7 +7,7 @@ import PasswordConfirmDialog from '~/components/PasswordConfirmDialog.vue'
 import { Button } from '~/components/ui/button'
 import { Card } from '~/components/ui/card'
 import { Input } from '~/components/ui/input'
-import { TableSkeletonRow } from '~/components/ui/table'
+import TableLoadingRow from '~/components/ui/TableLoadingRow.vue'
 import { useAuth } from '~/composables/useAuth'
 import { useStepUp } from '~/composables/useStepUp'
 import { hasAbilityRequirement } from '~/lib/access-control'
@@ -82,7 +82,7 @@ const removeUser = async (user: App.Data.UserData) => {
 
     <Card class="overflow-x-auto">
       <table class="w-full text-sm">
-        <thead class="border-b text-left text-muted-foreground">
+        <thead class="border-b text-left text-muted">
           <tr>
             <th class="px-3 py-2 font-medium">{{ t('auth.fields.name') }}</th>
             <th class="px-3 py-2 font-medium">{{ t('auth.fields.email') }}</th>
@@ -97,13 +97,11 @@ const removeUser = async (user: App.Data.UserData) => {
             users.isFetching.value && users.data.value ? 'opacity-50' : '',
           ]"
         >
-          <template v-if="users.isPending.value">
-            <TableSkeletonRow
-              v-for="index in 5"
-              :key="index"
-              :columns="4"
-            />
-          </template>
+          <TableLoadingRow
+            v-if="users.isPending.value"
+            :colspan="4"
+            :rows="5"
+          />
           <tr
             v-for="user in users.data.value?.data ?? []"
             :key="user.id"
@@ -195,6 +193,7 @@ const removeUser = async (user: App.Data.UserData) => {
           </option>
         </select>
         <Button
+          variant="primary"
           type="submit"
           :loading="createInvite.isPending.value"
         >
@@ -209,7 +208,7 @@ const removeUser = async (user: App.Data.UserData) => {
         >
           <span>
             {{ invite.email }}
-            <span class="ml-2 text-xs text-muted-foreground"
+            <span class="ml-2 text-xs text-muted"
               >{{ invite.role }} · {{ t(`users.invites.status.${invite.status}`) }}</span
             >
           </span>

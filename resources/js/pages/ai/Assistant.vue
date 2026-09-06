@@ -41,6 +41,7 @@ const ask = async (): Promise<void> => {
           />
         </div>
         <Button
+          variant="primary"
           type="submit"
           class="self-end"
           :loading="assistant.isStreaming.value"
@@ -61,14 +62,14 @@ const ask = async (): Promise<void> => {
 
       <p
         v-if="assistant.status.value"
-        class="text-sm text-muted-foreground"
+        class="text-sm text-muted"
       >
         {{ assistant.status.value }}
       </p>
 
       <Alert
         v-if="assistant.error.value"
-        variant="destructive"
+        color="destructive"
       >
         {{ assistant.error.value }}
       </Alert>
@@ -81,7 +82,7 @@ const ask = async (): Promise<void> => {
       </p>
       <p
         v-else-if="!assistant.isStreaming.value && !assistant.error.value"
-        class="text-sm text-muted-foreground"
+        class="text-sm text-muted"
       >
         {{ t('ai.empty') }}
       </p>

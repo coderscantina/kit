@@ -82,11 +82,12 @@ const submit = async () => {
       />
       <Alert
         v-if="errors.message.value"
-        variant="destructive"
+        color="destructive"
       >
         {{ errors.message.value }}
       </Alert>
       <Button
+        variant="primary"
         type="submit"
         class="w-full"
         :loading="loading"

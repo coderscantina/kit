@@ -158,6 +158,7 @@ const deleteAccount = async () => {
           required
         />
         <Button
+          variant="primary"
           type="submit"
           :loading="savingPassword"
         >
@@ -168,7 +169,7 @@ const deleteAccount = async () => {
 
     <Card class="p-6">
       <h2 class="mb-2 font-medium">{{ t('account.security.twoFactor') }}</h2>
-      <p class="mb-4 text-sm text-muted-foreground">
+      <p class="mb-4 text-sm text-muted">
         {{
           twoFactorEnabled ? t('account.security.twoFactorOn') : t('account.security.twoFactorOff')
         }}
@@ -196,6 +197,7 @@ const deleteAccount = async () => {
             required
           />
           <Button
+            variant="primary"
             type="submit"
             :loading="busy"
           >
@@ -209,6 +211,7 @@ const deleteAccount = async () => {
         class="flex gap-2"
       >
         <Button
+          variant="primary"
           v-if="!twoFactorEnabled"
           :loading="busy"
           @click="startSetup"
@@ -217,7 +220,7 @@ const deleteAccount = async () => {
         </Button>
         <template v-else>
           <Button
-            variant="secondary"
+            variant="default"
             :loading="busy"
             @click="regenerate"
           >
@@ -251,7 +254,7 @@ const deleteAccount = async () => {
 
     <Card class="border-destructive/50 p-6">
       <h2 class="mb-2 font-medium">{{ t('account.security.deleteAccount') }}</h2>
-      <p class="mb-4 text-sm text-muted-foreground">
+      <p class="mb-4 text-sm text-muted">
         {{ t('account.security.deleteDescription') }}
       </p>
       <Button
@@ -265,7 +268,7 @@ const deleteAccount = async () => {
 
     <Alert
       v-if="errors.message.value"
-      variant="destructive"
+      color="destructive"
     >
       {{ errors.message.value }}
     </Alert>
