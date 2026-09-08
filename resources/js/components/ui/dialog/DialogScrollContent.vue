@@ -11,6 +11,7 @@ import {
 import { computed, type HTMLAttributes } from 'vue'
 
 import Icon from '~/components/Icon.vue'
+import { overlayClass } from '~/components/ui/overlay'
 import { cn } from '~/lib/utils'
 
 const props = defineProps<DialogContentProps & { class?: HTMLAttributes['class'] }>()
@@ -27,13 +28,11 @@ const forwarded = useForwardPropsEmits(delegatedProps, emits)
 
 <template>
   <DialogPortal>
-    <DialogOverlay
-      class="data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 fixed inset-0 z-50 grid place-items-center overflow-y-auto bg-surface/30 backdrop-blur-xs"
-    >
+    <DialogOverlay :class="cn(overlayClass, 'grid place-items-center overflow-y-auto')">
       <DialogContent
         :class="
           cn(
-            'relative z-50 my-8 grid w-full max-w-lg gap-4 border border-border bg-background p-6 shadow-lg max-sm:px-4 duration-200 sm:rounded-lg md:w-full',
+            'relative z-50 my-8 grid w-full max-w-lg gap-4 border border-border bg-card p-6 shadow-soft-lg max-sm:px-4 duration-200 sm:rounded-lg md:w-full',
             props.class
           )
         "

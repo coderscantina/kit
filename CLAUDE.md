@@ -117,6 +117,9 @@ whispering the value as typed with `{ values: true }`; it is never the
 default and never sent for a password or a field listed in `secret`.
 `docs/presence.md` has the contract and the reason.
 
+Everything modal dims the page with `overlayClass` from
+`~/components/ui/overlay`, never its own scrim string.
+
 Composables are imported explicitly. Only `vue` and `vue-router` APIs are
 auto-imported; a directory auto-import silently drops a composable that imports
 a sibling, and typecheck, lint and tests all stay green while the app renders

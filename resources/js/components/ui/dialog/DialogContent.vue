@@ -11,6 +11,7 @@ import type { HTMLAttributes } from 'vue'
 import { computed } from 'vue'
 
 import Icon from '~/components/Icon.vue'
+import { overlayClass } from '~/components/ui/overlay'
 import { cn } from '~/lib/utils'
 import { useI18n } from '~/plugins/i18n'
 
@@ -61,15 +62,13 @@ const onKeydown = (event: KeyboardEvent) => {
 
 <template>
   <DialogPortal>
-    <DialogOverlay
-      class="data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 fixed inset-0 z-50 bg-overlay backdrop-blur-xs"
-    />
+    <DialogOverlay :class="overlayClass" />
     <DialogContent
       v-bind="forwarded"
       @keydown="onKeydown"
       :class="
         cn(
-          'data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95  fixed top-1/2 left-1/2 z-50 flex max-h-[calc(100dvh-2rem)] w-full max-w-lg -translate-x-1/2 -translate-y-1/2 flex-col bg-background p-6 shadow-soft-lg max-sm:px-4 duration-200 sm:rounded-lg',
+          'data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95  fixed top-1/2 left-1/2 z-50 flex max-h-[calc(100dvh-2rem)] w-full max-w-lg -translate-x-1/2 -translate-y-1/2 flex-col bg-card p-6 shadow-soft-lg max-sm:px-4 duration-200 sm:rounded-lg',
           props.class
         )
       "
@@ -82,7 +81,7 @@ const onKeydown = (event: KeyboardEvent) => {
       </div>
       <slot v-else />
       <DialogClose
-        class="absolute top-4 right-4 z-20 flex cursor-pointer items-center rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:outline-none disabled:pointer-events-none data-[state=open]:bg-accent data-[state=open]:text-muted"
+        class="absolute top-4 right-4 z-20 flex cursor-pointer items-center rounded-sm opacity-70 ring-offset-surface transition-opacity hover:opacity-100 focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:outline-none disabled:pointer-events-none data-[state=open]:bg-accent data-[state=open]:text-muted"
       >
         <Icon name="lucide:x" />
         <span class="sr-only">{{ t('actions.close') }}</span>
