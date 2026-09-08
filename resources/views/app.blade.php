@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
     <meta name="color-scheme" content="light dark">
-    <meta name="theme-color" media="(prefers-color-scheme: light)" content="#f0f1f4">
+    <meta name="theme-color" media="(prefers-color-scheme: light)" content="#f3f3f6">
     <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#16171b">
     {{-- Home-screen install. Chromium and Safari read the manifest; iOS still
          wants its own tags for the title, the icon and a status bar that lets

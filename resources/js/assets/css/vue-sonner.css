@@ -82,9 +82,9 @@ html[dir='rtl'],
 
 /* Styled Toast */
 [data-sonner-toast][data-styled='true'] {
-  @apply rounded-lg border border-border bg-card p-4 text-foreground shadow-lg;
+  @apply rounded-lg border border-popover-border bg-popover p-4 text-popover-foreground shadow-soft-lg;
   @apply flex items-center gap-1.5 text-xs;
-  @apply dark:border-border dark:bg-card dark:text-foreground;
+  @apply dark:border-popover-border dark:bg-popover dark:text-popover-foreground;
 
   border-radius: var(--border-radius);
   width: var(--width);
@@ -154,8 +154,7 @@ html[dir='rtl'],
 [data-sonner-toast][data-styled='true'] [data-button] {
   @apply h-6 cursor-pointer rounded border-none px-2 text-xs font-medium outline-none;
   @apply flex flex-shrink-0 items-center transition-all duration-[400ms];
-  @apply bg-foreground text-background hover:opacity-90;
-  @apply dark:bg-foreground dark:text-background;
+  @apply bg-primary text-primary-foreground hover:opacity-90;
 
   margin-left: var(--toast-button-margin-start);
   margin-right: var(--toast-button-margin-end);
@@ -173,9 +172,9 @@ html[dir='rtl'],
 /* Close Button */
 [data-sonner-toast][data-styled='true'] [data-close-button] {
   @apply absolute top-0 flex h-5 w-5 items-center justify-center p-0;
-  @apply z-10 cursor-pointer rounded-full border border-border bg-card text-foreground;
-  @apply transition-all duration-100 hover:border-elevated hover:bg-secondary;
-  @apply dark:border-border dark:bg-card dark:text-foreground dark:hover:bg-secondary;
+  @apply z-10 cursor-pointer rounded-full border border-popover-border bg-popover text-popover-foreground;
+  @apply transition-all duration-100 hover:border-border-strong hover:bg-secondary;
+  @apply dark:border-popover-border dark:bg-popover dark:text-popover-foreground dark:hover:bg-secondary;
 
   left: var(--toast-close-button-start);
   right: var(--toast-close-button-end);

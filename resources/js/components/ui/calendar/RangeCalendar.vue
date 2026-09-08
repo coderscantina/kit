@@ -46,13 +46,13 @@ const forwarded = useForwardPropsEmits(delegatedProps, emits)
   >
     <RangeCalendarHeader class="flex items-center justify-between pb-3">
       <RangeCalendarPrev
-        class="inline-flex size-7 items-center justify-center rounded-md text-muted transition-colors hover:bg-elevated hover:text-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+        class="inline-flex size-7 items-center justify-center rounded-md text-muted transition-colors hover:bg-secondary hover:text-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
       >
         <Icon name="lucide:chevron-left" />
       </RangeCalendarPrev>
       <RangeCalendarHeading class="text-sm font-semibold text-primary" />
       <RangeCalendarNext
-        class="inline-flex size-7 items-center justify-center rounded-md text-muted transition-colors hover:bg-elevated hover:text-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+        class="inline-flex size-7 items-center justify-center rounded-md text-muted transition-colors hover:bg-secondary hover:text-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
       >
         <Icon name="lucide:chevron-right" />
       </RangeCalendarNext>
@@ -90,7 +90,7 @@ const forwarded = useForwardPropsEmits(delegatedProps, emits)
               <RangeCalendarCellTrigger
                 :day="weekDate"
                 :month="month.value"
-                class="relative inline-flex size-9 items-center justify-center rounded-md p-0 text-sm font-normal text-primary outline-none transition-colors hover:bg-elevated focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring data-[outside-view]:text-muted/40 data-[disabled]:pointer-events-none data-[disabled]:text-muted/30 data-[unavailable]:pointer-events-none data-[unavailable]:text-muted/30 data-[unavailable]:line-through data-[selected]:rounded-none data-[today]:font-semibold data-[today]:text-accent data-[selection-start]:rounded-md data-[selection-start]:bg-accent data-[selection-start]:text-accent-foreground data-[selection-start]:hover:bg-accent-hover data-[selection-end]:rounded-md data-[selection-end]:bg-accent data-[selection-end]:text-accent-foreground data-[selection-end]:hover:bg-accent-hover data-[selection-start]:data-[today]:text-accent-foreground data-[selection-end]:data-[today]:text-accent-foreground"
+                class="relative inline-flex size-9 items-center justify-center rounded-md p-0 text-sm font-normal text-primary outline-none transition-colors hover:bg-secondary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring data-[outside-view]:text-muted/40 data-[disabled]:pointer-events-none data-[disabled]:text-muted/30 data-[unavailable]:pointer-events-none data-[unavailable]:text-muted/30 data-[unavailable]:line-through data-[selected]:rounded-none data-[today]:font-semibold data-[today]:text-accent data-[selection-start]:rounded-md data-[selection-start]:bg-accent data-[selection-start]:text-accent-foreground data-[selection-start]:hover:bg-accent-hover data-[selection-end]:rounded-md data-[selection-end]:bg-accent data-[selection-end]:text-accent-foreground data-[selection-end]:hover:bg-accent-hover data-[selection-start]:data-[today]:text-accent-foreground data-[selection-end]:data-[today]:text-accent-foreground"
               />
             </RangeCalendarCell>
           </RangeCalendarGridRow>

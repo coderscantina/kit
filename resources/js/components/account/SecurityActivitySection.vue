@@ -91,7 +91,7 @@ const label = (event: string): string => {
         class="relative flex items-start gap-3 py-2 text-sm"
       >
         <span
-          class="relative z-10 grid size-8 shrink-0 place-items-center rounded-full border border-border bg-background text-muted"
+          class="relative z-10 grid size-8 shrink-0 place-items-center rounded-full border border-border bg-card text-muted"
         >
           <Icon
             :name="icon(event.event)"

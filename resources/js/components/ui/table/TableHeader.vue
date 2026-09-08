@@ -19,7 +19,7 @@ const props = defineProps<{
     role="rowgroup"
     :class="
       cn(
-        'bg-muted-background/50 [&_tr]:border-b [&_tr]:border-b-border-strong [&_tr:hover]:bg-transparent',
+        'bg-muted-background [&_tr]:border-b [&_tr]:border-b-border-strong [&_tr:hover]:bg-transparent',
         props.class
       )
     "

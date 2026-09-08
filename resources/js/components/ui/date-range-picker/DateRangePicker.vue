@@ -180,7 +180,7 @@ function clearValue(): void {
           v-if="hasValue"
           role="button"
           tabindex="0"
-          class="-mr-1 ml-1 flex size-5 items-center justify-center rounded-full p-0.5 text-muted hover:bg-elevated hover:text-primary"
+          class="-mr-1 ml-1 flex size-5 items-center justify-center rounded-full p-0.5 text-muted hover:bg-secondary hover:text-primary"
           :aria-label="t('labels.dateRange.clear')"
           @click.stop="clearValue"
           @keydown.enter.stop.prevent="clearValue"
@@ -209,8 +209,8 @@ function clearValue(): void {
             v-for="preset in presets"
             :key="preset.key"
             type="button"
-            class="flex cursor-pointer items-center justify-between rounded-md px-3 py-1.5 text-start text-sm font-semibold transition-colors hover:bg-elevated"
-            :class="activePreset === preset.key ? 'bg-elevated text-accent' : 'text-primary'"
+            class="flex cursor-pointer items-center justify-between rounded-md px-3 py-1.5 text-start text-sm font-semibold transition-colors hover:bg-secondary"
+            :class="activePreset === preset.key ? 'bg-secondary text-accent' : 'text-primary'"
             @click="applyPreset(preset)"
           >
             <span>{{ t(`labels.dateRange.presets.${preset.key}`) }}</span>

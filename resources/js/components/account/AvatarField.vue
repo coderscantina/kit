@@ -107,7 +107,7 @@ const pick = () => input.value?.click()
     <button
       type="button"
       :class="[
-        'rounded-2xl ring-offset-background transition focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none',
+        'rounded-2xl ring-offset-surface transition focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none',
         dragging ? 'ring-2 ring-ring' : '',
       ]"
       :aria-label="t('account.profile.avatarChange')"

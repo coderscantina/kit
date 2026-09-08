@@ -59,7 +59,7 @@ const label = computed(() => {
     />
     <span
       v-if="status"
-      class="absolute -right-0.5 -bottom-0.5 flex rounded-full bg-background p-0.5"
+      class="absolute -right-0.5 -bottom-0.5 flex rounded-full bg-card p-0.5"
     >
       <PulseDot
         :variant="presenceDotVariants[status]"

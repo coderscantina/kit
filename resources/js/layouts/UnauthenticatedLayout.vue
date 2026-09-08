@@ -20,7 +20,7 @@ const points = ['auth.marketing.pointOne', 'auth.marketing.pointTwo', 'auth.mark
     <!-- The brand half is decoration, so it is the half that goes first on a
          small screen; nobody signs in by reading the tagline. -->
     <aside
-      class="relative hidden flex-col justify-between overflow-hidden bg-surface p-10 lg:flex"
+      class="relative hidden flex-col justify-between overflow-hidden bg-sidebar p-10 lg:flex"
       aria-hidden="true"
     >
       <div
@@ -68,7 +68,7 @@ const points = ['auth.marketing.pointOne', 'auth.marketing.pointTwo', 'auth.mark
       <p class="relative text-xs text-muted">{{ t('auth.marketing.footer') }}</p>
     </aside>
 
-    <main class="flex flex-col overflow-x-clip bg-background">
+    <main class="flex flex-col overflow-x-clip bg-surface">
       <div class="flex justify-end p-3">
         <!-- Before sign-in is exactly when someone with light sensitivity
              needs the switch, so it is not hidden behind the account menu. -->

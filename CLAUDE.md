@@ -117,6 +117,11 @@ whispering the value as typed with `{ values: true }`; it is never the
 default and never sent for a password or a field listed in `secret`.
 `docs/presence.md` has the contract and the reason.
 
+Colour is a token from `resources/js/assets/css/app.css`, never a palette
+shade. Pick the rung by nesting: `bg-sidebar` for the frame, `bg-surface` for
+the canvas, `bg-card` for a boxed block, `bg-popover` for anything floating.
+`docs/design-tokens.md` has the ladder, the fills and the contrast rules.
+
 Everything modal dims the page with `overlayClass` from
 `~/components/ui/overlay`, never its own scrim string.
 

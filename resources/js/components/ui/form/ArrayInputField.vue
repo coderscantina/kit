@@ -241,7 +241,7 @@ const handleKeyPress = (event: KeyboardEvent): void => {
     <div class="space-y-4">
       <Table
         variant="boxed"
-        class="bg-elevated"
+        class="bg-surface"
       >
         <TableHeader>
           <TableRow>

@@ -23,7 +23,7 @@ const features = appConfig.features
        width as much as on the window, so it adapts to its own slot.
        `pt-safe` keeps it under a notch when the app runs from the home screen. -->
   <header
-    class="@container sticky top-0 z-20 flex shrink-0 items-center gap-2 border-b border-border bg-background/85 px-3 pt-safe backdrop-blur-md"
+    class="@container sticky top-0 z-20 flex shrink-0 items-center gap-2 border-b border-sidebar-border bg-sidebar/85 px-3 pt-safe backdrop-blur-md"
   >
     <div class="flex h-shell-header min-w-0 flex-1 items-center gap-2">
       <!-- The phone has no sidebar to hold the brand, so the header does. The

@@ -90,7 +90,7 @@ const filteredEmojis = computed(() => {
               v-for="(emojis, name) in filteredEmojis"
               :key="name"
             >
-              <h2 class="sticky mb-2 bg-background text-sm font-semibold">
+              <h2 class="sticky mb-2 bg-popover text-sm font-semibold">
                 {{ t(`labels.emojis.groups.${name}`) }}
               </h2>
               <div class="grid grid-cols-9 gap-1">

@@ -22,20 +22,36 @@
   --color-blue-900: oklch(38.84% 0.094 245.39);
   --color-blue-950: oklch(30.91% 0.071 243.7);
 
-  --color-gray-50: oklch(95.82% 0.004 271.37);
-  --color-gray-100: oklch(91.68% 0.008 278.63);
-  --color-gray-150: oklch(87.56% 0.01 279.37);
-  --color-gray-200: oklch(82.89% 0.012 279);
-  --color-gray-250: oklch(78.21% 0.017 279.73);
+  /* The gray ramp. The surfaces live in the two ends, so those ends are on a
+     fine grid and the middle, which only carries text, stays coarse.
+
+       25 - 200   light surfaces, 1.7 points of oklch L apart
+       250 - 700  text, 6 points apart at the top and widening
+       750 - 950  dark surfaces, 2.75 points apart
+
+     A rung and the fill or hairline that sits on it are one grid step apart,
+     so nothing in the shell jumps. */
+  --color-gray-25: oklch(98.3% 0.003 278.6);
+  --color-gray-50: oklch(96.6% 0.004 278.6);
+  --color-gray-75: oklch(94.9% 0.006 278.6);
+  --color-gray-100: oklch(93.2% 0.008 278.6);
+  --color-gray-125: oklch(91.5% 0.009 279);
+  --color-gray-150: oklch(89.8% 0.01 279.2);
+  --color-gray-175: oklch(88.1% 0.011 279.2);
+  --color-gray-200: oklch(86.4% 0.012 279);
+  --color-gray-250: oklch(80.3% 0.019 279.4);
   --color-gray-300: oklch(74.2% 0.024 278.9);
   --color-gray-400: oklch(65.24% 0.032 278.37);
   --color-gray-500: oklch(55.99% 0.04 277.73);
   --color-gray-600: oklch(47.78% 0.032 277.85);
   --color-gray-700: oklch(39.21% 0.024 278.04);
-  --color-gray-750: oklch(34.21% 0.024 277.8);
-  --color-gray-800: oklch(30.43% 0.018 277.6);
-  --color-gray-850: oklch(23.53% 0.012 277.72);
+  --color-gray-750: oklch(34.38% 0.024 277.9);
+  --color-gray-800: oklch(31.63% 0.02 277.7);
+  --color-gray-825: oklch(28.88% 0.017 277.7);
+  --color-gray-850: oklch(26.13% 0.014 277.75);
+  --color-gray-875: oklch(23.38% 0.011 277.8);
   --color-gray-900: oklch(20.63% 0.008 277.83);
+  --color-gray-925: oklch(17.89% 0.006 281);
   --color-gray-950: oklch(15.15% 0.004 285.34);
 
   --ease-default: cubic-bezier(0.25, 0.1, 0.25, 1);
@@ -64,50 +80,81 @@
   --text-3xl: 30px;
   --text-3xl--line-height: 38px;
 
-  /* Elevation ladder (light): surface (canvas) < background (panel) < card/popover.
-     Depth convention:
-       L0 canvas   bg-surface, no shadow
-       L1 panel    bg-background
-       L2 card     bg-card shadow-soft
-       L3 popover  bg-popover border-popover-border shadow-soft-lg
-       L4 modal    bg-background shadow-soft-lg over bg-overlay scrim */
-  --surface: var(--color-gray-100);
-  --background: var(--color-gray-50);
-  --elevated: var(--color-gray-150);
-  --foreground: var(--color-gray-700);
+  /* Elevation ladder. One rung per level of nesting, in the same order in
+     both modes: the frame sits furthest back, the canvas is the stage, and a
+     block that is boxed or floats sits one rung above whatever it is on.
 
-  --primary: var(--color-gray-900);
-  --primary-foreground: var(--color-gray-50);
-  --secondary: var(--color-gray-150);
-  --secondary-foreground: var(--color-gray-800);
+       L0 sidebar   the frame: sidebar, header, tab bar,       bg-sidebar
+                    mobile drawer
+       L1 surface   the canvas: body, main                     bg-surface
+       L2 card      a boxed block on the canvas: Card, Table,  bg-card (+ border or shadow-soft)
+                    Dialog, Sheet
+       L3 popover   floating: menu, select, tooltip, palette   bg-popover border-popover-border shadow-soft-lg
+       scrim        under a dialog                             bg-overlay
 
+     The header and the tab bar are the frame, not the canvas: they meet the
+     sidebar at a corner, and two tones meeting there put a seam through the
+     shell. One tone makes the chrome an L around a clean canvas.
+
+     Light gets its depth from a hairline and a shadow, so card and popover
+     share one white. Dark has no shadow worth seeing, so every rung is one
+     grid step lighter than the rung below it. */
+  --sidebar: var(--color-gray-100);
+  --surface: var(--color-gray-50);
   --card: var(--color-white);
-  --card-foreground: var(--color-gray-700);
-  --accent: var(--color-blue-500);
-  --accent-hover: var(--color-blue-700);
-  --accent-foreground: var(--color-white);
-  /* --muted is a TEXT color (app-wide convention); --muted-background is the surface pair */
-  --muted: var(--color-gray-600);
-  --muted-background: var(--color-gray-150);
-
-  --input: var(--color-white);
-  --input-border: var(--color-gray-200);
-
-  --border: var(--color-gray-200);
-  --border-strong: var(--color-gray-250);
-  --ring: var(--color-blue-500);
   --popover: var(--color-white);
-  --popover-foreground: var(--color-gray-700);
-  --popover-border: var(--color-gray-200);
-
   --overlay: oklch(20.63% 0.008 277.83 / 0.45);
 
-  --sidebar: var(--color-gray-100);
+  /* Fills are not rungs. They sit on a rung and tint it:
+       secondary         a control at rest, and the hover of a flat one
+       muted-background  a passive fill: table header, tab list, kbd, code
+       input             a field
+       elevated          a raised chip on a fill: the active tab, the switch thumb
+
+     A fill is one grid step off the rung it lands on. `elevated` is the
+     exception: a chip has to be lighter than the fill it rides on, so it goes
+     to the top of the ramp. */
+  --secondary: var(--color-gray-125);
+  --secondary-foreground: var(--color-gray-800);
+  --muted-background: var(--color-gray-100);
+  --input: var(--color-white);
+  --input-border: var(--color-gray-175);
+  --elevated: var(--color-white);
+
+  /* Text, three steps: primary is a heading or a value, foreground is
+     body, muted is a label or a hint. Every step clears 4.5:1 on every rung. */
+  --primary: var(--color-gray-900);
+  --primary-foreground: var(--color-gray-50);
+  --foreground: var(--color-gray-700);
+  --card-foreground: var(--color-gray-700);
+  --popover-foreground: var(--color-gray-700);
+  /* --muted is a TEXT color (app-wide convention); --muted-background is the fill */
+  --muted: var(--color-gray-600);
+
+  /* Hairlines, weakest to strongest: `popover-border`, `border`,
+     `input-border`, `border-strong`. `border` is the divider, `input-border`
+     the edge that makes a field a field, `border-strong` the one that has to
+     carry on its own (the switch track, the rule under a table header).
+     `popover-border` is the lightest because in light mode the shadow does
+     the floating, and a hard edge on top of it is what made menus look
+     heavy. */
+  --border: var(--color-gray-125);
+  --border-strong: var(--color-gray-200);
+  --popover-border: var(--color-gray-100);
+
+  /* The accent is the one saturated colour. Its foreground is whichever of
+     white and near-black clears 4.5:1 on it; blue-700 is the lightest blue
+     that carries white. The 500 is kept for dark mode, where the text flips. */
+  --accent: var(--color-blue-700);
+  --accent-hover: var(--color-blue-800);
+  --accent-foreground: var(--color-white);
+  --ring: var(--color-blue-700);
+
   --sidebar-foreground: var(--color-gray-700);
   --sidebar-muted: var(--color-gray-600);
-  --sidebar-accent: var(--color-gray-200);
+  --sidebar-accent: var(--color-gray-175);
   --sidebar-accent-foreground: var(--color-gray-900);
-  --sidebar-border: var(--color-gray-200);
+  --sidebar-border: var(--color-gray-125);
   --sidebar-ring: var(--ring);
 
   --destructive: var(--color-red-600);
@@ -171,47 +218,55 @@
 }
 
 .dark {
-  /* Elevation ladder (dark): surface 950 < background 900 < card 850 < elevated/popover 800.
-     Depth comes from lighter surfaces + borders. */
-  --surface: var(--color-gray-950);
-  --background: var(--color-gray-900);
-  --elevated: var(--color-gray-800);
-  --foreground: var(--color-gray-300);
+  /* Same ladder, read upward, one grid step per rung: 925 frame, 900 canvas,
+     875 card, 850 popover. The old ladder jumped 6.9 points from card to
+     popover and 2.9 from canvas to card; these are 2.75 apart all the way. */
+  --sidebar: var(--color-gray-925);
+  --surface: var(--color-gray-900);
+  --card: var(--color-gray-875);
+  --popover: var(--color-gray-850);
+  --overlay: oklch(0% 0 0 / 0.6);
+
+  /* A control has to read on the popover rung too, so `secondary` sits at 800:
+     one step above the lightest rung, not level with it. `input` sits level
+     with the popover and is read from its border there. */
+  --secondary: var(--color-gray-800);
+  --secondary-foreground: var(--color-gray-100);
+  --muted-background: var(--color-gray-850);
+  --input: var(--color-gray-850);
+  --input-border: var(--color-gray-800);
+  --elevated: var(--color-gray-700);
 
   --primary: var(--color-gray-50);
   --primary-foreground: var(--color-gray-950);
-  --secondary: var(--color-gray-800);
-  --secondary-foreground: var(--color-gray-200);
-
-  --card: var(--color-gray-850);
+  --foreground: var(--color-gray-300);
   --card-foreground: var(--color-gray-300);
+  --popover-foreground: var(--color-gray-300);
+  --muted: var(--color-gray-400);
+
+  /* Dark has no shadow to lean on, so the popover's border is stronger than
+     the divider rather than lighter. Same job as in light mode, opposite
+     direction. */
+  --border: var(--color-gray-825);
+  --border-strong: var(--color-gray-750);
+  --popover-border: var(--color-gray-800);
+
+  /* White on any 500 is about 3:1 in the dark; near-black clears 6:1 on all
+     six accents, so the label flips rather than the fill going dull. Hover
+     goes lighter, because contrast against the surface is what a hover has
+     to keep. The ring is the 400: the 500 on gray-900 is a 3:1 ring. */
   --accent: var(--color-blue-500);
   --accent-hover: var(--color-blue-400);
-  --accent-foreground: var(--color-white);
-  --muted: var(--color-gray-400);
-  --muted-background: var(--color-gray-800);
-
-  --input: var(--color-gray-800);
-  --input-border: var(--color-gray-750);
-
-  --border: var(--color-gray-800);
-  --border-strong: var(--color-gray-750);
-  /* Blue-500 on gray-950 is a 3.1:1 ring; blue-400 clears 4.5:1, which is
-     what makes focus-visible actually visible in dark mode. */
+  --accent-foreground: var(--color-gray-950);
   --ring: var(--color-blue-400);
 
-  --popover: var(--color-gray-800);
-  --popover-foreground: var(--color-gray-300);
-  --popover-border: var(--color-gray-750);
-
-  --overlay: oklch(0% 0 0 / 0.6);
-
-  --sidebar: var(--color-gray-950);
-  --sidebar-foreground: var(--color-gray-400);
-  --sidebar-muted: var(--color-gray-500);
-  --sidebar-accent: var(--color-gray-850);
+  /* The frame carries the same two text steps as the page. gray-500 on the
+     frame was 4.2:1, which a 10px section label cannot afford. */
+  --sidebar-foreground: var(--color-gray-300);
+  --sidebar-muted: var(--color-gray-400);
+  --sidebar-accent: var(--color-gray-875);
   --sidebar-accent-foreground: var(--color-gray-50);
-  --sidebar-border: var(--color-gray-850);
+  --sidebar-border: var(--color-gray-875);
   --sidebar-ring: var(--ring);
 
   --destructive: var(--color-red-500);
@@ -239,38 +294,38 @@
    resources/js/composables/useAccentColor.ts and by the inline script in
    app.blade.php that runs before first paint. Blue is the default and needs no
    block. Each accent moves three tokens and nothing else: the accent itself,
-   its hover step and the focus ring. Everything that is "the app's colour" —
-   buttons, links, selection, the sidebar's ring — already reads one of those,
-   so this is the whole feature.
+   its hover step and the focus ring. Everything that is "the app's colour",
+   buttons, links, selection, the sidebar's ring, already reads one of those.
 
-   Hover goes darker in light mode and lighter in dark mode, because contrast
-   against the surface is what a hover state has to keep. */
+   The light shade is the lightest step of each hue that carries white text
+   at 4.5:1 (violet and rose at 600, the rest at 700); dark keeps the 500 and
+   flips the label to near-black, which every hue clears. Amber is the one hue
+   white never sits on, so it flips in light mode too. */
 
 html[data-accent='violet'] {
-  --accent: var(--color-violet-500);
+  --accent: var(--color-violet-600);
   --accent-hover: var(--color-violet-700);
-  --ring: var(--color-violet-500);
+  --ring: var(--color-violet-600);
 }
 
 html[data-accent='violet'].dark {
+  --accent: var(--color-violet-500);
   --accent-hover: var(--color-violet-400);
   --ring: var(--color-violet-400);
 }
 
 html[data-accent='emerald'] {
-  --accent: var(--color-emerald-500);
-  --accent-hover: var(--color-emerald-700);
-  --ring: var(--color-emerald-500);
+  --accent: var(--color-emerald-700);
+  --accent-hover: var(--color-emerald-800);
+  --ring: var(--color-emerald-700);
 }
 
 html[data-accent='emerald'].dark {
+  --accent: var(--color-emerald-500);
   --accent-hover: var(--color-emerald-400);
   --ring: var(--color-emerald-400);
 }
 
-/* Amber is the one accent white text cannot sit on: 500 against white is
-   about 2:1. Its foreground flips to near-black instead, which is why the
-   components read `text-accent-foreground` rather than `text-white`. */
 html[data-accent='amber'] {
   --accent: var(--color-amber-500);
   --accent-hover: var(--color-amber-600);
@@ -284,23 +339,25 @@ html[data-accent='amber'].dark {
 }
 
 html[data-accent='rose'] {
-  --accent: var(--color-rose-500);
+  --accent: var(--color-rose-600);
   --accent-hover: var(--color-rose-700);
-  --ring: var(--color-rose-500);
+  --ring: var(--color-rose-600);
 }
 
 html[data-accent='rose'].dark {
+  --accent: var(--color-rose-500);
   --accent-hover: var(--color-rose-400);
   --ring: var(--color-rose-400);
 }
 
 html[data-accent='cyan'] {
-  --accent: var(--color-cyan-500);
-  --accent-hover: var(--color-cyan-700);
-  --ring: var(--color-cyan-500);
+  --accent: var(--color-cyan-700);
+  --accent-hover: var(--color-cyan-800);
+  --ring: var(--color-cyan-700);
 }
 
 html[data-accent='cyan'].dark {
+  --accent: var(--color-cyan-500);
   --accent-hover: var(--color-cyan-400);
   --ring: var(--color-cyan-400);
 }
@@ -320,17 +377,19 @@ html[data-accent='cyan'].dark {
 }
 
 @theme inline {
+  --color-sidebar: var(--sidebar);
   --color-surface: var(--surface);
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-popover: var(--popover);
+  --color-overlay: var(--overlay);
   --color-elevated: var(--elevated);
+  --color-foreground: var(--foreground);
 
   --color-primary: var(--primary);
   --color-primary-foreground: var(--primary-foreground);
   --color-secondary: var(--secondary);
   --color-secondary-foreground: var(--secondary-foreground);
 
-  --color-card: var(--card);
   --color-card-foreground: var(--card-foreground);
   --color-accent: var(--accent);
   --color-accent-hover: var(--accent-hover);
@@ -343,12 +402,9 @@ html[data-accent='cyan'].dark {
   --color-border: var(--border);
   --color-border-strong: var(--border-strong);
   --color-ring: var(--ring);
-  --color-popover: var(--popover);
   --color-popover-foreground: var(--popover-foreground);
   --color-popover-border: var(--popover-border);
-  --color-overlay: var(--overlay);
 
-  --color-sidebar: var(--sidebar);
   --color-sidebar-foreground: var(--sidebar-foreground);
   --color-sidebar-muted: var(--sidebar-muted);
   --color-sidebar-accent: var(--sidebar-accent);
@@ -396,10 +452,12 @@ html[data-accent='cyan'].dark {
     0px 1px 1px rgba(3, 7, 18, 0.01), 0px 3px 5px rgba(3, 7, 18, 0.02),
     0px 6px 12px rgba(3, 7, 18, 0.04), 0px 10px 21px rgba(3, 7, 18, 0.05),
     0px 16px 33px rgba(3, 7, 18, 0.06);
+  /* What lifts a menu off a white page. Four layers instead of six and half
+     the total ink: the old stack reached 33px at 6% and read as a smudge under
+     every dropdown. */
   --shadow-soft-lg:
-    0px 1px 1px rgba(3, 7, 18, 0.01), 0px 3px 4px rgba(3, 7, 18, 0.02),
-    0px 6px 8px rgba(3, 7, 18, 0.03), 0px 11px 15px rgba(3, 7, 18, 0.04),
-    0px 17px 23px rgba(3, 7, 18, 0.05), 0px 24px 33px rgba(3, 7, 18, 0.06);
+    0px 1px 1px rgba(3, 7, 18, 0.02), 0px 4px 6px rgba(3, 7, 18, 0.03),
+    0px 9px 14px rgba(3, 7, 18, 0.04), 0px 16px 24px rgba(3, 7, 18, 0.04);
 }
 
 @layer base {
@@ -435,7 +493,7 @@ html[data-accent='cyan'].dark {
 
   ::selection {
     background-color: var(--color-accent);
-    color: var(--color-primary);
+    color: var(--color-accent-foreground);
   }
 
   @keyframes textShine {

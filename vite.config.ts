@@ -54,8 +54,8 @@ export default defineConfig(({ mode }) => ({
         display_override: ['standalone', 'minimal-ui'],
         orientation: 'any',
         lang: 'en',
-        theme_color: '#f0f1f4',
-        background_color: '#f0f1f4',
+        theme_color: '#f3f3f6',
+        background_color: '#f3f3f6',
         categories: ['productivity', 'business'],
         icons: [
           { src: '/icons/icon.svg', sizes: 'any', type: 'image/svg+xml', purpose: 'any' },

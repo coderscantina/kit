@@ -103,7 +103,7 @@ const swatch: Record<ColorMode, string> = {
           role="radio"
           :aria-checked="accent === option"
           :aria-label="t(`accent.${option}`)"
-          class="grid size-8 place-items-center rounded-full ring-offset-2 ring-offset-background transition-shadow duration-200 ease-butter aria-checked:ring-2 aria-checked:ring-current"
+          class="grid size-8 place-items-center rounded-full ring-offset-2 ring-offset-surface transition-shadow duration-200 ease-butter aria-checked:ring-2 aria-checked:ring-current"
           :class="accentSwatch[option]"
           @click="setAccent(option)"
         >

@@ -7,7 +7,8 @@ mutations, and a result that changes is pushed to everyone watching it.
 Read [architecture](/architecture) for how the pieces fit, then
 [adding a feature](/adding-a-feature) for the generator walkthrough.
 [App shell](/app-shell) covers what a user sees: the sidebar, the header, the
-keyboard layer and the one file you edit to rebrand. [Lists and
+keyboard layer and the one file you edit to rebrand, and [design
+tokens](/design-tokens) the ladder of surfaces that file defines. [Lists and
 filters](/lists) covers the query contract every list surface speaks, and the
 saved views built on it. [Presence](/presence) covers the roster
 and the whisper channel behind it. [Notifications](/notifications) covers the

@@ -8,7 +8,7 @@ import { cn } from '~/lib/utils'
 const alertVariants = cva('relative w-full p-3', {
   variants: {
     color: {
-      default: 'border-border bg-background text-foreground',
+      default: 'border-border bg-card text-foreground',
       info: 'border-info/40 text-info bg-info-background/10',
       destructive: 'border-destructive/40 text-destructive bg-destructive-background/10',
       success: 'border-success/40 text-success bg-success-background/10',

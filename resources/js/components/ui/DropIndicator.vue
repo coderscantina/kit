@@ -71,13 +71,13 @@ const labelStyle = computed<CSSProperties>(() => {
       :style="lineStyle"
     >
       <span
-        class="absolute rounded-full border-solid border-info bg-background"
+        class="absolute rounded-full border-solid border-info bg-card"
         :style="terminalStyle"
       />
     </div>
     <div
       v-if="label"
-      class="absolute rounded-md border border-info/30 bg-background/95 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide whitespace-nowrap text-info shadow-sm backdrop-blur-sm"
+      class="absolute rounded-md border border-info/30 bg-card/95 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide whitespace-nowrap text-info shadow-sm backdrop-blur-sm"
       :style="labelStyle"
     >
       {{ label }}
