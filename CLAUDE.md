@@ -173,6 +173,11 @@ The client calls `useAiStream('<name>')` from `~/composables/useAiStream`,
 typed off `Kit.AiMap`. Never fetch `/api/ai/stream` directly. Run
 `types:generate` after touching an action or its args class.
 
+A conversation is composed, not generated: `message`, `bubble`,
+`message-scroller`, `marker`, `attachment` and `questionnaire` in
+`~/components/ui`. `resources/js/pages/ai/Assistant.vue` is the shipped
+example. There is no conversation store; the transcript is the page's.
+
 Test with `FakeAiDriver::swap(...)`: no network, no key, no bill. Full contract
 in `docs/ai.md`.
 

@@ -15,6 +15,7 @@ const ref_ = (name: string) => `${id(name)}.end`
 
 <template>
   <svg
+    data-slot="spinner"
     fill="currentColor"
     viewBox="0 0 24 24"
     xmlns="http://www.w3.org/2000/svg"

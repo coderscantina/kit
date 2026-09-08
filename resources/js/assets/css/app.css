@@ -612,6 +612,111 @@ html[data-accent='cyan'].dark {
   }
 }
 
+/* The vertical twin of `scroll-fade-x`, for a log that scrolls: the top edge
+   fades once there is history above, the bottom once there is more below. The
+   scrollbar is left alone, so a message list can still show one. */
+@utility scroll-fade-y {
+  --scroll-fade-size: 2.5rem;
+  overflow-y: auto;
+  @supports (animation-timeline: scroll(self y)) {
+    animation: scroll-fade-y linear both;
+    animation-timeline: scroll(self y);
+  }
+}
+
+@keyframes scroll-fade-y {
+  0% {
+    mask-image: linear-gradient(
+      to bottom,
+      black,
+      black var(--scroll-fade-size, 2.5rem),
+      black calc(100% - var(--scroll-fade-size, 2.5rem)),
+      transparent
+    );
+  }
+  15%,
+  85% {
+    mask-image: linear-gradient(
+      to bottom,
+      transparent,
+      black var(--scroll-fade-size, 2.5rem),
+      black calc(100% - var(--scroll-fade-size, 2.5rem)),
+      transparent
+    );
+  }
+  100% {
+    mask-image: linear-gradient(
+      to bottom,
+      transparent,
+      black var(--scroll-fade-size, 2.5rem),
+      black calc(100% - var(--scroll-fade-size, 2.5rem)),
+      black
+    );
+  }
+}
+
+/* Scrollbar width. `scrollbar-none` hides it; `scrollbar-thin` keeps it but
+   out of the way, and `scrollbar-gutter-stable` reserves the track so content
+   does not shift when it appears. */
+@utility scrollbar-none {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+@utility scrollbar-thin {
+  scrollbar-width: thin;
+  &::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+}
+
+@utility scrollbar-gutter-stable {
+  scrollbar-gutter: stable;
+}
+
+/* A highlight that travels across the text, for a label whose value is still
+   being produced: an attachment mid-upload, a title a model is writing. Reads
+   off `currentColor`, so it needs no colour of its own. */
+@utility shimmer {
+  --shimmer-spread: calc(3ch + 40px);
+  --shimmer-base: currentColor;
+  --shimmer-highlight: oklch(from currentColor l c h / calc(alpha * 0.2));
+
+  background-image: linear-gradient(
+    100deg,
+    var(--shimmer-base) calc(50% - var(--shimmer-spread)),
+    color-mix(in oklch, var(--shimmer-highlight), var(--shimmer-base) 50%)
+      calc(50% - var(--shimmer-spread) * 0.5),
+    var(--shimmer-highlight) 50%,
+    color-mix(in oklch, var(--shimmer-highlight), var(--shimmer-base) 50%)
+      calc(50% + var(--shimmer-spread) * 0.5),
+    var(--shimmer-base) calc(50% + var(--shimmer-spread))
+  );
+  background-repeat: no-repeat;
+  background-size: calc(200% + var(--shimmer-spread) * 2) 100%;
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: shimmer 2s linear infinite;
+
+  @variant dark {
+    --shimmer-highlight: oklch(from currentColor max(0.8, calc(l + 0.4)) c h / calc(alpha + 0.4));
+  }
+}
+
+@keyframes shimmer {
+  from {
+    background-position: 100% 0;
+  }
+  to {
+    background-position: 0 0;
+  }
+}
+
 .fade-enter-active,
 .fade-leave-active {
   transition: opacity 0.15s ease;
@@ -679,6 +784,7 @@ html[data-accent='cyan'].dark {
 
   .animate-pulse,
   .ai-animate-text,
+  .shimmer,
   .page-enter {
     animation: none;
   }

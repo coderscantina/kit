@@ -117,6 +117,29 @@ instance for a second concurrent stream. Never fetch `/api/ai/stream`
 directly — the CSRF handshake, the abort handling and the terminal-event rules
 live in the composable.
 
+## The chat surface
+
+`useAiStream` gives you text. The components that turn it into a conversation
+are in `resources/js/components/ui`, ported from shadcn-vue and moved onto the
+kit's tokens:
+
+| Family             | What it is                                                                                                        |
+| ------------------ | ----------------------------------------------------------------------------------------------------------------- |
+| `message`          | One turn: avatar, header, content, footer. `align="end"` flips it to the user side                                |
+| `bubble`           | The block inside a turn. Variants `default`, `muted`, `outline`, `ai`, `destructive`                              |
+| `message-scroller` | The log: sticks to the bottom while an answer streams, lets go the moment you scroll up, and offers a button back |
+| `marker`           | A line between turns: a date, a tool call, an error                                                               |
+| `attachment`       | A file on a turn, with `state` for idle/uploading/processing/error/done                                           |
+| `questionnaire`    | The model asking back: one question at a time, keyboard-driven, native form submit                                |
+
+`resources/js/pages/ai/Assistant.vue` is the shipped example. It keeps the
+transcript in a local array, writes deltas into the turn being answered through
+`onDelta`, and composes with `InputGroup` plus `InputGroupTextarea`. There is
+no conversation store behind it; see "What this is not".
+
+Nothing here is registered anywhere. Import the family from
+`~/components/ui/<family>` and compose it.
+
 ## What comes back
 
 Four event types, in one order: any number of `status` and `delta` events,
