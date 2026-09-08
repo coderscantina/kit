@@ -5,10 +5,14 @@ import { computed } from 'vue'
 import { toast } from 'vue-sonner'
 
 import Icon from '~/components/Icon.vue'
-import { Button } from '~/components/ui/button'
+import {
+  InputGroup,
+  InputGroupAddon,
+  InputGroupButton,
+  InputGroupInput,
+} from '~/components/ui/input-group'
 import { useI18n } from '~/plugins/i18n'
 
-import Input from '../input/Input.vue'
 import FormField from './FormField.vue'
 
 const { t } = useI18n()
@@ -53,6 +57,11 @@ const modelValue = useVModel(props, 'modelValue', emits, {
   defaultValue: props.defaultValue,
 })
 
+const slots = defineSlots<{
+  prepend?: () => unknown
+  append?: () => unknown
+}>()
+
 const inputProps = computed(() => {
   const {
     //
@@ -61,14 +70,20 @@ const inputProps = computed(() => {
     tooltip,
     description,
     error,
+    actions,
+    actionTabindex,
     class: _class,
+    inputClass: _inputClass,
     modelValue: _modelValue,
     defaultValue: _defaultValue,
     ...rest
   } = props
 
-  return { ...rest, class: props.inputClass }
+  return rest
 })
+
+/** Whether anything sits after the control, so the addon can be left out. */
+const hasTrailing = computed(() => !!props.actions?.length || !!slots.append)
 
 const trigger = (action: InputActionType) => {
   if (action === 'clear') {
@@ -92,27 +107,33 @@ const trigger = (action: InputActionType) => {
     :class="props.class"
   >
     <template #default="{ id, hasError }">
-      <div class="relative">
-        <Input
+      <InputGroup :class="props.inputClass">
+        <InputGroupAddon v-if="slots.prepend">
+          <slot name="prepend" />
+        </InputGroupAddon>
+        <InputGroupInput
           :id="id"
           v-model="modelValue"
-          :class="{ 'border-red-500': hasError }"
+          :aria-invalid="hasError || undefined"
           v-bind="{ ...inputProps, ...$attrs }"
         />
-        <div class="absolute top-1/2 right-1 flex -translate-y-1/2 items-center gap-0.5">
-          <slot name="append"></slot>
-          <Button
+        <InputGroupAddon
+          v-if="hasTrailing"
+          align="inline-end"
+        >
+          <slot name="append" />
+          <InputGroupButton
             v-for="action in actions"
             :key="action"
-            size="xs"
-            :aria-label="action"
+            size="icon-xs"
+            :aria-label="t(`actions.${action}`)"
             :tabindex="actionTabindex"
             @click="trigger(action)"
           >
             <Icon :name="icons[action]" />
-          </Button>
-        </div>
-      </div>
+          </InputGroupButton>
+        </InputGroupAddon>
+      </InputGroup>
     </template>
   </FormField>
 </template>

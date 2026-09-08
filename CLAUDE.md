@@ -120,6 +120,10 @@ default and never sent for a password or a field listed in `secret`.
 Everything modal dims the page with `overlayClass` from
 `~/components/ui/overlay`, never its own scrim string.
 
+A field that carries a button, an icon or a unit composes `InputGroup`;
+`InputField` is already built that way, so `actions` and the `prepend` and
+`append` slots reserve space instead of floating over the text.
+
 Composables are imported explicitly. Only `vue` and `vue-router` APIs are
 auto-imported; a directory auto-import silently drops a composable that imports
 a sibling, and typecheck, lint and tests all stay green while the app renders

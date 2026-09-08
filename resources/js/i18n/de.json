@@ -15,7 +15,8 @@
     "clear": "Leeren",
     "close": "Schließen",
     "moreOptions": "Weitere Optionen",
-    "dragToReorder": "Zum Sortieren ziehen"
+    "dragToReorder": "Zum Sortieren ziehen",
+    "copy": "Kopieren"
   },
   "nav": {
     "label": "Hauptnavigation",

@@ -15,7 +15,8 @@
     "clear": "Clear",
     "close": "Close",
     "moreOptions": "More options",
-    "dragToReorder": "Drag to reorder"
+    "dragToReorder": "Drag to reorder",
+    "copy": "Copy"
   },
   "nav": {
     "label": "Main navigation",

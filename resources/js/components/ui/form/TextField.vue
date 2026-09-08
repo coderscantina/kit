@@ -71,7 +71,7 @@ const inputProps = computed(() => {
       <Textarea
         :id="id"
         v-model="modelValue"
-        :class="{ 'border-red-500': hasError }"
+        :aria-invalid="hasError || undefined"
         v-bind="{ ...inputProps, ...$attrs }"
       />
     </template>

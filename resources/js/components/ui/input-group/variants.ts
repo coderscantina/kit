@@ -43,6 +43,7 @@ export const inputGroupButtonVariants = cva('text-sm shadow-none flex gap-2 item
 export type InputGroupButtonVariants = VariantProps<typeof inputGroupButtonVariants>
 
 export interface InputGroupButtonProps {
+  type?: 'button' | 'submit' | 'reset'
   variant?: ButtonVariants['variant']
   size?: InputGroupButtonVariants['size']
   class?: HTMLAttributes['class']
