@@ -38,6 +38,17 @@ final class FeatureGate
         return self::override('push') ?? filled(config('webpush.vapid.public_key'));
     }
 
+    /**
+     * Whether the SMS channel and the phone verification flow are offered.
+     * Derived from a sender being configured: without one there is no number
+     * to verify and no rung to enable, so the UI drops both rather than
+     * showing switches that cannot work.
+     */
+    public static function smsEnabled(): bool
+    {
+        return self::override('sms') ?? filled(config('sms.driver'));
+    }
+
     /** Derived from whether any listed provider has credentials. */
     public static function socialEnabled(): bool
     {
@@ -94,7 +105,7 @@ final class FeatureGate
     }
 
     /**
-     * @return array{realtime: bool, registration: bool, impersonation: bool, ai: bool, push: bool, social: bool}
+     * @return array{realtime: bool, registration: bool, impersonation: bool, ai: bool, push: bool, sms: bool, social: bool}
      */
     public static function features(): array
     {
@@ -104,6 +115,7 @@ final class FeatureGate
             'impersonation' => self::impersonationEnabled(),
             'ai' => self::aiEnabled(),
             'push' => self::pushEnabled(),
+            'sms' => self::smsEnabled(),
             'social' => self::socialEnabled(),
         ];
     }

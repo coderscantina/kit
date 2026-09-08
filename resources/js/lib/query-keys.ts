@@ -12,4 +12,5 @@ export const queryKeys = {
   securityActivity: (page: number) => ['account', 'security-activity', page] as const,
   publicInvite: (id: string, token: string) => ['invites', 'public', id, token] as const,
   savedViews: (scope: string) => ['account', 'views', scope] as const,
+  notificationSettings: () => ['account', 'notification-settings'] as const,
 }

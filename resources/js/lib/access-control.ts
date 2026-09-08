@@ -38,6 +38,7 @@ export const navigationIcons: Record<string, string> = {
   shield: 'lucide:shield',
   sparkles: 'lucide:sparkles',
   database: 'lucide:database',
+  bell: 'lucide:bell',
   box: 'lucide:box',
 }
 
@@ -60,6 +61,7 @@ export const navigationItems: NavigationItem[] = [
 export const accountNavigationItems: NavigationItem[] = [
   { labelKey: 'nav.profile', icon: 'user', routeName: 'account-profile' },
   { labelKey: 'nav.security', icon: 'shield', routeName: 'account-security' },
+  { labelKey: 'nav.notifications', icon: 'bell', routeName: 'account-notifications' },
   { labelKey: 'nav.data', icon: 'database', routeName: 'account-data' },
 ]
 
@@ -69,7 +71,9 @@ export const routeAccessRequirements: Record<AppRouteName, RouteAccessRequiremen
   users: { abilities: { anyOf: ['users.view', 'invites.view'] } },
   'account-profile': { abilities: 'app.access' },
   'account-security': { abilities: 'app.access' },
+  'account-notifications': { abilities: 'app.access' },
   'account-data': { abilities: 'app.access' },
+  notifications: { abilities: 'app.access' },
   assistant: {
     // Two gates: the ability, and whether the installation has a provider
     // key at all. Without the second the item is a button that can only fail.

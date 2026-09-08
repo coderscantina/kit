@@ -3,6 +3,7 @@ import AppBrand from '~/components/app/AppBrand.vue'
 import AppBreadcrumbs from '~/components/app/AppBreadcrumbs.vue'
 import AppUserMenu from '~/components/app/AppUserMenu.vue'
 import Icon from '~/components/Icon.vue'
+import NotificationBell from '~/components/notifications/NotificationBell.vue'
 import { Button } from '~/components/ui/button'
 import { useCommandPalette } from '~/composables/useCommandPalette'
 import { useSidebar } from '~/composables/useSidebar'
@@ -75,6 +76,8 @@ const features = appConfig.features
           id="app-header-actions"
           class="flex items-center gap-1.5 empty:hidden"
         />
+
+        <NotificationBell />
 
         <AppUserMenu />
       </div>

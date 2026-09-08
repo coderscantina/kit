@@ -16,6 +16,7 @@ window.__APP_CONFIG__ = {
     impersonation: true,
     ai: true,
     push: false,
+    sms: false,
     social: false,
   },
   echo: null,

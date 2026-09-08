@@ -29,6 +29,7 @@ export default defineConfig({
           { text: 'People and account', link: '/account' },
           { text: 'Lists and filters', link: '/lists' },
           { text: 'Presence', link: '/presence' },
+          { text: 'Notifications', link: '/notifications' },
           { text: 'Social login', link: '/social-login' },
           { text: 'Push notifications', link: '/push-notifications' },
           { text: 'Runtime contract', link: '/runtime-contract' },

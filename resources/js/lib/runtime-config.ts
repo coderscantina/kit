@@ -19,6 +19,7 @@ export const runtimeConfig = {
     impersonation: appConfig?.features.impersonation ?? false,
     ai: appConfig?.features.ai ?? false,
     push: appConfig?.features.push ?? false,
+    sms: appConfig?.features.sms ?? false,
     social: appConfig?.features.social ?? false,
   },
   /** The sign-in buttons to offer. Empty when no provider has credentials. */

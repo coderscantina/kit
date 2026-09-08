@@ -7,6 +7,7 @@ namespace App\Actions\Invites;
 use App\Actions\Users\CreateUser;
 use App\Models\Invite;
 use App\Models\User;
+use App\Notifications\InviteAcceptedNotification;
 use App\Services\Auth\AuthorizationService;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Support\Facades\DB;
@@ -63,6 +64,10 @@ class AcceptInvite
 
             $locked->accepted_at = now();
             $locked->save();
+
+            // The person who sent it is the one waiting to hear. Queued, so a
+            // dead mail server cannot fail the acceptance itself.
+            $locked->inviter?->notify(new InviteAcceptedNotification($user->name, $user->email));
 
             return $user;
         });

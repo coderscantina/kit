@@ -6,6 +6,8 @@ namespace App\Console\Commands;
 
 use App\Services\Ai\Contracts\AiDriver;
 use App\Services\Ai\Registry\AiCatalog;
+use App\Support\FeatureGate;
+use App\Support\Notifications\NotificationRegistry;
 use Illuminate\Console\Command;
 use Illuminate\Contracts\Redis\Factory as RedisFactory;
 use Illuminate\Support\Facades\Cache;
@@ -45,7 +47,7 @@ class DoctorCommand extends Command
 
     protected $signature = 'kit:doctor {--strict : Treat warnings as failures}';
 
-    protected $description = 'Check the reactive runtime, the registry, the reactive queue worker, the AI layer, the Octane flush list and the message files';
+    protected $description = 'Check the reactive runtime, the registry, the reactive queue worker, the AI layer, notifications, the Octane flush list and the message files';
 
     /** @var array<int, array{0: string, 1: string, 2: string}> */
     private array $results = [];
@@ -59,6 +61,7 @@ class DoctorCommand extends Command
         $this->checkReactiveQueue();
         $this->checkUnregisteredQueries();
         $this->checkAi();
+        $this->checkNotifications();
         $this->checkOctaneFlushList();
         $this->checkMessageParity();
 
@@ -332,6 +335,35 @@ class DoctorCommand extends Command
      * what gets checked. `bin/gate` and the compose smoke exercise the real
      * worker.
      */
+    /**
+     * The two ways the notification layer is quietly wrong: a preferences
+     * screen offering a channel nothing can deliver on, and the log SMS
+     * driver left in place on a production box, where it writes verification
+     * codes into the application log instead of sending them.
+     */
+    private function checkNotifications(): void
+    {
+        $types = app(NotificationRegistry::class)->all();
+
+        $this->pass('notification types', count($types).' configurable type(s) discovered');
+
+        if (! FeatureGate::smsEnabled()) {
+            $this->pass('sms', 'no sender configured; the SMS channel and the phone flow are hidden');
+
+            return;
+        }
+
+        $driver = (string) config('sms.driver');
+
+        if ($driver === 'log' && app()->isProduction()) {
+            $this->broke('sms', 'the log driver is active in production: verification codes are written to the log, not sent');
+
+            return;
+        }
+
+        $this->pass('sms', "driver '{$driver}' configured");
+    }
+
     private function checkOctaneFlushList(): void
     {
         /** @var array<int, string> $flush */

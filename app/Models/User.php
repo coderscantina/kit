@@ -16,6 +16,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Carbon;
@@ -28,6 +29,8 @@ use NotificationChannels\WebPush\HasPushSubscriptions;
  * @property string $email
  * @property string $password
  * @property string $locale
+ * @property string|null $phone
+ * @property Carbon|null $phone_verified_at
  * @property string|null $avatar_path
  * @property string|null $role_id
  * @property bool $is_root
@@ -67,6 +70,7 @@ class User extends Authenticatable implements MustVerifyEmail
     {
         return [
             'email_verified_at' => 'datetime',
+            'phone_verified_at' => 'datetime',
             'two_factor_confirmed_at' => 'datetime',
             'last_login_at' => 'datetime',
             'password' => 'hashed',
@@ -123,11 +127,60 @@ class User extends Authenticatable implements MustVerifyEmail
     }
 
     /**
+     * The inbox. Overridden so rows are the app's Notification model, which
+     * carries reactive invalidation and the escalation columns; the
+     * framework's own model has neither, and a delivery through it would
+     * write a row no subscription ever hears about.
+     *
+     * @return MorphMany<Notification, $this>
+     */
+    public function notifications(): MorphMany
+    {
+        return $this->morphMany(Notification::class, 'notifiable')->latest();
+    }
+
+    /**
+     * What this account chose to receive, and where. A type with no row here
+     * has not been chosen for and takes the type's own defaults.
+     *
+     * @return HasMany<NotificationPreference, $this>
+     */
+    public function notificationPreferences(): HasMany
+    {
+        return $this->hasMany(NotificationPreference::class);
+    }
+
+    /**
+     * The number waiting on the code texted to it, if one was requested.
+     *
+     * @return HasOne<PhoneVerification, $this>
+     */
+    public function phoneVerification(): HasOne
+    {
+        return $this->hasOne(PhoneVerification::class);
+    }
+
+    /**
      * @return HasMany<SecurityEvent, $this>
      */
     public function securityEvents(): HasMany
     {
         return $this->hasMany(SecurityEvent::class);
+    }
+
+    public function hasVerifiedPhone(): bool
+    {
+        return $this->phone !== null && $this->phone_verified_at !== null;
+    }
+
+    /**
+     * Where the SMS channel sends. An unverified number is not a route: the
+     * whole reason for verifying is that nobody can point this app's texts at
+     * a stranger's handset.
+     */
+    public function routeNotificationForSms(): ?string
+    {
+        return $this->hasVerifiedPhone() ? $this->phone : null;
     }
 
     public function hasEnabledTwoFactor(): bool

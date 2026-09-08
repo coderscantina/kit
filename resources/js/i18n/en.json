@@ -28,7 +28,8 @@
       "manage": "Manage",
       "account": "Account"
     },
-    "data": "Your data"
+    "data": "Your data",
+    "notifications": "Notifications"
   },
   "shell": {
     "skipToContent": "Skip to content",
@@ -322,6 +323,44 @@
       "test": "Send a test",
       "testSent": "Sent. It should arrive in a moment.",
       "error": "That did not work. Try again."
+    },
+    "notificationsPage": {
+      "title": "Notifications",
+      "description": "What reaches you, and where. Your inbox always gets everything; these switches decide what else happens."
+    },
+    "notificationPrefs": {
+      "title": "What you receive",
+      "description": "One row per notification, one column per channel.",
+      "ladder": "Channels are tried in order, {minutes} minutes apart, and stop as soon as you have seen the notification.",
+      "required": "Always on for this one.",
+      "notOffered": "Not available for this notification",
+      "unreachable": {
+        "push": "Turn on push for this device below.",
+        "mail": "No email address on file.",
+        "sms": "Verify a phone number below."
+      },
+      "error": "That switch did not save. Try again."
+    },
+    "phone": {
+      "title": "Phone number",
+      "description": "Where SMS notifications go. A number is only used once it has answered its code.",
+      "number": "Phone number",
+      "numberHint": "International format, starting with a plus and the country code.",
+      "send": "Send code",
+      "resend": "Send another code",
+      "resendIn": "Send another in {seconds}s",
+      "code": "Verification code",
+      "codeSent": "Code sent.",
+      "codeSentTo": "We texted a code to {phone}. Enter it below.",
+      "verify": "Verify",
+      "verified": "Your phone number is verified.",
+      "verifiedBadge": "Verified",
+      "remove": "Remove number",
+      "removed": "Number removed.",
+      "removeConfirm": {
+        "title": "Remove your phone number?",
+        "message": "SMS notifications stop straight away. Your channel choices are kept, in case you add a number back."
+      }
     }
   },
   "users": {
@@ -376,7 +415,19 @@
     },
     "rowActions": "Row actions"
   },
-  "mutations": {},
+  "mutations": {
+    "notifications": {
+      "markSeen": {
+        "error": "Could not mark those as seen."
+      },
+      "archive": {
+        "error": "Could not archive those."
+      },
+      "restore": {
+        "error": "Could not put those back."
+      }
+    }
+  },
   "ai": {
     "title": "Assistant",
     "label": "Question",
@@ -412,6 +463,75 @@
   "notifications": {
     "inputField": {
       "copied": "Copied to clipboard"
+    },
+    "title": "Notifications",
+    "bell": {
+      "label": "Notifications, {count} unseen",
+      "viewAll": "See all notifications"
+    },
+    "tabs": {
+      "inbox": "Inbox",
+      "unseen": "Unseen",
+      "archived": "Archived"
+    },
+    "status": {
+      "unseen": "Unseen",
+      "seen": "Seen",
+      "archived": "Archived"
+    },
+    "channels": {
+      "push": "Push",
+      "mail": "Email",
+      "sms": "SMS"
+    },
+    "groups": {
+      "security": "Security",
+      "people": "People",
+      "general": "General"
+    },
+    "actions": {
+      "markAllSeen": "Mark all as seen",
+      "archive": "Archive",
+      "archiveAll": "Archive what I have seen",
+      "restore": "Put back"
+    },
+    "confirm": {
+      "archiveAll": {
+        "title": "Archive everything you have seen?",
+        "message": "Anything still unseen stays in your inbox. Nothing is deleted; archived notifications are kept for a while and then cleaned up."
+      }
+    },
+    "empty": {
+      "inbox": {
+        "title": "Nothing waiting",
+        "description": "New notifications land here, and on the channels you picked."
+      },
+      "unseen": {
+        "title": "All caught up",
+        "description": "You have looked at everything in your inbox."
+      },
+      "archived": {
+        "title": "Nothing archived",
+        "description": "Notifications you put away show up here."
+      }
+    },
+    "error": {
+      "title": "Could not load your notifications",
+      "description": "The connection dropped. It will retry on its own."
+    },
+    "types": {
+      "security_alert": {
+        "label": "Security alerts",
+        "hint": "Password changes, two-factor changes, a linked sign-in provider.",
+        "title": "Security alert",
+        "body": "{event} From {device}."
+      },
+      "people_invite_accepted": {
+        "label": "Invitation accepted",
+        "hint": "Someone you invited has joined.",
+        "title": "Invitation accepted",
+        "body": "{name} ({email}) accepted your invitation."
+      }
     }
   },
   "components": {
@@ -420,6 +540,19 @@
       "dropFileAction": "Drop the file here",
       "orDragDrop": "or drag and drop",
       "unsupportedFileError": "That file type is not supported."
+    },
+    "questionnaire": {
+      "progress": "Question {current} of {total}",
+      "progressLabel": "Questionnaire progress",
+      "skip": "Skip",
+      "submit": "Submit",
+      "requiredError": "Choose an answer to continue.",
+      "optionalError": "Choose an answer or skip this question."
+    },
+    "messageScroller": {
+      "region": "Messages",
+      "start": "Scroll to the first message",
+      "end": "Scroll to the newest message"
     }
   },
   "labels": {

@@ -90,12 +90,26 @@ const routes: RouteRecordRaw[] = [
         meta: { layout: 'app' },
       },
       {
+        path: 'notifications',
+        name: 'account-notifications',
+        component: () => import('~/pages/account/Notifications.vue'),
+        meta: { layout: 'app' },
+      },
+      {
         path: 'data',
         name: 'account-data',
         component: () => import('~/pages/account/Data.vue'),
         meta: { layout: 'app' },
       },
     ],
+  },
+  {
+    // The inbox. Not in the sidebar: it hangs off the bell in the header,
+    // where the badge already says whether it is worth opening.
+    path: '/notifications',
+    name: 'notifications',
+    component: () => import('~/pages/notifications/Index.vue'),
+    meta: { layout: 'app' },
   },
   {
     path: '/assistant',

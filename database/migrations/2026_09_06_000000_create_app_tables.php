@@ -108,10 +108,64 @@ return new class extends Migration
             $table->string('content_encoding')->nullable();
             $table->timestamps();
         });
+
+        // The inbox. Laravel's own notifications table with the escalation
+        // plan added: `channels` is the ladder the notification was sent
+        // with, `deliveries` is a channel-to-timestamp map of what actually
+        // went out, and `archived_at` is the third state on top of the
+        // framework's read/unread. `read_at` is what the app calls "seen",
+        // and is the signal that stops the ladder.
+        Schema::create('notifications', function (Blueprint $table) {
+            $table->uuid('id')->primary();
+            $table->string('type');
+            $table->ulidMorphs('notifiable');
+            $table->json('data');
+            $table->json('channels');
+            $table->json('deliveries');
+            $table->timestamp('read_at')->nullable();
+            $table->timestamp('archived_at')->nullable();
+            $table->timestamps();
+
+            // The inbox query in one index: this person's rows, unarchived
+            // first, newest first.
+            $table->index(['notifiable_type', 'notifiable_id', 'archived_at', 'created_at'], 'notifications_inbox_idx');
+        });
+
+        // One row per (user, notification type). A missing row is "has not
+        // chosen" and takes the type's declared defaults; an empty channel
+        // list is a deliberate "inbox only". The two must stay distinct,
+        // which is why the preferences endpoint writes a row per type rather
+        // than only for the ones switched on.
+        Schema::create('notification_preferences', function (Blueprint $table) {
+            $table->ulid('id')->primary();
+            $table->foreignUlid('user_id')->constrained('users')->cascadeOnDelete();
+            $table->string('type', 96);
+            $table->json('channels');
+            $table->timestamps();
+
+            $table->unique(['user_id', 'type']);
+        });
+
+        // A number waiting on the code texted to it. Same shape as
+        // email_changes: one pending row per user, only the code's hash
+        // stored, an expiry, and an attempt counter, because six digits are
+        // guessable and a phone number is a second factor for some people.
+        Schema::create('phone_verifications', function (Blueprint $table) {
+            $table->ulid('id')->primary();
+            $table->foreignUlid('user_id')->unique()->constrained('users')->cascadeOnDelete();
+            $table->string('phone', 24);
+            $table->string('code_hash');
+            $table->unsignedTinyInteger('attempts')->default(0);
+            $table->timestamp('expires_at');
+            $table->timestamps();
+        });
     }
 
     public function down(): void
     {
+        Schema::dropIfExists('phone_verifications');
+        Schema::dropIfExists('notification_preferences');
+        Schema::dropIfExists('notifications');
         Schema::dropIfExists('push_subscriptions');
         Schema::dropIfExists('saved_views');
         Schema::dropIfExists('user_social_links');

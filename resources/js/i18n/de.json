@@ -28,7 +28,8 @@
       "manage": "Verwalten",
       "account": "Konto"
     },
-    "data": "Deine Daten"
+    "data": "Deine Daten",
+    "notifications": "Benachrichtigungen"
   },
   "shell": {
     "skipToContent": "Zum Inhalt springen",
@@ -322,6 +323,44 @@
       "test": "Test senden",
       "testSent": "Gesendet. Sie sollte gleich ankommen.",
       "error": "Das hat nicht geklappt. Bitte erneut versuchen."
+    },
+    "notificationsPage": {
+      "title": "Benachrichtigungen",
+      "description": "Was dich erreicht und wo. Dein Posteingang bekommt immer alles; diese Schalter entscheiden, was zusätzlich passiert."
+    },
+    "notificationPrefs": {
+      "title": "Was du bekommst",
+      "description": "Eine Zeile je Benachrichtigung, eine Spalte je Kanal.",
+      "ladder": "Kanäle werden der Reihe nach versucht, im Abstand von {minutes} Minuten, und stoppen, sobald du die Benachrichtigung gesehen hast.",
+      "required": "Lässt sich hier nicht abschalten.",
+      "notOffered": "Für diese Benachrichtigung nicht verfügbar",
+      "unreachable": {
+        "push": "Push für dieses Gerät unten einschalten.",
+        "mail": "Keine E-Mail-Adresse hinterlegt.",
+        "sms": "Unten eine Telefonnummer bestätigen."
+      },
+      "error": "Der Schalter wurde nicht gespeichert. Versuch es noch einmal."
+    },
+    "phone": {
+      "title": "Telefonnummer",
+      "description": "Wohin SMS-Benachrichtigungen gehen. Eine Nummer wird erst genutzt, wenn sie ihren Code beantwortet hat.",
+      "number": "Telefonnummer",
+      "numberHint": "International, mit Pluszeichen und Ländervorwahl.",
+      "send": "Code senden",
+      "resend": "Neuen Code senden",
+      "resendIn": "Neuer Code in {seconds}s",
+      "code": "Bestätigungscode",
+      "codeSent": "Code gesendet.",
+      "codeSentTo": "Wir haben einen Code an {phone} geschickt. Gib ihn unten ein.",
+      "verify": "Bestätigen",
+      "verified": "Deine Telefonnummer ist bestätigt.",
+      "verifiedBadge": "Bestätigt",
+      "remove": "Nummer entfernen",
+      "removed": "Nummer entfernt.",
+      "removeConfirm": {
+        "title": "Telefonnummer entfernen?",
+        "message": "SMS-Benachrichtigungen hören sofort auf. Deine Kanalauswahl bleibt erhalten, falls du wieder eine Nummer hinterlegst."
+      }
     }
   },
   "users": {
@@ -376,7 +415,19 @@
     },
     "rowActions": "Aktionen"
   },
-  "mutations": {},
+  "mutations": {
+    "notifications": {
+      "markSeen": {
+        "error": "Konnte nicht als gesehen markiert werden."
+      },
+      "archive": {
+        "error": "Konnte nicht archiviert werden."
+      },
+      "restore": {
+        "error": "Konnte nicht zurückgelegt werden."
+      }
+    }
+  },
   "ai": {
     "title": "Assistent",
     "label": "Frage",
@@ -412,6 +463,75 @@
   "notifications": {
     "inputField": {
       "copied": "In die Zwischenablage kopiert"
+    },
+    "title": "Benachrichtigungen",
+    "bell": {
+      "label": "Benachrichtigungen, {count} ungelesen",
+      "viewAll": "Alle Benachrichtigungen ansehen"
+    },
+    "tabs": {
+      "inbox": "Posteingang",
+      "unseen": "Ungesehen",
+      "archived": "Archiviert"
+    },
+    "status": {
+      "unseen": "Ungesehen",
+      "seen": "Gesehen",
+      "archived": "Archiviert"
+    },
+    "channels": {
+      "push": "Push",
+      "mail": "E-Mail",
+      "sms": "SMS"
+    },
+    "groups": {
+      "security": "Sicherheit",
+      "people": "Team",
+      "general": "Allgemein"
+    },
+    "actions": {
+      "markAllSeen": "Alle als gesehen markieren",
+      "archive": "Archivieren",
+      "archiveAll": "Gesehene archivieren",
+      "restore": "Zurücklegen"
+    },
+    "confirm": {
+      "archiveAll": {
+        "title": "Alles Gesehene archivieren?",
+        "message": "Ungesehenes bleibt im Posteingang. Gelöscht wird nichts; Archiviertes wird eine Weile aufbewahrt und dann aufgeräumt."
+      }
+    },
+    "empty": {
+      "inbox": {
+        "title": "Nichts offen",
+        "description": "Neue Benachrichtigungen landen hier und auf den Kanälen, die du gewählt hast."
+      },
+      "unseen": {
+        "title": "Alles gesehen",
+        "description": "Du hast dir alles im Posteingang angesehen."
+      },
+      "archived": {
+        "title": "Nichts archiviert",
+        "description": "Weggelegte Benachrichtigungen erscheinen hier."
+      }
+    },
+    "error": {
+      "title": "Benachrichtigungen konnten nicht geladen werden",
+      "description": "Die Verbindung ist abgerissen. Es wird automatisch erneut versucht."
+    },
+    "types": {
+      "security_alert": {
+        "label": "Sicherheitshinweise",
+        "hint": "Passwortänderungen, Zwei-Faktor-Änderungen, verbundene Anmeldedienste.",
+        "title": "Sicherheitshinweis",
+        "body": "{event} Von {device}."
+      },
+      "people_invite_accepted": {
+        "label": "Einladung angenommen",
+        "hint": "Jemand, den du eingeladen hast, ist dabei.",
+        "title": "Einladung angenommen",
+        "body": "{name} ({email}) hat deine Einladung angenommen."
+      }
     }
   },
   "components": {
@@ -420,6 +540,19 @@
       "dropFileAction": "Datei hier ablegen",
       "orDragDrop": "oder per Drag & Drop",
       "unsupportedFileError": "Dieser Dateityp wird nicht unterstützt."
+    },
+    "questionnaire": {
+      "progress": "Frage {current} von {total}",
+      "progressLabel": "Fortschritt des Fragebogens",
+      "skip": "Überspringen",
+      "submit": "Absenden",
+      "requiredError": "Wähle eine Antwort, um fortzufahren.",
+      "optionalError": "Wähle eine Antwort oder überspringe die Frage."
+    },
+    "messageScroller": {
+      "region": "Nachrichten",
+      "start": "Zur ersten Nachricht springen",
+      "end": "Zur neuesten Nachricht springen"
     }
   },
   "labels": {

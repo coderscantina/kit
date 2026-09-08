@@ -26,6 +26,8 @@ class UserFactory extends Factory
             'email_verified_at' => now(),
             'password' => static::$password ??= 'password',
             'locale' => 'en',
+            'phone' => null,
+            'phone_verified_at' => null,
             'avatar_path' => null,
             // Every column, not just the required ones: models are strict about
             // missing attributes and a created (unrefreshed) instance has only
@@ -43,6 +45,15 @@ class UserFactory extends Factory
     public function unverified(): static
     {
         return $this->state(fn (array $attributes) => ['email_verified_at' => null]);
+    }
+
+    /** An account the SMS channel can actually reach. */
+    public function withVerifiedPhone(string $phone = '+15551234567'): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'phone' => $phone,
+            'phone_verified_at' => now(),
+        ]);
     }
 
     public function root(): static

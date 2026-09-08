@@ -1,3 +1,4 @@
+import { VueQueryPlugin } from '@tanstack/vue-query'
 import { mount } from '@vue/test-utils'
 import { afterEach, describe, expect, it } from 'vitest'
 import { defineComponent, h } from 'vue'
@@ -60,7 +61,9 @@ const mountShell = async () => {
     defineComponent({
       setup: () => () => h(AppLayout, null, { default: () => h('p', 'page body') }),
     }),
-    { global: { plugins: [router] } }
+    // The header carries the notification bell, which is a reactive query,
+    // so the shell needs a query client the way the real app has one.
+    { global: { plugins: [router, VueQueryPlugin] } }
   )
 }
 
@@ -116,7 +119,7 @@ describe('the app shell', () => {
             default: () => h(PageActions, null, { default: () => h('button', 'New post') }),
           }),
       }),
-      { global: { plugins: [router] }, attachTo: document.body }
+      { global: { plugins: [router, VueQueryPlugin] }, attachTo: document.body }
     )
 
     await wrapper.vm.$nextTick()

@@ -13,8 +13,10 @@ app/Actions/<Domain>/    plain classes that do one thing (CreateUser, AcceptInvi
 app/Ai/Actions/          streamed AI actions
 app/Data/                every laravel-data class, args classes included
 app/Http/                controllers, form requests, filters, middleware
+app/Listeners/           event listeners, wired in a service provider
 app/Models/              every model, on the App\Models\Model base
 app/Mutations/<Domain>/  reactive mutations
+app/Notifications/       notifications; #[NotificationType] makes one configurable
 app/Policies/            ResourcePolicy and the concrete policies
 app/Queries/<Domain>/    reactive queries
 app/Services/<Domain>/   the stateful pieces (Ai, Auth, Account)
@@ -32,15 +34,17 @@ and `Database\Factories\PostFactory` by name, migrations are read from
 
 ## 2. Which data path a change belongs on
 
-**Everything shipped today is REST.** Auth, account, people, invites, saved
-views and the AI assistant are controller + FormRequest + action class +
-laravel-data, called from `resources/js/api/resources/*`. Read those before
-adding a surface that looks like them.
+**Most of what is shipped is REST.** Auth, account, people, invites, saved
+views, notification settings and the AI assistant are controller +
+FormRequest + action class + laravel-data, called from
+`resources/js/api/resources/*`. Read those before adding a surface that looks
+like them.
 
-**The reactive layer is what the generators produce.** `make:feature` writes a
-query, a page and a mutation on it. No shipped page uses it yet, so treat the
-generated code and `docs/adding-a-feature.md` as the reference, not a grep of
-`resources/js/pages`.
+**The reactive layer is what the generators produce, and what notifications
+run on.** `make:feature` writes a query, a page and a mutation on it. The
+inbox (`app/Queries/Notifications`, `app/Mutations/Notifications`, the bell and
+`/notifications`) is the shipped example to read; `docs/adding-a-feature.md`
+is the walkthrough.
 
 Pick by surface, not by taste: a new list or detail view that wants live
 updates goes reactive; something the browser posts a form to, uploads a file
@@ -165,7 +169,39 @@ typed off `Kit.AiMap`. Never fetch `/api/ai/stream` directly. Run
 Test with `FakeAiDriver::swap(...)`: no network, no key, no bill. Full contract
 in `docs/ai.md`.
 
-## 7. Presence
+## 7. Notifications
+
+Every notification lands in the `notifications` inbox first; everything after
+that is a ladder, not a fan-out. Declare a configurable one with
+`#[NotificationType]` on a class extending `App\Notifications\AppNotification`
+in `app/Notifications`. The attribute is the whole registration:
+`NotificationRegistry` discovers it and the preferences screen is built from
+what it finds. A notification **without** the attribute is transactional
+(password reset, verification code) and stays out of preferences on purpose.
+
+`channels` on the attribute is the ladder in escalation order. Rung 0 goes out
+with the inbox row; every later rung is queued with a delay and checks
+`read_at` before it sends, so a person who saw the push never gets the mail.
+That is Laravel's own `withDelay()` and `shouldSend()`, not a job you write.
+SMS is never on a ladder unless a type names it and the user switches it on
+and the number has answered its code.
+
+`read_at` is what the app calls "seen"; with `archived_at` it gives the three
+states unseen/seen/archived. A missing `notification_preferences` row means
+"has not chosen" and takes the type's defaults; an empty channel list is a
+deliberate "inbox only". The two must stay distinct.
+
+The inbox is the kit's reactive surface: `notifications.list` and
+`notifications.summary`, both declaring
+`Dep::eq('notifications', 'notifiable_id', $userId)`. Bulk state changes go
+through `App\Actions\Notifications\UpdateInboxState`, which does one UPDATE
+and records one owner-scoped `Change` rather than a table-wide invalidation.
+
+SMS ships as a seam: `App\Services\Sms\SmsSender` plus a `log` driver. Bind
+your own and name it in `config/sms.php`. `kit:doctor` fails a production box
+still on the log driver. `docs/notifications.md` has the contract.
+
+## 8. Presence
 
 Who is on a screen is not a query. `usePresence('<resource>')` joins
 `presence.<resource>` over Echo; `App\Support\Presence` opens it to whoever
@@ -178,7 +214,7 @@ so they carry cursors, typing flags and selections, and nothing that has to
 survive a refresh. Throttle a stream of them. Full contract in
 `docs/presence.md`.
 
-## 8. Migrations
+## 9. Migrations
 
 Nothing here has shipped to a database anyone has to protect, so the schema is
 kept as few files as it can be: the framework's three, plus
@@ -187,7 +223,7 @@ that file and re-running `php artisan migrate:fresh --seed`, not by stacking an
 `ALTER` on top. A generated feature gets its own `create_<table>_table`, which
 is the right shape once the feature is real.
 
-## 9. Definition of done
+## 10. Definition of done
 
 `bin/gate` green locally. One test per query and per mutation; the generators
 write them, keep them meaningful. Tests use `#[Test]`, never a `@test`
@@ -198,13 +234,13 @@ docblock, which PHPUnit 13 ignores silently;
 `Fixture` feature and checks it passes everything. Any change to the
 generators, the stubs, or where files go has to keep that green.
 
-## 10. Release
+## 11. Release
 
 `bin/release` cuts `vYYYY.M.D-<shortsha>` from `main`, writes the changelog
 block from the commit subjects and tags the changelog commit. Rollback is
 re-running the receiver with the previous tag. See `docs/release.md`.
 
-## 11. When kit:doctor fails
+## 12. When kit:doctor fails
 
 Redis, Horizon and Reverb warnings mean a service is down; restart it. A
 `reactive queue` warning means no worker took the probe, or the one that did
@@ -214,7 +250,7 @@ query name (run `types:generate`), an ambient binding missing from
 `config/octane.php` `flush` (add it to `config/kit.php` `ambient_bindings`), or
 an `en`/`de` key mismatch. See `docs/runtime-contract.md`.
 
-## 12. Accepted trade-offs
+## 13. Accepted trade-offs
 
 Decisions reviewers keep re-filing. They are deliberate.
 

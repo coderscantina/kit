@@ -6,7 +6,9 @@ use App\Http\Controllers\Account\AvatarController;
 use App\Http\Controllers\Account\DataExportController;
 use App\Http\Controllers\Account\EmailChangeController;
 use App\Http\Controllers\Account\InviteController;
+use App\Http\Controllers\Account\NotificationSettingsController;
 use App\Http\Controllers\Account\PeopleController;
+use App\Http\Controllers\Account\PhoneController;
 use App\Http\Controllers\Account\ProfileController;
 use App\Http\Controllers\Account\PushSubscriptionController;
 use App\Http\Controllers\Account\SavedViewController;
@@ -48,6 +50,20 @@ Route::prefix('api')->name('api.')->middleware('web')->group(function (): void {
             Route::post('push-subscriptions/test', [PushSubscriptionController::class, 'test'])
                 ->middleware('throttle:sensitive')
                 ->name('push.test');
+
+            // The preferences matrix. The inbox itself is reactive
+            // (notifications.list / notifications.summary), not REST.
+            Route::get('notifications', [NotificationSettingsController::class, 'index'])->name('notifications.index');
+            Route::put('notifications', [NotificationSettingsController::class, 'update'])->name('notifications.update');
+
+            // Sending a code costs a message; guessing one must not be cheap.
+            Route::post('phone', [PhoneController::class, 'store'])
+                ->middleware('throttle:sensitive')
+                ->name('phone.store');
+            Route::post('phone/verify', [PhoneController::class, 'verify'])
+                ->middleware('throttle:sensitive')
+                ->name('phone.verify');
+            Route::delete('phone', [PhoneController::class, 'destroy'])->name('phone.destroy');
 
             Route::get('social-links', [SocialLinkController::class, 'index'])->name('social-links.index');
             Route::delete('social-links/{provider}', [SocialLinkController::class, 'destroy'])

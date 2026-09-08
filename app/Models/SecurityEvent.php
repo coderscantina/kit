@@ -47,6 +47,10 @@ class SecurityEvent extends Model
 
     public const string DATA_EXPORTED = 'data_exported';
 
+    public const string PHONE_VERIFIED = 'phone_verified';
+
+    public const string PHONE_REMOVED = 'phone_removed';
+
     public $timestamps = false;
 
     /**

@@ -26,6 +26,10 @@ return new class extends Migration
             $table->timestamp('email_verified_at')->nullable();
             $table->string('password');
             $table->string('locale', 8)->default('en');
+            // E.164, and only ever written once the code texted to it came
+            // back: an unverified number is not a route the SMS channel uses.
+            $table->string('phone', 24)->nullable();
+            $table->timestamp('phone_verified_at')->nullable();
             $table->string('avatar_path')->nullable();
             $table->foreignUlid('role_id')->nullable()->constrained('roles')->nullOnDelete();
             $table->boolean('is_root')->default(false);

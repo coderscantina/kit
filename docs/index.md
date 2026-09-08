@@ -10,9 +10,10 @@ Read [architecture](/architecture) for how the pieces fit, then
 keyboard layer and the one file you edit to rebrand. [Lists and
 filters](/lists) covers the query contract every list surface speaks, and the
 saved views built on it. [Presence](/presence) covers the roster
-and the whisper channel behind it. [Social login](/social-login) and [push
-notifications](/push-notifications) are both off until configured. [AI](/ai)
-covers the streamed model calls. When
+and the whisper channel behind it. [Notifications](/notifications) covers the
+inbox, the escalation ladder and the phone flow; [social
+login](/social-login), [push notifications](/push-notifications) and SMS are
+all off until configured. [AI](/ai) covers the streamed model calls. When
 something is broken in production, [runtime contract](/runtime-contract) says
 what runs where and [known limitations](/limitations) says what the design
 does not promise.

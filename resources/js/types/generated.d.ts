@@ -18,10 +18,53 @@ declare namespace App {
       status: string,
       createdAt: string,
     };
+    export type ListNotificationsArgs = {
+      userId: string,
+      status: App.Enums.NotificationStatus | null,
+    };
     export type MeData = {
       user: App.Data.UserData,
       abilities: string[],
       impersonating: boolean,
+    };
+    export type NotificationChannelData = {
+      key: string,
+      available: boolean,
+      deliverable: boolean,
+    };
+    export type NotificationData = {
+      id: string,
+      type: string,
+      data: Record<string, any>,
+      status: App.Enums.NotificationStatus,
+      deliveries: Record<string, string>,
+      seenAt: string | null,
+      archivedAt: string | null,
+      createdAt: string,
+    };
+    export type NotificationScopeArgs = {
+      userId: string,
+      ids: string[] | null,
+    };
+    export type NotificationSettingsData = {
+      channels: App.Data.NotificationChannelData[],
+      types: App.Data.NotificationTypeData[],
+      phone: App.Data.PhoneData,
+      escalationMinutes: number,
+    };
+    export type NotificationSummaryArgs = {
+      userId: string,
+    };
+    export type NotificationSummaryData = {
+      unseen: number,
+      total: number,
+    };
+    export type NotificationTypeData = {
+      key: string,
+      group: string,
+      channels: string[],
+      required: string[],
+      enabled: string[],
     };
     export type PersonData = {
       kind: string,
@@ -41,6 +84,12 @@ declare namespace App {
       canAssignRole: boolean,
       canRemove: boolean,
       canResend: boolean,
+    };
+    export type PhoneData = {
+      phone: string | null,
+      verified: boolean,
+      pendingPhone: string | null,
+      resendIn: number,
     };
     export type PresenceMemberData = {
       id: string,
@@ -110,6 +159,10 @@ declare namespace App {
       pendingEmail: string | null,
     };
   }
+  namespace Enums {
+    export type NotificationChannel = 'push' | 'mail' | 'sms';
+    export type NotificationStatus = 'unseen' | 'seen' | 'archived';
+  }
   namespace Services {
     namespace Ai {
       namespace Dto {
@@ -139,6 +192,7 @@ declare namespace App {
         impersonation: boolean,
         ai: boolean,
         push: boolean,
+        sms: boolean,
         social: boolean,
       },
       echo: App.Support.EchoConfigPayload | null,
@@ -205,7 +259,28 @@ declare namespace Spatie {
 }
 
 declare namespace Kit {
-  export type ReactiveMap = {}
+  export type ReactiveMap = {
+    'notifications.archive': {
+      args: App.Data.NotificationScopeArgs
+      result: App.Data.NotificationSummaryData
+    }
+    'notifications.list': {
+      args: App.Data.ListNotificationsArgs
+      result: Array<App.Data.NotificationData>
+    }
+    'notifications.markSeen': {
+      args: App.Data.NotificationScopeArgs
+      result: App.Data.NotificationSummaryData
+    }
+    'notifications.restore': {
+      args: App.Data.NotificationScopeArgs
+      result: App.Data.NotificationSummaryData
+    }
+    'notifications.summary': {
+      args: App.Data.NotificationSummaryArgs
+      result: App.Data.NotificationSummaryData
+    }
+  }
 }
 
 declare namespace Kit {

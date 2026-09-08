@@ -16,7 +16,7 @@ use Spatie\TypeScriptTransformer\Attributes\TypeScript;
 class RuntimeConfigPayload extends Data
 {
     /**
-     * @param  array{realtime: bool, registration: bool, impersonation: bool, ai: bool, push: bool, social: bool}  $features
+     * @param  array{realtime: bool, registration: bool, impersonation: bool, ai: bool, push: bool, sms: bool, social: bool}  $features
      * @param  array<int, SocialProviderPayload>  $socialProviders
      */
     public function __construct(
