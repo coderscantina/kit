@@ -120,7 +120,7 @@ const selectFirstMatch = () => {
   <Popover v-model:open="open">
     <PopoverTrigger
       :disabled="disabled"
-      class="flex cursor-pointer items-center justify-between rounded-md border border-input-border px-2 py-1 font-semibold shadow-sm ring-offset-surface focus:outline-none focus:ring-1 focus:ring-ring hover:bg-input disabled:cursor-not-allowed disabled:opacity-50 gap-2"
+      class="flex h-9 cursor-pointer items-center justify-between gap-2 rounded-md border border-input-border bg-input px-2 py-1 font-semibold text-primary shadow-sm transition-colors ring-offset-surface focus:outline-none focus:ring-1 focus:ring-ring hover:bg-muted-background disabled:cursor-not-allowed disabled:opacity-50"
     >
       <Icon
         v-if="selectedIcon"
@@ -187,8 +187,8 @@ const selectFirstMatch = () => {
                   :aria-label="icon"
                   :title="icon"
                   :class="[
-                    'inline-flex size-8 cursor-pointer items-center justify-center rounded-md p-1 hover:bg-secondary/60',
-                    icon === selectedIcon && 'bg-secondary',
+                    'inline-flex size-8 cursor-pointer items-center justify-center rounded-md p-1 transition-colors hover:bg-muted-background',
+                    icon === selectedIcon && 'bg-accent/15 text-accent hover:bg-accent/20',
                   ]"
                   @click="select(icon)"
                 >

@@ -19,7 +19,7 @@ export const badgeVariants = cva(
       },
       type: {
         default: '',
-        outline: 'border-border bg-transparent',
+        outline: 'border-border-strong bg-transparent text-foreground',
       },
       size: {
         indicator: 'size-2 rounded-full!',
@@ -40,7 +40,7 @@ export const badgeVariants = cva(
       {
         variant: 'destructive',
         type: 'outline',
-        class: '!border-destructive-background text-destructive-foreground',
+        class: '!border-destructive text-destructive-foreground',
       },
       {
         variant: 'accent',
@@ -65,12 +65,12 @@ export const badgeVariants = cva(
       {
         variant: 'surface',
         type: 'outline',
-        class: '!border-surface text-foreground',
+        class: '!border-border-strong text-foreground',
       },
       {
         variant: 'secondary',
         type: 'outline',
-        class: '!border-secondary text-secondary-foreground',
+        class: '!border-border-strong text-foreground',
       },
       {
         variant: 'primary',
