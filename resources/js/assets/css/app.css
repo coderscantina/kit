@@ -87,7 +87,7 @@
        L0 sidebar   the frame: sidebar, header, tab bar,       bg-sidebar
                     mobile drawer
        L1 surface   the canvas: body, main                     bg-surface
-       L2 card      a boxed block on the canvas: Card, Table,  bg-card (+ border or shadow-soft)
+       L2 card      a boxed block on the canvas: Card, Table,  bg-card border-border shadow-soft-sm
                     Dialog, Sheet
        L3 popover   floating: menu, select, tooltip, palette   bg-popover border-popover-border shadow-soft-lg
        scrim        under a dialog                             bg-overlay
@@ -96,9 +96,11 @@
      sidebar at a corner, and two tones meeting there put a seam through the
      shell. One tone makes the chrome an L around a clean canvas.
 
-     Light gets its depth from a hairline and a shadow, so card and popover
-     share one white. Dark has no shadow worth seeing, so every rung is one
-     grid step lighter than the rung below it. */
+     Light is a gray-50 canvas with white blocks on it, each with a hairline
+     and a shadow-soft-sm that settles it; the frame is two grid steps below
+     the canvas, so the chrome reads as chrome. Card and popover share the white; the big shadow is for what
+     floats. Dark has no shadow worth
+     seeing, so every rung is one grid step lighter than the rung below it. */
   --sidebar: var(--color-gray-100);
   --surface: var(--color-gray-50);
   --card: var(--color-white);
@@ -111,12 +113,13 @@
        input             a field
        elevated          a raised chip on a fill: the active tab, the switch thumb
 
-     A fill is one grid step off the rung it lands on. `elevated` is the
-     exception: a chip has to be lighter than the fill it rides on, so it goes
-     to the top of the ramp. */
-  --secondary: var(--color-gray-125);
+     A passive fill is one grid step off the white it sits on, a control at
+     rest is two; more than that and a table header reads as a bar.
+     `elevated` is the exception: a chip has to be lighter than the fill it
+     rides on, so it goes to the top of the ramp. */
+  --secondary: var(--color-gray-100);
   --secondary-foreground: var(--color-gray-800);
-  --muted-background: var(--color-gray-100);
+  --muted-background: var(--color-gray-75);
   --input: var(--color-white);
   --input-border: var(--color-gray-175);
   --elevated: var(--color-white);
@@ -138,7 +141,7 @@
      `popover-border` is the lightest because in light mode the shadow does
      the floating, and a hard edge on top of it is what made menus look
      heavy. */
-  --border: var(--color-gray-125);
+  --border: var(--color-gray-150);
   --border-strong: var(--color-gray-200);
   --popover-border: var(--color-gray-100);
 
@@ -154,7 +157,7 @@
   --sidebar-muted: var(--color-gray-600);
   --sidebar-accent: var(--color-gray-175);
   --sidebar-accent-foreground: var(--color-gray-900);
-  --sidebar-border: var(--color-gray-125);
+  --sidebar-border: var(--color-gray-150);
   --sidebar-ring: var(--ring);
 
   --destructive: var(--color-red-600);
@@ -445,9 +448,9 @@ html[data-accent='cyan'].dark {
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) + 4px);
 
-  --shadow-soft-sm:
-    0px 2px 4px rgba(3, 7, 18, 0.02), 0px 7px 15px rgba(3, 7, 18, 0.04),
-    0px 16px 33px rgba(3, 7, 18, 0.06);
+  /* What sits under a card and a table: two tight layers, felt more than
+     seen, so the hairline stays the edge and the shadow only settles it. */
+  --shadow-soft-sm: 0px 1px 2px rgba(3, 7, 18, 0.04), 0px 2px 6px rgba(3, 7, 18, 0.05);
   --shadow-soft:
     0px 1px 1px rgba(3, 7, 18, 0.01), 0px 3px 5px rgba(3, 7, 18, 0.02),
     0px 6px 12px rgba(3, 7, 18, 0.04), 0px 10px 21px rgba(3, 7, 18, 0.05),

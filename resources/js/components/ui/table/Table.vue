@@ -35,7 +35,7 @@ const props = withDefaults(
 </script>
 
 <template>
-  <div class="overflow-hidden rounded-lg border border-border bg-card">
+  <div class="overflow-hidden rounded-lg border border-border bg-card shadow-soft-sm">
     <div class="scroll-fade-x relative w-full">
       <table
         role="table"

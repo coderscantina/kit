@@ -42,14 +42,19 @@ and a block that is boxed or floats sits one rung above whatever it is on.
 | ---- | ---------------------------------------------------------------- | ------------------------------------------------- | -------- | -------- |
 | L0   | the frame: sidebar, header, tab bar, drawer, the auth brand half | `bg-sidebar`                                      | gray-100 | gray-925 |
 | L1   | the canvas: body, main                                           | `bg-surface`                                      | gray-50  | gray-900 |
-| L2   | a boxed block on the canvas: Card, Table, Dialog, Sheet          | `bg-card` plus a border or `shadow-soft`          | white    | gray-875 |
+| L2   | a boxed block on the canvas: Card, Table, Dialog, Sheet          | `bg-card border-border shadow-soft-sm`            | white    | gray-875 |
 | L3   | floating: menu, select, tooltip, palette, toast                  | `bg-popover border-popover-border shadow-soft-lg` | white    | gray-850 |
 |      | the scrim under a dialog                                         | `bg-overlay`                                      |          |          |
 
-Light mode gets depth from a hairline and a shadow, so card and popover share
-one white; the two steps below it are 3.4 points of L each. Dark mode has no
-shadow worth seeing, so every rung is one grid step (2.75 points) lighter than
-the rung below it.
+Light mode is a gray-50 canvas with white blocks on it. A boxed block gets a
+hairline and `shadow-soft-sm` under it, a two-layer shadow that settles the
+block without lifting it; the frame is two grid steps below the canvas, so
+the chrome reads as chrome and not as more page. A
+white canvas was tried and read as flat: the white blocks had nothing to
+stand on. The full shadow the cards used to float on is gone, the tint and
+the hairline do that work now. Dark mode has no shadow worth seeing,
+so every rung is one grid step (2.75 points) lighter than the rung below it,
+and the card carries the same hairline so it does not lean on the step alone.
 
 The rule when building a screen: pick the rung by nesting, not by taste. A
 table on the page is `bg-card`. A table inside a card sinks back to
@@ -73,12 +78,14 @@ frame agree.
 
 ## Fills
 
-A fill is not a rung. It sits on a rung and tints it, one grid step off.
+A fill is not a rung. It sits on a rung and tints it. A passive fill is one
+grid step off the white it sits on and a control at rest is two; more than
+that and a table header reads as a bar.
 
 | Token              | Use                                                       | Light    | Dark     |
 | ------------------ | --------------------------------------------------------- | -------- | -------- |
-| `secondary`        | a control at rest, and the hover of a flat one            | gray-125 | gray-800 |
-| `muted-background` | a passive fill: table header, tab list, `kbd`, code       | gray-100 | gray-850 |
+| `secondary`        | a control at rest, and the hover of a flat one            | gray-100 | gray-800 |
+| `muted-background` | a passive fill: table header, tab list, `kbd`, code       | gray-75  | gray-850 |
 | `input`            | a field                                                   | white    | gray-850 |
 | `elevated`         | a raised chip on a fill: the active tab, the switch thumb | white    | gray-700 |
 
@@ -96,10 +103,10 @@ picks the weight by what the line has to do.
 | Token            | Use                                                  | Light    | Dark     |
 | ---------------- | ---------------------------------------------------- | -------- | -------- |
 | `popover-border` | the edge of something floating                       | gray-100 | gray-800 |
-| `border`         | a divider, a card edge, the default `*` border       | gray-125 | gray-825 |
+| `border`         | a divider, a card edge, the default `*` border       | gray-150 | gray-825 |
 | `input-border`   | the edge that makes a field a field                  | gray-175 | gray-800 |
 | `border-strong`  | a line that carries alone: switch track, header rule | gray-200 | gray-750 |
-| `sidebar-border` | the frame against the canvas                         | gray-125 | gray-875 |
+| `sidebar-border` | the frame against the canvas                         | gray-150 | gray-875 |
 
 `popover-border` is the lightest in light mode and stronger than `border` in
 dark. Same job, opposite direction: in light the shadow does the floating and a
@@ -114,7 +121,9 @@ the shell look pieced together.
 
 ## Shadows
 
-`shadow-soft` lifts a card off the canvas. `shadow-soft-lg` is what makes a
+`shadow-soft-sm` sits under a card and a table: two layers, 6px reach, about
+9% of ink. The hairline is the edge, the shadow only settles it. `shadow-soft`
+is for a block raised on purpose, like the accent card. `shadow-soft-lg` is what makes a
 menu float: four layers reaching 24px, about 13% of ink in total. It used to be
 six layers reaching 33px at twice the ink, which read as a smudge under every
 dropdown.
@@ -169,8 +178,8 @@ The tightest pairs, checked with WCAG on the oklch values:
 | Pair                                 | Ratio |
 | ------------------------------------ | ----- |
 | light `muted` on `sidebar-accent`    | 4.63  |
-| light `muted` on `secondary`         | 5.15  |
-| light `muted` on `muted-background`  | 5.43  |
+| light `muted` on `secondary`         | 5.43  |
+| light `muted` on `muted-background`  | 5.71  |
 | dark `muted` on `input` / `popover`  | 4.82  |
 | dark `muted` on `secondary`          | 5.20  |
 | dark `sidebar-muted` on `sidebar`    | 5.86  |
