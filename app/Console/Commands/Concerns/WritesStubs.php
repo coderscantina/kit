@@ -7,13 +7,18 @@ namespace App\Console\Commands\Concerns;
 use Illuminate\Filesystem\Filesystem;
 use RuntimeException;
 use stdClass;
+use Symfony\Component\Process\Process;
 
 /**
  * Shared by the generators: render a stub with `{{ placeholders }}`, write it
- * without clobbering, and insert lines at `// kit:<marker>` anchors.
+ * without clobbering, insert lines at `// kit:<marker>` anchors, and format
+ * what was written with the repository's own formatters.
  */
 trait WritesStubs
 {
+    /** @var array<string, true> Files this run created or changed, for formatWritten(). */
+    private array $written = [];
+
     /**
      * Absolute path of a stub in app/Console/Stubs.
      */
@@ -49,18 +54,21 @@ trait WritesStubs
     /**
      * @param  array<string, string>  $replacements
      */
-    protected function writeStub(string $stub, string $target, array $replacements, bool $force = false): bool
+    protected function writeStub(string $stub, string $target, array $replacements, bool $force = false, bool $quiet = false): bool
     {
         $files = new Filesystem;
 
         if ($files->exists($target) && ! $force) {
-            $this->components->warn('Exists, left alone: '.$this->relative($target));
+            if (! $quiet) {
+                $this->components->warn('Exists, left alone: '.$this->relative($target));
+            }
 
             return false;
         }
 
         $files->ensureDirectoryExists(dirname($target));
         $files->put($target, $this->renderStub($stub, $replacements));
+        $this->written[$target] = true;
         $this->components->info('Created '.$this->relative($target));
 
         return true;
@@ -101,7 +109,7 @@ trait WritesStubs
         }
 
         $files->put($file, preg_replace('/^([ \t]*)'.preg_quote($anchor, '/').'/m', $insert.'$1'.$anchor, $contents, 1) ?? $contents);
-        $this->components->info('Updated '.$this->relative($file));
+        $this->updated($file);
     }
 
     /**
@@ -169,7 +177,38 @@ trait WritesStubs
         $json = json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR);
         $json = preg_replace_callback('/^ +/m', fn (array $m) => str_repeat(' ', intdiv(strlen($m[0]), 2)), $json) ?? $json;
         $files->put($file, $json."\n");
-        $this->components->info('Updated '.$this->relative($file));
+        $this->updated($file);
+    }
+
+    /**
+     * Run pint and oxfmt over what this run wrote, so generated code passes
+     * `bin/gate` as written. Stubs are close to formatted already; this
+     * settles what field lists and marker inserts vary. Skipped quietly when
+     * a formatter is not installed.
+     */
+    protected function formatWritten(): void
+    {
+        $written = array_keys($this->written);
+        $this->written = [];
+
+        $php = array_values(array_filter($written, fn (string $file): bool => str_ends_with($file, '.php')));
+        $frontend = array_values(array_filter($written, fn (string $file): bool => preg_match('/\.(ts|vue|json)$/', $file) === 1));
+
+        foreach ([[base_path('vendor/bin/pint'), $php], [base_path('node_modules/.bin/oxfmt'), $frontend]] as [$binary, $targets]) {
+            if ($targets !== [] && is_executable($binary)) {
+                (new Process([$binary, ...$targets], base_path()))->setTimeout(120)->run();
+            }
+        }
+    }
+
+    /** Records a patched file, and says so once per file rather than once per insert. */
+    private function updated(string $file): void
+    {
+        if (! isset($this->written[$file])) {
+            $this->components->info('Updated '.$this->relative($file));
+        }
+
+        $this->written[$file] = true;
     }
 
     protected function relative(string $path): string

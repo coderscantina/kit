@@ -1,0 +1,34 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Data;
+
+use App\Models\{{ feature }};
+use Spatie\LaravelData\Data;
+use Spatie\TypeScriptTransformer\Attributes\TypeScript;
+
+/**
+ * What the {{ resource }} queries and mutations return. #[TypeScript] puts it
+ * in resources/js/types/generated.d.ts; run `php artisan types:generate`
+ * after every change to the properties.
+ *
+ * `from($model)` and `collect($models)` go through fromModel(), so a column
+ * and its property are mapped in one place.
+ */
+#[TypeScript]
+final class {{ data }} extends Data
+{
+    public function __construct(
+        public string $id,
+{{ params }}
+    ) {}
+
+    public static function fromModel({{ feature }} ${{ variable }}): self
+    {
+        return new self(
+            id: ${{ variable }}->id,
+{{ assignments }}
+        );
+    }
+}

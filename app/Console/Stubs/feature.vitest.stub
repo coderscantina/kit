@@ -9,11 +9,11 @@ describe('{{ title }} page', () => {
     // Seeded by key, not by stubbing useReactiveQuery: if the query key
     // drifts the page renders the empty state and this fails.
     const { wrapper } = mountWithQuery(Index, {
-      seed: [[['rq', '{{ resource }}.list', {}], [{ id: '1', name: 'First {{ feature }}' }]]],
+      seed: [[['rq', '{{ resource }}.list', {}], [{{ row }}]]],
     })
 
     expect(wrapper.text()).toContain('{{ title }}')
-    expect(wrapper.text()).toContain('First {{ feature }}')
+    expect(wrapper.text()).toContain({{ expected }})
     wrapper.unmount()
   })
 

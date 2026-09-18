@@ -8,16 +8,19 @@ use Database\Factories\{{ feature }}Factory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Support\Carbon;
+{{ model_imports }}
 
 /**
  * @property string $id
- * @property string $name
+{{ properties }}
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  */
-#[Fillable(['name'])]
+#[Fillable([{{ fillable }}])]
 class {{ feature }} extends Model
 {
     /** @use HasFactory<{{ feature }}Factory> */
     use HasFactory;
+{{ traits }}
+{{ casts }}
 }

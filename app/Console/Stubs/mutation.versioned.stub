@@ -13,6 +13,10 @@ use Kit\Reactive\Mutation;
 use Spatie\LaravelData\Data;
 
 /**
+ * Writes a row a form holds open. The args carry the version the form read;
+ * a row that moved since answers 409 with the current row, and the client
+ * merges it field by field instead of overwriting (useReactiveForm).
+ *
  * @extends Mutation<{{ args }}>
  */
 #[ReactiveMutation('{{ name }}', result: {{ data }}::class)]
@@ -25,19 +29,23 @@ final class {{ class }} extends Mutation
 
     public function authorize(Authenticatable $user, Data $args): void
     {
-        $this->gate($user)->authorize('create', {{ feature }}::class);
+        $this->gate($user)->authorize('update', {{ feature }}::query()->findOrFail($args->id));
     }
 
     /**
      * Runs inside the transaction the runner opened. Do not call
      * DB::transaction, afterCommit or dispatch an invalidation here; a
-     * PHPStan rule fails the build if you do. Use $this->lock($model) to
-     * read a row you are about to branch on.
+     * PHPStan rule fails the build if you do. Versioned bumps `version` on
+     * save; never write it by hand.
      */
     public function handle(Data $args): {{ data }}
     {
-        return {{ data }}::from({{ feature }}::query()->create([
+        ${{ variable }} = $this->lockVersion({{ feature }}::query()->findOrFail($args->id), $args->version);
+
+        ${{ variable }}->fill([
 {{ writes }}
-        ]));
+        ])->save();
+
+        return {{ data }}::from(${{ variable }});
     }
 }

@@ -1,0 +1,62 @@
+<?php
+
+declare(strict_types=1);
+
+namespace Tests\Feature\{{ feature }};
+
+use App\Models\{{ feature }};
+use App\Mutations\{{ feature }}\{{ class }};
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Kit\Reactive\Facades\Reactive;
+use Kit\Reactive\Testing\InteractsWithReactive;
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\Test;
+use Tests\TestCase;
+
+#[CoversClass({{ class }}::class)]
+final class {{ class }}Test extends TestCase
+{
+    use InteractsWithReactive;
+    use RefreshDatabase;
+
+    #[Test]
+    public function it_writes_the_row_and_bumps_its_version(): void
+    {
+        $this->createAndActAs(role: 'admin');
+        Reactive::fake();
+        $row = {{ feature }}::factory()->create();
+
+        $this->mutate('{{ name }}', ['id' => $row->id, 'version' => 1, {{ payload }}])
+            ->assertOk()
+            ->assertJsonPath('result.version', 2){{ assert_result }};
+    }
+
+    #[Test]
+    public function a_stale_version_answers_409_with_the_current_row_and_writes_nothing(): void
+    {
+        $this->createAndActAs(role: 'admin');
+        Reactive::fake();
+        $row = {{ feature }}::factory()->create();
+
+        $this->mutate('{{ name }}', ['id' => $row->id, 'version' => 1, {{ payload }}])->assertOk();
+
+        // Same version again: someone else's save landed in between.
+        $this->mutate('{{ name }}', ['id' => $row->id, 'version' => 1, {{ payload }}])
+            ->assertStatus(409)
+            ->assertJsonPath('code', 'CONFLICT')
+            ->assertJsonPath('current.version', 2);
+
+        $this->assertSame(2, $row->fresh()?->version);
+    }
+
+    #[Test]
+    public function a_user_without_the_ability_is_forbidden_and_writes_nothing(): void
+    {
+        $this->createAndActAs(role: 'member');
+        $row = {{ feature }}::factory()->create();
+
+        $this->mutate('{{ name }}', ['id' => $row->id, 'version' => 1, {{ payload }}])->assertForbidden();
+
+        $this->assertSame(1, $row->fresh()?->version);
+    }
+}

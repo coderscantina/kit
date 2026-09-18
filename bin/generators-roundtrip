@@ -39,6 +39,7 @@ created_paths=(
   app/Policies/FixturePolicy.php
   app/Data/FixtureData.php
   app/Data/CreateFixtureArgs.php
+  app/Data/UpdateFixtureArgs.php
   app/Data/SummarizeFixtureArgs.php
   app/Queries/Fixture
   app/Mutations/Fixture
@@ -46,6 +47,7 @@ created_paths=(
   tests/Feature/Fixture
   database/factories/FixtureFactory.php
   resources/js/pages/fixtures
+  resources/js/components/fixtures
   tests/js/pages/fixtures
 )
 
@@ -91,9 +93,13 @@ done
 # would still look clean.
 before_hashes="$(cat "${patched_files[@]}" | shasum)"
 
-php artisan make:feature Fixture
+# Every field type, nullable and not, and the versioned path, so a change to
+# any of them is exercised here rather than by the first feature that uses it.
+php artisan make:feature Fixture --versioned \
+  --fields="title:string body:text? rank:integer done:boolean due_on:date? published_at:datetime?"
 php artisan make:query fixture.list
 php artisan make:mutation fixture.create
+php artisan make:mutation fixture.update --versioned
 php artisan make:ai-action fixture.summarize
 php artisan types:generate
 

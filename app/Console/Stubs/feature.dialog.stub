@@ -1,0 +1,89 @@
+<script setup lang="ts">
+import { Button } from '~/components/ui/button'
+import { Dialog, DialogContent, DialogHeaderCombined } from '~/components/ui/dialog'
+import { Label } from '~/components/ui/label'
+{{ dialog_imports }}
+import { useReactiveForm, useReactiveMutation } from '~/lib/reactive'
+import { useI18n } from '~/plugins/i18n'
+
+/**
+ * Edits one row while other people may hold it open too. Pass the row from
+ * a reactive query and it stays live: a colleague's save lands in the fields
+ * this user has not touched, and a field both sides changed is listed in
+ * `conflicts` until the user keeps theirs or takes the other one. A save
+ * against a row that moved answers 409, and the current row goes through
+ * the same `apply()`, so the next save carries the new version.
+ */
+const props = defineProps<{ row: App.Data.{{ data }} | null }>()
+
+const open = defineModel<boolean>('open', { default: false })
+
+const { t } = useI18n()
+
+const form = useReactiveForm(() => props.row, { fields: [{{ field_list }}] })
+
+const update = useReactiveMutation('{{ name }}', {
+  onConflict: (error) => form.apply(error.current),
+  onSuccess: () => {
+    open.value = false
+  },
+})
+
+const save = () => {
+  const base = form.base.value
+  if (!base) return
+
+  update.mutate({ id: base.id, version: base.version, ...form.values() })
+}
+</script>
+
+<template>
+  <Dialog v-model:open="open">
+    <DialogContent class="max-w-md">
+      <DialogHeaderCombined :title="t('{{ resource }}.edit')" />
+      <form
+        class="grid gap-4"
+        @submit.prevent="save"
+      >
+{{ inputs }}
+        <ul
+          v-if="form.conflicts.value.length > 0"
+          class="grid gap-2"
+        >
+          <li
+            v-for="conflict in form.conflicts.value"
+            :key="String(conflict.field)"
+            class="flex items-center justify-between gap-3 rounded-md border border-border p-3 text-sm"
+          >
+            <span>{{ t('{{ resource }}.conflict', { field: t(`{{ resource }}.fields.${String(conflict.field)}`) }) }}</span>
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              @click="form.accept(conflict.field)"
+            >
+              {{ t('{{ resource }}.useTheirs') }}
+            </Button>
+          </li>
+        </ul>
+        <div class="flex justify-end gap-2">
+          <Button
+            type="button"
+            variant="ghost"
+            @click="open = false"
+          >
+            {{ t('actions.cancel') }}
+          </Button>
+          <Button
+            variant="primary"
+            type="submit"
+            :loading="update.isPending.value"
+            :disabled="!form.isDirty.value"
+          >
+            {{ t('actions.save') }}
+          </Button>
+        </div>
+      </form>
+    </DialogContent>
+  </Dialog>
+</template>

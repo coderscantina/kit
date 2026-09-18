@@ -27,9 +27,9 @@ final class {{ class }}Test extends TestCase
 
         $this->actingAsSubscriber($user, '{{ name }}');
 
-        {{ feature }}::factory()->create(['name' => 'pushed']);
+        {{ feature }}::factory()->create({{ factory_state }});
 
-        Reactive::assertPushed('{{ name }}', fn (mixed $result) => $result[0]['name'] === 'pushed');
+        Reactive::assertPushed('{{ name }}', fn (mixed $result) => {{ pushed }});
     }
 
     #[Test]

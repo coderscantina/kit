@@ -26,7 +26,7 @@ class {{ feature }}Factory extends Factory
     {
         return [
             'id' => (string) Str::ulid(),
-            'name' => fake()->words(3, true),
+{{ definitions }}
         ];
     }
 }
