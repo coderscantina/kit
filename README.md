@@ -46,25 +46,27 @@ exists only with `APP_ENV=local` and `APP_DEBUG=true`.
 
 ## Commands
 
-| Command                                      | Does                                                                                                               |
-| -------------------------------------------- | ------------------------------------------------------------------------------------------------------------------ |
-| `bin/dev up`                                 | rebuild and start the local stack, waiting for health                                                              |
-| `bin/dev down --wipe`                        | stop it and drop the volumes                                                                                       |
-| `bin/dev artisan <cmd>`                      | run artisan inside the container                                                                                   |
-| `bin/gate`                                   | everything CI runs, locally, in CI's order                                                                         |
-| `bin/release`                                | cut and push a CalVer release; `--dry-run`, `--backfill`                                                           |
-| `php artisan make:feature Post`              | scaffold a feature, its `list` query and a page that renders it, wired into the registry, router, nav and messages |
-| `php artisan make:query posts.list`          | a query, its data class and a test asserting push-on-change and 403                                                |
-| `php artisan make:mutation posts.create`     | a mutation, its args and data classes and a test asserting the commit, the invalidation and 403                    |
-| `php artisan make:ai-action posts.summarize` | a streamed AI action, its args class and a test that runs it against a faked model                                 |
-| `php artisan ai:models`                      | the provider's model catalogue, with context window and price                                                      |
-| `php artisan make:data Post/Summary`         | a laravel-data class with the TypeScript attribute                                                                 |
-| `php artisan make:job RebuildIndex`          | a `QueuedJob` subclass                                                                                             |
-| `php artisan types:generate [--check]`       | regenerate `resources/js/types/generated.d.ts`                                                                     |
-| `php artisan reactive:cache`                 | cache the query and mutation name maps; `optimize` runs it                                                         |
-| `php artisan kit:setup`                      | idempotent first run and upgrade                                                                                   |
-| `php artisan kit:doctor`                     | check the runtime, the registry and the message files                                                              |
-| `bun run docs:dev`                           | the documentation site                                                                                             |
+| Command                                      | Does                                                                                                                                                     |
+| -------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `bin/dev up`                                 | rebuild and start the local stack, waiting for health                                                                                                    |
+| `bin/dev down --wipe`                        | stop it and drop the volumes                                                                                                                             |
+| `bin/dev artisan <cmd>`                      | run artisan inside the container                                                                                                                         |
+| `bin/gate [--changed]`                       | everything CI runs, locally; `--changed` scopes it to the diff against `main`                                                                            |
+| `bin/release`                                | cut and push a CalVer release; `--dry-run`, `--backfill`                                                                                                 |
+| `php artisan make:feature Post --fields=…`   | scaffold a feature from its columns, its `list` query and a page that renders it, wired into the registry, router, nav and messages                      |
+| `php artisan make:query posts.list`          | a query, its data class and a test asserting push-on-change and 403                                                                                      |
+| `php artisan make:mutation posts.create`     | a mutation, its args and data classes and a test asserting the commit, the invalidation and 403; `--versioned` for the edit path with its 409 and dialog |
+| `php artisan make:ai-action posts.summarize` | a streamed AI action, its args class and a test that runs it against a faked model                                                                       |
+| `php artisan make:filter Post`               | a list filter with its sort allow list and whitelist, and its test                                                                                       |
+| `php artisan make:endpoint posts.import`     | a REST endpoint: controller, FormRequest, action, route, `api` resource method and test                                                                  |
+| `php artisan ai:models`                      | the provider's model catalogue, with context window and price                                                                                            |
+| `php artisan make:data Post/Summary`         | a laravel-data class with the TypeScript attribute                                                                                                       |
+| `php artisan make:job RebuildIndex`          | a `QueuedJob` subclass                                                                                                                                   |
+| `php artisan types:generate [--check]`       | regenerate `resources/js/types/generated.d.ts`                                                                                                           |
+| `php artisan reactive:cache`                 | cache the query and mutation name maps; `optimize` runs it                                                                                               |
+| `php artisan kit:setup`                      | idempotent first run and upgrade                                                                                                                         |
+| `php artisan kit:doctor`                     | check the runtime, the registry and the message files                                                                                                    |
+| `bun run docs:dev`                           | the documentation site                                                                                                                                   |
 
 ## Stack
 

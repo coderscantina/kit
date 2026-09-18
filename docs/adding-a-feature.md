@@ -6,10 +6,18 @@ create every editor can run.
 ## 1. Scaffold
 
 ```sh
-php artisan make:feature Post
+php artisan make:feature Post --versioned --fields="title:string body:text? published_at:datetime?"
 ```
 
 <!--@include: ./generated/make-feature.md-->
+
+`--fields` names the columns once, as `name:type` with a trailing `?` for
+nullable. The types are `string`, `text`, `integer`, `boolean`, `date` and
+`datetime`; without the option the feature gets one `name` string. Every file
+below follows the list: the migration's columns, the model's `#[Fillable]` and
+casts, the factory, the data class and its `fromModel()`, the page's columns
+and the `posts.fields.*` labels. `--versioned` adds the `version` column and
+the `Versioned` trait, which a row edited in a form needs (step 3).
 
 That writes the feature across the layers, every file named after it:
 
@@ -41,8 +49,9 @@ inserts, at the `// kit:` marker lines:
 
 Nothing is overwritten, so a second run only fills gaps.
 
-Open the migration and give the table its real columns, then the model's
-`#[Fillable]` and the factory to match.
+The create migration stays the one place a column is declared. The later
+generators read the fields back from it, so a column added there shows up in
+the next query, mutation or endpoint you generate.
 
 ## 2. A query
 
@@ -110,7 +119,7 @@ php artisan make:mutation posts.create
 <!--@include: ./generated/make-mutation.md-->
 
 `app/Mutations/Post/CreatePost.php` and `app/Data/CreatePostArgs.php` come out
-together.
+together, with one validated property per column and a write that fills them.
 The mutation runs inside a transaction the runner opened, with
 deadlock retry and after-commit invalidation. Do not call `DB::transaction`,
 `afterCommit` or dispatch an invalidation inside it; a PHPStan rule fails the
@@ -126,16 +135,24 @@ because `useReactiveMutation` always translates that key and a missing one
 would echo back at the user.
 
 A mutation that edits a row two people can have open states the version it
-read. Give the model `Kit\Reactive\Concurrency\Versioned` and the table an
-`unsignedInteger('version')->default(1)`, put `public int $version` on the
-args, and lock against it:
+read:
+
+```sh
+php artisan make:mutation posts.update --versioned
+```
+
+The args carry `id` and `version`, and `handle()` locks against it:
 
 ```php
 $post = $this->lockVersion(Post::query()->findOrFail($args->id), $args->version);
 ```
 
 A row that moved answers 409 with the current row instead of being
-overwritten. `docs/architecture.md` has the payload and the client half.
+overwritten; the generated test covers both. The feature needs the
+`Versioned` trait and the `version` column, which `make:feature --versioned`
+wrote; the generator says what to add when they are missing. It also writes
+`resources/js/components/posts/UpdatePostDialog.vue`, the client half below.
+`docs/architecture.md` has the payload.
 
 ## 4. Types and the page
 
@@ -180,7 +197,29 @@ const save = () =>
 
 Bind `form.fields.title` with `v-model` as you would a ref. `form.conflicts`
 lists the fields both sides changed, each with the server's value, and
-`form.accept('title')` takes it.
+`form.accept('title')` takes it. The generated `UpdatePostDialog` is this, with
+an input per column; open it from a row with
+`<UpdatePostDialog v-model:open="editing" :row="post" />`.
+
+## A REST endpoint
+
+What the browser posts a form to, uploads a file to or is redirected back to
+stays REST:
+
+```sh
+php artisan make:endpoint posts.import
+```
+
+<!--@include: ./generated/make-endpoint.md-->
+
+That writes an invokable controller, its FormRequest and the action behind it
+under `Posts/`, adds `POST /api/posts/import` to `routes/app.php`, a method to
+`resources/js/api/resources/posts.ts` (registered on `api` the first time),
+and a test for the 201, the 422 and the 403. It creates a row from the columns
+until you give the action its real work.
+
+A REST list filters through `make:filter Post`, which writes the filter with
+its sort allow list and whitelist. [Lists](/lists) has the contract.
 
 ## 5. Ask a model about it
 
@@ -198,12 +237,15 @@ prompt-injection rules, is in [AI](/ai).
 ## 6. Check it
 
 ```sh
-bin/gate
+bin/gate --changed   # while working
+bin/gate             # before calling it done
 ```
 
-Pint, PHPStan, PHPUnit, oxlint, oxfmt, `vue-tsc`, Vitest, the generated-types
-diff and the generator round trip, in that order, stopping at the first
-failure.
+Pint, PHPStan, PHPUnit and the generated-types diff in one lane, oxlint,
+oxfmt, `vue-tsc` and Vitest in the other, then the generator round trip. Each
+check prints one line; a failing one prints its output. `--changed` scopes the
+formatters and Vitest to what changed since `main` and runs the round trip
+only when something it reads moved.
 
 One gap: `tests/Reactive` needs MySQL and Redis, and skips itself when
 `REACTIVE_TEST_DB` is unset. `bin/gate` prints a yellow line when that happens,

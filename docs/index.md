@@ -55,15 +55,18 @@ owner and closes self-registration.
 
 ## Commands
 
-| Command                                      | Does                                                          |
-| -------------------------------------------- | ------------------------------------------------------------- |
-| `bin/dev up`                                 | build and start the local stack                               |
-| `bin/gate`                                   | everything CI runs, locally, in CI's order                    |
-| `bin/release`                                | cut and push a CalVer release                                 |
-| `php artisan make:feature Post`              | scaffold a feature, its list query and a page that renders it |
-| `php artisan make:query posts.list`          | a query, its data class and its test                          |
-| `php artisan make:mutation posts.create`     | a mutation, its args and data classes and its test            |
-| `php artisan make:ai-action posts.summarize` | a streamed AI action, its args class and its test             |
-| `php artisan types:generate`                 | regenerate `resources/js/types/generated.d.ts`                |
-| `php artisan ai:models`                      | the provider's model catalogue, with context window and price |
-| `php artisan kit:doctor`                     | check the runtime, the registry and the message files         |
+| Command                                      | Does                                                           |
+| -------------------------------------------- | -------------------------------------------------------------- |
+| `bin/dev up`                                 | build and start the local stack                                |
+| `bin/dev start` / `stop` / `status`          | the same app on host PHP, detached; `/dev/login/{role}` works  |
+| `bin/gate [--changed]`                       | everything CI runs, locally; `--changed` scopes it to the diff |
+| `bin/release`                                | cut and push a CalVer release                                  |
+| `php artisan make:feature Post`              | scaffold a feature, its list query and a page that renders it  |
+| `php artisan make:query posts.list`          | a query, its data class and its test                           |
+| `php artisan make:mutation posts.create`     | a mutation, its args and data classes and its test             |
+| `php artisan make:ai-action posts.summarize` | a streamed AI action, its args class and its test              |
+| `php artisan make:filter Post`               | a list filter and its test                                     |
+| `php artisan make:endpoint posts.import`     | a REST endpoint, its route, api method and test                |
+| `php artisan types:generate`                 | regenerate `resources/js/types/generated.d.ts`                 |
+| `php artisan ai:models`                      | the provider's model catalogue, with context window and price  |
+| `php artisan kit:doctor`                     | check the runtime, the registry and the message files          |

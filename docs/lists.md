@@ -23,6 +23,9 @@ spliced into a builder. Kit uses
 `App\Models\Model` and `App\Models\User` carry its `Filterable` trait, so every
 model has `->filter($filter)`.
 
+`php artisan make:filter Post` writes one from the feature's columns, with a
+test for the search, the sort allow list and the whitelist.
+
 ```php
 namespace App\Http\Filters;
 
@@ -82,6 +85,9 @@ Two rules that are not optional:
   on the base classes is reachable from the query string.
 - **`$sortableColumns` on every filter.** An unlisted column is dropped, not
   passed through.
+
+`tests/Architecture/ListContractTest.php` checks both on every filter, and
+fails any page that puts a table inside a `Card`.
 
 `applyDynamicFilter()` accepts the `operator:value` forms below; a bare value
 is an equality test. `applyAdvancedDateFilter()` adds `2026-01-01` →
