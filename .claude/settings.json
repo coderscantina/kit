@@ -1,0 +1,49 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-settings.json",
+  "permissions": {
+    "allow": [
+      "Bash(bin/gate)",
+      "Bash(bin/gate:*)",
+      "Bash(bin/dev start)",
+      "Bash(bin/dev stop)",
+      "Bash(bin/dev status)",
+      "Bash(php artisan make:*)",
+      "Bash(php artisan types:generate:*)",
+      "Bash(php artisan test:*)",
+      "Bash(php artisan kit:doctor:*)",
+      "Bash(php artisan reactive:inspect:*)",
+      "Bash(php artisan route:list:*)",
+      "Bash(php artisan docs:commands)",
+      "Bash(vendor/bin/pint:*)",
+      "Bash(vendor/bin/phpstan:*)",
+      "Bash(vendor/bin/phpunit:*)",
+      "Bash(bun run lint:*)",
+      "Bash(bun run format:*)",
+      "Bash(bun run typecheck)",
+      "Bash(bun run test:*)",
+      "Bash(bunx vitest:*)"
+    ]
+  },
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Edit|MultiEdit|Write",
+        "hooks": [
+          { "type": "command", "command": "\"$CLAUDE_PROJECT_DIR\"/.claude/hooks/before-edit.sh" }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Edit|MultiEdit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"$CLAUDE_PROJECT_DIR\"/.claude/hooks/after-edit.sh",
+            "timeout": 60
+          }
+        ]
+      }
+    ]
+  }
+}
