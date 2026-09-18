@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Auth;
 
+use App\Actions\Auth\CompleteSignIn;
 use App\Actions\Users\CreateUser;
 use App\Http\Controllers\Controller;
 use App\Models\SecurityEvent;
@@ -54,6 +55,7 @@ class SocialLoginController extends Controller
         private readonly CreateUser $createUser,
         private readonly TwoFactorAuthService $twoFactor,
         private readonly SecurityLog $securityLog,
+        private readonly CompleteSignIn $completeSignIn,
     ) {}
 
     public function redirect(Request $request, string $provider): RedirectResponse
@@ -275,12 +277,7 @@ class SocialLoginController extends Controller
     private function signIn(Request $request, User $user): string
     {
         Auth::guard('web')->login($user);
-
-        $user->last_login_at = now();
-        $user->save();
-
-        $this->securityLog->record($user, SecurityEvent::SIGNED_IN);
-        $request->session()->regenerate();
+        $this->completeSignIn->execute($request, $user);
 
         return $this->safePath($request->session()->pull(self::RETURN_TO), '/');
     }
