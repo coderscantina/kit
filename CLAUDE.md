@@ -1,7 +1,9 @@
 # CLAUDE.md
 
 Laravel 13 + Vue 3 starter kit. Two data paths, one layered layout. Full docs
-in `docs/`.
+in `docs/`. Each contract lives in a project skill that loads when the work
+touches it: `reactive-layer`, `list-surfaces`, `ai-actions`, `notifications`,
+`presence`, `runtime-debugging` (in `.claude/skills/`).
 
 ## 1. Where things go
 
@@ -37,85 +39,49 @@ and `Database\Factories\PostFactory` by name, migrations are read from
 **Most of what is shipped is REST.** Auth, account, people, invites, saved
 views, notification settings and the AI assistant are controller +
 FormRequest + action class + laravel-data, called from
-`resources/js/api/resources/*`. Read those before adding a surface that looks
-like them.
+`resources/js/api/resources/*`.
 
 **The reactive layer is what the generators produce, and what notifications
-run on.** `make:feature` writes a query, a page and a mutation on it. The
-inbox (`app/Queries/Notifications`, `app/Mutations/Notifications`, the bell and
-`/notifications`) is the shipped example to read; `docs/adding-a-feature.md`
-is the walkthrough.
+run on.** The inbox is the shipped example; `docs/adding-a-feature.md` is the
+walkthrough.
 
 Pick by surface, not by taste: a new list or detail view that wants live
 updates goes reactive; something the browser posts a form to, uploads a file
-to, or gets redirected back to (OAuth, downloads, SSE) stays REST. Do not put
-a controller in front of a reactive query.
+to, or gets redirected back to (OAuth, downloads, SSE) stays REST. A reactive
+query is called by the client directly, never through a controller.
 
-## 3. The reactive contract
+## 3. Generate, then edit
 
-Always `php artisan make:query <feature>.<name>` and
-`make:mutation <feature>.<name>`. Never hand-roll a query or mutation class.
-`make:feature` runs `make:query <resource>.list` for you, so a new feature
-ships a page that renders real rows.
+Every query, mutation, filter, endpoint and AI action starts from a generator,
+which writes the class, its test and the wiring. The generated code passes
+`bin/gate` as written; `php artisan <command> --help` has the options.
 
-Arguments are a laravel-data class, not a `rules()` array. A query or mutation
-names it twice, in `@extends Query<ListPostArgs>` and in `args()`; PHPStan
-checks the two agree. The runner builds it with `Data::validateAndCreate()`, so
-a bad payload is a 422 before your code runs. `Kit\Reactive\NoArgs` is the args
-class for something that takes none. Give the args class `#[TypeScript]`:
-`types:generate` names it in `Kit.ReactiveMap`.
+| Command                                                              | Writes                                                                                                |
+| -------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------- |
+| `make:feature Post --fields="title:string body:text?" [--versioned]` | model, migration, factory, policy, data class, list query, page, tests, abilities, route, nav, labels |
+| `make:query posts.<name>`                                            | a query and its test                                                                                  |
+| `make:mutation posts.create`                                         | a mutation, its args and its test                                                                     |
+| `make:mutation posts.update --versioned`                             | the edit path: version lock, 409 test, a `useReactiveForm` dialog                                     |
+| `make:filter Post`                                                   | the list filter with its sort allow list and whitelist                                                |
+| `make:endpoint posts.import`                                         | REST: controller, FormRequest, action, route, `api` resource method, test                             |
+| `make:ai-action posts.summarize`                                     | an AI action, its args and its test                                                                   |
 
-`handle()`, `authorize()` and `reads()` are declared `Data $args` because PHP
-forbids narrowing a parameter type in an override. The concrete type reaches
-PHPStan through the `@extends`, so `$args->ownerId` still type-checks.
+The feature's create migration is the one place a column is declared: the
+later generators read the fields from it. Add a column there, then generate.
 
-Inside a mutation, never call `DB::transaction`, `afterCommit`, or dispatch an
-invalidation. The base class does all three, and a PHPStan rule fails the build
-otherwise. Take row locks with `$this->lock($model)` inside `handle()`.
+## 4. The loop
 
-`authorize()` is abstract and must do real work. An empty body fails an
-architecture test.
+- `bin/gate --changed` while working: one line per check, the output of the
+  one that failed, the generator round trip only when its inputs moved.
+- `bin/gate` once before calling the work done.
+- `bin/dev start` runs the stack on the host and returns when it answers;
+  `/dev/login/<owner|admin|member>` signs in as a seeded account. `bin/dev stop`
+  stops what it started.
+- The project hooks format every file you write and rerun `types:generate`
+  after a change to a data class, query, mutation or AI action. Commit
+  `resources/js/types/generated.d.ts` with the change; CI fails on a stale one.
 
-A mutation that edits a row a form can hold states the version it read:
-the model uses `Kit\Reactive\Concurrency\Versioned`, the args carry
-`int $version`, and `handle()` takes the row with
-`$this->lockVersion($model, $args->version)`. A row that moved answers 409
-with the current row; the client resolves, never overwrites. Plain
-`$this->lock()` is for a row no form holds open.
-
-After commit, a write that wakes at most four computations recomputes and
-pushes them inside its own request; more than that goes to the `reactive`
-queue. `docs/architecture.md` has the numbers and `docs/limitations.md` the
-cost.
-
-A query's `handle()` takes args only. Never read `auth()`, `request()` or the
-session in it: subscribers asking the same question share one computed result,
-and `handle()` also runs on a worker with no session. Scope through args, check
-the caller in `authorize()`. A PHPStan rule enforces it.
-
-Declare `reads()` with `Dep::eq(...)` on tables over 10k rows or with high
-write fan-out. Keep pushed results small: over 8 KB the push carries only a
-hash and the client pays an extra round trip.
-
-## 4. Frontend contract
-
-Reactive data comes from `useReactiveQuery` / `useReactiveMutation` in
-`~/lib/reactive`. Never `fetch` `/rq/*` directly. REST data goes through an
-`api` resource class in `resources/js/api/resources/`, never a bare `fetch`.
-
-A form bound to a row uses `useReactiveForm` from `~/lib/reactive`: pushes
-land in the fields the user has not touched, his edits stay, `conflicts`
-says where both sides met, and a 409 goes through the same `apply()`. Pass
-`onConflict` to `useReactiveMutation` for it. `docs/architecture.md` has the
-contract.
-
-Presence is not the reactive layer. A roster comes from `usePresence`, a
-status indicator from `UserAvatar` plus `usePresenceStatus`, and field-level
-"who is editing this" from `provideFieldPresence` on the form. All of it
-rides whispers, so nothing survives the sender's socket. A form opts into
-whispering the value as typed with `{ values: true }`; it is never the
-default and never sent for a password or a field listed in `secret`.
-`docs/presence.md` has the contract and the reason.
+## 5. Frontend rules
 
 Colour is a token from `resources/js/assets/css/app.css`, never a palette
 shade. Pick the rung by nesting: `bg-sidebar` for the frame, `bg-surface` for
@@ -129,109 +95,16 @@ A field that carries a button, an icon or a unit composes `InputGroup`;
 `InputField` is already built that way, so `actions` and the `prepend` and
 `append` slots reserve space instead of floating over the text.
 
+Data reaches the client through three doors: an `api` resource in
+`resources/js/api/resources/` for REST, `~/lib/reactive` for the reactive
+layer, `useAiStream` for AI. A lint rule rejects a bare `fetch`.
+
 Composables are imported explicitly. Only `vue` and `vue-router` APIs are
 auto-imported; a directory auto-import silently drops a composable that imports
 a sibling, and typecheck, lint and tests all stay green while the app renders
 blank.
 
-Run `php artisan types:generate` after any change to a data class, query or
-mutation, and commit the result. CI fails on a stale `generated.d.ts`.
-
-## 5. The list contract
-
-Every list surface speaks one query contract: `page`, `per_page`,
-`sort` (`+column` / `-column`), the free-text `q`, and one parameter per
-filter carrying `operator:value`. The URL is the state.
-
-Filters and sorting come from an `App\Http\Filters\<Name>Filter` extending
-`CodersCantina\Filter\AdvancedFilter`, applied with `->filter($filter)`. Never
-splice request values into a builder, and never take a `sort` column without
-an allow list: the value reaches `orderBy()`. Every filter class calls
-`setWhitelistedFilters()` in its constructor — the whole query bag arrives at
-`apply()`, and `limit`/`offset` are inherited helpers a client must not reach.
-A hand-built query that has no model to sort against (the people union) parses
-the string with `App\Support\Filtering\SortString`.
-
-On the client, `useTableQueryState` owns the URL and produces `params`; the API
-resource passes that bag through rather than re-mapping it. `TableFilter`
-builds the chips, `SavedViews` stores them. Tables are never wrapped in a card.
-Full contract in `docs/lists.md`.
-
-## 6. The AI contract
-
-An AI action is a class, not a controller: `php artisan make:ai-action <feature>.<verb>`
-writes it to `app/Ai/Actions/`, its args class to `app/Data/` and its test to
-`tests/Feature/<Feature>/`. Never add a controller for a prompt; there is one
-endpoint, `/api/ai/stream`, and the action name selects the action.
-
-The shape mirrors a query: `args()` names a laravel-data class (checked
-against `@extends AiAction<XArgs>` by PHPStan), `authorize()` must do real
-work, `system()` is the standing instruction and carries no per-request data
-so the provider can cache the prefix, `prompt()` returns the request.
-
-Everything the user or the database supplied goes through `Prompt::with()`,
-which fences it under a nonced tag. Never concatenate user data into the
-instruction string. A tool runs server-side with nobody watching, so it
-authorizes every row it touches; an id the model produced is not proof.
-
-The client calls `useAiStream('<name>')` from `~/composables/useAiStream`,
-typed off `Kit.AiMap`. Never fetch `/api/ai/stream` directly. Run
-`types:generate` after touching an action or its args class.
-
-A conversation is composed, not generated: `message`, `bubble`,
-`message-scroller`, `marker`, `attachment` and `questionnaire` in
-`~/components/ui`. `resources/js/pages/ai/Assistant.vue` is the shipped
-example. There is no conversation store; the transcript is the page's.
-
-Test with `FakeAiDriver::swap(...)`: no network, no key, no bill. Full contract
-in `docs/ai.md`.
-
-## 7. Notifications
-
-Every notification lands in the `notifications` inbox first; everything after
-that is a ladder, not a fan-out. Declare a configurable one with
-`#[NotificationType]` on a class extending `App\Notifications\AppNotification`
-in `app/Notifications`. The attribute is the whole registration:
-`NotificationRegistry` discovers it and the preferences screen is built from
-what it finds. A notification **without** the attribute is transactional
-(password reset, verification code) and stays out of preferences on purpose.
-
-`channels` on the attribute is the ladder in escalation order. Rung 0 goes out
-with the inbox row; every later rung is queued with a delay and checks
-`read_at` before it sends, so a person who saw the push never gets the mail.
-That is Laravel's own `withDelay()` and `shouldSend()`, not a job you write.
-SMS is never on a ladder unless a type names it and the user switches it on
-and the number has answered its code.
-
-`read_at` is what the app calls "seen"; with `archived_at` it gives the three
-states unseen/seen/archived. A missing `notification_preferences` row means
-"has not chosen" and takes the type's defaults; an empty channel list is a
-deliberate "inbox only". The two must stay distinct.
-
-The inbox is the kit's reactive surface: `notifications.list` and
-`notifications.summary`, both declaring
-`Dep::eq('notifications', 'notifiable_id', $userId)`. Bulk state changes go
-through `App\Actions\Notifications\UpdateInboxState`, which does one UPDATE
-and records one owner-scoped `Change` rather than a table-wide invalidation.
-
-SMS ships as a seam: `App\Services\Sms\SmsSender` plus a `log` driver. Bind
-your own and name it in `config/sms.php`. `kit:doctor` fails a production box
-still on the log driver. `docs/notifications.md` has the contract.
-
-## 8. Presence
-
-Who is on a screen is not a query. `usePresence('<resource>')` joins
-`presence.<resource>` over Echo; `App\Support\Presence` opens it to whoever
-has `<resource>.view`, falling back to `app.access`. Nothing to register: the
-one callback in `routes/channels.php` covers every resource-level roster. A
-row-scoped roster needs its own callback with a real policy check.
-
-Whispers (`whisper` / `onWhisper`) go client to client and never reach PHP,
-so they carry cursors, typing flags and selections, and nothing that has to
-survive a refresh. Throttle a stream of them. Full contract in
-`docs/presence.md`.
-
-## 9. Migrations
+## 6. Migrations
 
 Nothing here has shipped to a database anyone has to protect, so the schema is
 kept as few files as it can be: the framework's three, plus
@@ -240,34 +113,22 @@ that file and re-running `php artisan migrate:fresh --seed`, not by stacking an
 `ALTER` on top. A generated feature gets its own `create_<table>_table`, which
 is the right shape once the feature is real.
 
-## 10. Definition of done
+## 7. Definition of done
 
-`bin/gate` green locally. One test per query and per mutation; the generators
-write them, keep them meaningful. Tests use `#[Test]`, never a `@test`
-docblock, which PHPUnit 13 ignores silently;
-`tests/Architecture/NoDocblockTestAnnotationsTest.php` is what catches it.
+`bin/gate` green locally, with its last line saying so. One test per query, per
+mutation and per endpoint; the generators write them, keep them meaningful.
+Tests use `#[Test]` attributes; PHPUnit 13 ignores a `@test` docblock silently,
+and `tests/Architecture/NoDocblockTestAnnotationsTest.php` catches one.
 
 `bin/gate` ends on `bin/generators-roundtrip`, which scaffolds a throwaway
-`Fixture` feature and checks it passes everything. Any change to the
-generators, the stubs, or where files go has to keep that green.
+`Fixture` feature with every field type and every generator, and checks it
+passes everything. Any change to the generators, the stubs, or where files go
+has to keep that green.
 
-## 11. Release
+`bin/release` cuts a release from `main`; `docs/release.md` has the steps and
+the rollback.
 
-`bin/release` cuts `vYYYY.M.D-<shortsha>` from `main`, writes the changelog
-block from the commit subjects and tags the changelog commit. Rollback is
-re-running the receiver with the previous tag. See `docs/release.md`.
-
-## 12. When kit:doctor fails
-
-Redis, Horizon and Reverb warnings mean a service is down; restart it. A
-`reactive queue` warning means no worker took the probe, or the one that did
-started before the last change to the reactive code and is running stale
-code: restart it. A failure means the repository is wrong: an unregistered
-query name (run `types:generate`), an ambient binding missing from
-`config/octane.php` `flush` (add it to `config/kit.php` `ambient_bindings`), or
-an `en`/`de` key mismatch. See `docs/runtime-contract.md`.
-
-## 13. Accepted trade-offs
+## 8. Accepted trade-offs
 
 Decisions reviewers keep re-filing. They are deliberate.
 
