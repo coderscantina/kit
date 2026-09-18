@@ -107,16 +107,6 @@ subscription in the first place, because nothing can push on it; every fetch
 goes to `/rq/query` and the 30 second poll is the only freshness the client
 gets.
 
-## No social login
-
-Email and password only. An earlier draft carried a `socialProviders` block in
-`__APP_CONFIG__` with no route, controller or `services.social` config behind
-it, so the switch did nothing; it is gone rather than half-built. Adding OAuth
-means `laravel/socialite`, a redirect and callback route, and a decision about
-whether a provider email may claim an existing account. That decision is an
-account-takeover vector when it is made carelessly, so it belongs in a feature
-with its own tests, not in the baseline.
-
 ## No multi-tenancy
 
 Ability strings carry no scope (`posts.view`, not `workspace.posts.view`). That
