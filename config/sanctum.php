@@ -56,6 +56,19 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Route Prefix
+    |--------------------------------------------------------------------------
+    |
+    | Where Sanctum registers `csrf-cookie`. Under `auth` with the rest of the
+    | session endpoints: the SPA primes `/auth/csrf-cookie`, and the SPA
+    | catch-all already leaves `auth/` to Laravel.
+    |
+    */
+
+    'prefix' => 'auth',
+
+    /*
+    |--------------------------------------------------------------------------
     | Token Prefix
     |--------------------------------------------------------------------------
     |
