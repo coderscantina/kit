@@ -1,51 +1,205 @@
 #!/usr/bin/env bash
-# Everything CI runs, in CI's order, locally. Stops at the first failure so the
-# output ends on the thing that broke.
+# Everything CI runs, locally. Built to be run often, by an agent as much as
+# by a person: each step prints one line, and only a failing step prints its
+# output.
 #
-# The order is cheapest-first among the checks that catch the most: formatting
-# before types, types before tests, the generator round trip last because it
-# writes to the working tree.
+#   bin/gate              the full gate
+#   bin/gate --changed    the inner loop: formatters and vitest on what changed
+#                         since the merge base with main, the generator round
+#                         trip only when something it depends on changed
+#   bin/gate --verbose    stream every step's output, one step at a time
+#
+# The PHP and the JS checks run as two lanes in parallel; each lane stops at
+# its first failure. The generator round trip runs last and alone, because it
+# writes to the working tree the other steps read.
 set -uo pipefail
 
 cd "$(dirname "$0")/.."
 
-failed=""
+changed=0
+verbose=0
+for arg in "$@"; do
+  case "$arg" in
+    --changed) changed=1 ;;
+    --verbose) verbose=1 ;;
+    -h | --help)
+      sed -n '2,13p' "$0" | sed 's/^# \{0,1\}//'
+      exit 0
+      ;;
+    *)
+      echo "bin/gate: unknown option $arg" >&2
+      exit 2
+      ;;
+  esac
+done
 
+if [ -t 1 ]; then
+  bold=$'\033[1m' red=$'\033[31m' green=$'\033[32m' yellow=$'\033[33m' reset=$'\033[0m'
+else
+  bold='' red='' green='' yellow='' reset=''
+fi
+
+# Kept when the gate fails, so the full output of a long failure can be read.
+logs="$(mktemp -d "${TMPDIR:-/tmp}/gate.XXXXXX")"
+
+# Runs one step. Quiet mode keeps the output in a log and prints it only when
+# the step fails; the lane then stops.
 step() {
   local name="$1"
   shift
-  printf '\n\033[1m▶ %s\033[0m\n' "$name"
-  if ! "$@"; then
-    failed="$name"
-    printf '\n\033[31m✗ %s failed\033[0m\n' "$name"
-    exit 1
+
+  if [ "$verbose" -eq 1 ]; then
+    printf '\n%s▶ %s%s\n' "$bold" "$name" "$reset"
+    if ! "$@"; then
+      printf '\n%s✗ %s failed%s\n' "$red" "$name" "$reset"
+      exit 1
+    fi
+    return
+  fi
+
+  local log="$logs/${name// /-}.log" started=$SECONDS
+  if "$@" >"$log" 2>&1; then
+    printf '%s✓%s %s %ss\n' "$green" "$reset" "$name" $((SECONDS - started))
+    return
+  fi
+
+  printf '%s✗%s %s %ss\n' "$red" "$reset" "$name" $((SECONDS - started))
+  echo "$name" >>"$logs/failed"
+  exit 1
+}
+
+# --changed scopes to the diff against the merge base, committed or not, plus
+# untracked files. GATE_BASE overrides the branch it diffs against.
+base="${GATE_BASE:-main}"
+changed_files() {
+  local fork
+  fork="$(git merge-base HEAD "$base" 2>/dev/null || echo HEAD)"
+  { git diff --name-only --diff-filter=d "$fork"; git ls-files --others --exclude-standard; } | sort -u
+}
+
+if [ "$changed" -eq 1 ]; then
+  files="$(changed_files)"
+  php_files=()
+  while IFS= read -r file; do
+    php_files+=("$file")
+  done < <(grep -E '\.php$' <<<"$files" || true)
+  js_files=()
+  while IFS= read -r file; do
+    js_files+=("$file")
+  done < <(grep -E '\.(ts|vue|js|mjs|json|md|css)$' <<<"$files" | grep -vE '^(vendor|node_modules|public)/' || true)
+fi
+
+pint() {
+  if [ "$changed" -eq 1 ]; then
+    [ "${#php_files[@]}" -eq 0 ] && return 0
+    vendor/bin/pint --test "${php_files[@]}"
+  else
+    vendor/bin/pint --test
+  fi
+}
+
+oxlint() {
+  if [ "$changed" -eq 1 ]; then
+    local lintable=()
+    for file in "${js_files[@]+"${js_files[@]}"}"; do
+      [[ "$file" =~ \.(ts|vue|js|mjs)$ ]] && lintable+=("$file")
+    done
+    [ "${#lintable[@]}" -eq 0 ] && return 0
+    bunx oxlint --deny-warnings --no-error-on-unmatched-pattern "${lintable[@]}"
+  else
+    bun run lint:ci
+  fi
+}
+
+oxfmt() {
+  if [ "$changed" -eq 1 ]; then
+    [ "${#js_files[@]}" -eq 0 ] && return 0
+    bunx oxfmt --check --no-error-on-unmatched-pattern "${js_files[@]}"
+  else
+    bun run format:check
+  fi
+}
+
+vitest() {
+  if [ "$changed" -eq 1 ]; then
+    NODE_NO_WARNINGS=1 bunx vitest run --changed "$(git merge-base HEAD "$base" 2>/dev/null || echo HEAD)" --passWithNoTests
+  else
+    bun run test
   fi
 }
 
 # tests/Reactive needs MySQL and Redis and skips itself without
-# REACTIVE_TEST_DB, so a green run here does not cover it. Say so loudly
-# rather than letting the suite look like it passed.
+# REACTIVE_TEST_DB. Recorded, so the last line cannot read as a full pass.
 reactive_suite() {
-  if [ -n "${REACTIVE_TEST_DB:-}" ]; then
-    step 'phpunit (reactive)' vendor/bin/phpunit --testsuite=reactive --fail-on-skipped
-    return
-  fi
-
-  printf '\n\033[33m! reactive suite skipped: REACTIVE_TEST_DB is unset, so tests/Reactive did not run here. CI runs it against MySQL and Redis.\033[0m\n'
+  vendor/bin/phpunit --testsuite=reactive --fail-on-skipped
 }
 
-step 'pint'        vendor/bin/pint --test
-step 'phpstan'     vendor/bin/phpstan analyse --no-progress
-step 'phpunit'     php artisan test
-reactive_suite
-step 'lint'        bun run lint:ci
-step 'format'      bun run format:check
-step 'typecheck'   bun run typecheck
-step 'vitest'      bun run test
-step 'types'       php artisan types:generate --check
-# --allow-dirty: the round trip restores what it touches from a backup, so it
-# is safe here, and a local gate run is almost always on a dirty tree. CI calls
-# the script bare, on a clean checkout, and keeps the strict check.
-step 'generators'  ./bin/generators-roundtrip --allow-dirty
+php_lane() {
+  step 'pint' pint
+  step 'phpstan' vendor/bin/phpstan analyse --no-progress
+  step 'phpunit' php artisan test
+  if [ -n "${REACTIVE_TEST_DB:-}" ]; then
+    step 'phpunit reactive' reactive_suite
+  else
+    touch "$logs/reactive-skipped"
+  fi
+  step 'types' php artisan types:generate --check
+}
 
-printf '\n\033[32m✓ gate green\033[0m\n'
+js_lane() {
+  step 'oxlint' oxlint
+  step 'oxfmt' oxfmt
+  step 'typecheck' bun run typecheck
+  step 'vitest' vitest
+}
+
+if [ "$verbose" -eq 1 ]; then
+  php_lane
+  js_lane
+else
+  php_lane &
+  php_pid=$!
+  js_lane &
+  js_pid=$!
+  wait "$php_pid"
+  wait "$js_pid"
+fi
+
+# The round trip reads everything the generators touch or their output
+# imports. In --changed mode it only runs when one of those moved.
+generator_inputs='^(app/Console/|bin/generators-roundtrip|packages/|config/|app/Models/Model\.php|app/Policies/ResourcePolicy\.php|resources/js/(router|lib|i18n|components/ui)/|tests/js/support/|tests/TestCase\.php|phpstan|composer\.lock|bun\.lock)'
+
+if [ ! -s "$logs/failed" ]; then
+  if [ "$changed" -eq 0 ] || grep -qE "$generator_inputs" <<<"$files"; then
+    # --allow-dirty: the round trip restores what it touches from a backup,
+    # and a local gate run is almost always on a dirty tree. CI calls the
+    # script bare, on a clean checkout, and keeps the strict check.
+    # A subshell, so a failure lands in the report below instead of exiting here.
+    (step 'generators' ./bin/generators-roundtrip --allow-dirty)
+  else
+    echo "- generators skipped: nothing they depend on changed"
+  fi
+fi
+
+if [ -s "$logs/failed" ]; then
+  while IFS= read -r name; do
+    log="$logs/${name// /-}.log"
+    printf '\n%s── %s (last 150 lines) ──%s\n' "$bold" "$name" "$reset"
+    tail -n 150 "$log"
+  done <"$logs/failed"
+  printf '\n%s✗ gate failed: %s%s\n' "$red" "$(paste -sd, "$logs/failed" | sed 's/,/, /g')" "$reset"
+  echo "Full logs: $logs"
+  exit 1
+fi
+
+reactive_skipped=0
+[ -e "$logs/reactive-skipped" ] && reactive_skipped=1
+rm -rf "$logs"
+
+if [ "$reactive_skipped" -eq 1 ]; then
+  printf '\n%s✓ gate green, except tests/Reactive: not run, REACTIVE_TEST_DB is unset. CI runs it against MySQL and Redis.%s\n' "$yellow" "$reset"
+elif [ "$changed" -eq 1 ]; then
+  printf '\n%s✓ gate green for the changed files. Run bin/gate once before calling the work done.%s\n' "$green" "$reset"
+else
+  printf '\n%s✓ gate green%s\n' "$green" "$reset"
+fi
