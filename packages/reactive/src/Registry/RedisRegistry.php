@@ -65,9 +65,25 @@ final class RedisRegistry implements Registry
         return Computation::fromHash($key, $hash);
     }
 
-    public function updateComputation(string $key, string $hash, string $result, int $mutationId): void
+    public function computations(): array
+    {
+        $computations = [];
+
+        foreach ($this->members('rq:index:comps') as $key) {
+            $computation = $this->computation($key);
+
+            if ($computation !== null) {
+                $computations[] = $computation;
+            }
+        }
+
+        return $computations;
+    }
+
+    public function updateComputation(string $key, string $hash, string $result, int $mutationId, ?LastRecompute $recompute = null): void
     {
         $this->redis()->hmset($this->compKey($key), [
+            ...($recompute?->toHash() ?? []),
             'result_hash' => $hash,
             'result' => $result,
             'last_mutation_id' => (string) $mutationId,
@@ -76,9 +92,12 @@ final class RedisRegistry implements Registry
         $this->refresh($key);
     }
 
-    public function touchComputation(string $key, int $mutationId): void
+    public function touchComputation(string $key, int $mutationId, ?LastRecompute $recompute = null): void
     {
-        $this->redis()->hmset($this->compKey($key), ['last_mutation_id' => (string) $mutationId]);
+        $this->redis()->hmset($this->compKey($key), [
+            ...($recompute?->toHash() ?? []),
+            'last_mutation_id' => (string) $mutationId,
+        ]);
         $this->refresh($key);
     }
 

@@ -35,6 +35,7 @@ class DocsCommandsCommand extends Command
         'reactive:gc',
         'reactive:cache',
         'reactive:clear',
+        'reactive:inspect',
     ];
 
     protected $signature = 'docs:commands';

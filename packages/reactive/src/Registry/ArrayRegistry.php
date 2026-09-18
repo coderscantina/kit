@@ -52,7 +52,12 @@ final class ArrayRegistry implements Registry
         return $computation === null ? null : clone $computation;
     }
 
-    public function updateComputation(string $key, string $hash, string $result, int $mutationId): void
+    public function computations(): array
+    {
+        return array_values(array_map(fn (Computation $computation) => clone $computation, $this->computations));
+    }
+
+    public function updateComputation(string $key, string $hash, string $result, int $mutationId, ?LastRecompute $recompute = null): void
     {
         if (! isset($this->computations[$key])) {
             return;
@@ -60,14 +65,17 @@ final class ArrayRegistry implements Registry
 
         $this->computations[$key]->resultHash = $hash;
         $this->computations[$key]->result = $result;
-        $this->computations[$key]->lastMutationId = $mutationId;
+        $this->touchComputation($key, $mutationId, $recompute);
     }
 
-    public function touchComputation(string $key, int $mutationId): void
+    public function touchComputation(string $key, int $mutationId, ?LastRecompute $recompute = null): void
     {
-        if (isset($this->computations[$key])) {
-            $this->computations[$key]->lastMutationId = $mutationId;
+        if (! isset($this->computations[$key])) {
+            return;
         }
+
+        $this->computations[$key]->lastMutationId = $mutationId;
+        $this->computations[$key]->lastRecompute = $recompute ?? $this->computations[$key]->lastRecompute;
     }
 
     public function syncDeps(Computation $computation): void

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Kit\Reactive\Contracts;
 
 use Kit\Reactive\Registry\Computation;
+use Kit\Reactive\Registry\LastRecompute;
 use Kit\Reactive\Registry\Subscription;
 
 /**
@@ -22,11 +23,19 @@ interface Registry
 
     public function computation(string $key): ?Computation;
 
+    /**
+     * Every live computation; `reactive:inspect` reads it, nothing on the
+     * request path does.
+     *
+     * @return array<int, Computation>
+     */
+    public function computations(): array;
+
     /** Store a new result and watermark, and refresh the TTL. */
-    public function updateComputation(string $key, string $hash, string $result, int $mutationId): void;
+    public function updateComputation(string $key, string $hash, string $result, int $mutationId, ?LastRecompute $recompute = null): void;
 
     /** The result did not change: move the watermark and refresh the TTL only. */
-    public function touchComputation(string $key, int $mutationId): void;
+    public function touchComputation(string $key, int $mutationId, ?LastRecompute $recompute = null): void;
 
     /**
      * Replace the dependency sets with the computation's current tables and deps.

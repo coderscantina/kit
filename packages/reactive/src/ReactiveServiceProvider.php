@@ -20,6 +20,7 @@ use Illuminate\Support\ServiceProvider;
 use Kit\Reactive\Console\CacheCommand;
 use Kit\Reactive\Console\ClearCommand;
 use Kit\Reactive\Console\GcCommand;
+use Kit\Reactive\Console\InspectCommand;
 use Kit\Reactive\Contracts\Metrics;
 use Kit\Reactive\Contracts\Pusher;
 use Kit\Reactive\Contracts\Registry;
@@ -110,7 +111,7 @@ class ReactiveServiceProvider extends ServiceProvider
         $this->optimizes(optimize: 'reactive:cache', clear: 'reactive:clear', key: 'reactive');
 
         if ($this->app->runningInConsole()) {
-            $this->commands([CacheCommand::class, ClearCommand::class, GcCommand::class]);
+            $this->commands([CacheCommand::class, ClearCommand::class, GcCommand::class, InspectCommand::class]);
         }
     }
 

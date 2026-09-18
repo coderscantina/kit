@@ -140,4 +140,39 @@ A failing check and what it usually means:
 - **octane flush list** — an ambient binding leaks into the next request the
   worker serves. Add it to `config/kit.php` `ambient_bindings`.
 
+### Why a query did or did not push
+
+```sh
+php artisan reactive:inspect posts.list --json
+```
+
+Reach for it when a screen did not update after a write, or updated when it
+should not have. It reads the registry and prints every live computation of
+the query: its args, how many subscribers watch it, the tables and `reads()`
+predicates that wake it, the stored result's hash and size, and the last
+recompute. Without a name it lists every live computation, grouped by query.
+`--json` prints one document, which is what an agent should read.
+
+Read it in this order:
+
+- **no computation** — nobody subscribes to those args, so a write has nothing
+  to wake. Check the args the page sends.
+- **`last_recompute` is null** — nothing woke it since the first subscriber.
+  The write missed its tables and predicates: compare `table_level` and
+  `reads` with the table and column the write touched, and remember a
+  non-Eloquent write never invalidates.
+- **`changed: false`** — it recomputed and got the same hash, so there was
+  nothing to push. The query does not read what the write changed.
+- **`changed: true`** — it pushed. A client that still shows the old row
+  failed `authorize()` (the subscription was revoked) or is not listening.
+- **`result_inline: false`** — the result is over `inline_result_bytes`, so the
+  push carried only the hash and the client refetched through `/rq/query`.
+
+`via` says whether the last recompute ran in the writer's request (`inline`)
+or on the `reactive` queue; a queued one that never arrives points at the
+worker, see `kit:doctor` above. `query_ms` is the query alone, not the
+per-subscriber `authorize()` and push.
+
+<!--@include: ./generated/reactive-inspect.md-->
+
 <!--@include: ./generated/config-validate.md-->

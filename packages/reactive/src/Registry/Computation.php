@@ -36,6 +36,7 @@ final class Computation
         public readonly int $createdAt,
         public array $tables = [],
         public array $deps = [],
+        public ?LastRecompute $lastRecompute = null,
     ) {}
 
     /**
@@ -64,6 +65,7 @@ final class Computation
     public function toHash(): array
     {
         return [
+            ...($this->lastRecompute?->toHash() ?? []),
             'query' => $this->query,
             'args' => json_encode($this->args, JSON_THROW_ON_ERROR),
             'result_hash' => $this->resultHash,
@@ -97,6 +99,7 @@ final class Computation
             createdAt: (int) ($hash['created_at'] ?? 0),
             tables: $tables,
             deps: array_map(fn (array $dep) => Dep::fromArray($dep), $deps),
+            lastRecompute: LastRecompute::fromHash($hash),
         );
     }
 

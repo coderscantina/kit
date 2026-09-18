@@ -12,6 +12,7 @@ use Kit\Reactive\Contracts\Pusher;
 use Kit\Reactive\Contracts\Registry;
 use Kit\Reactive\Query;
 use Kit\Reactive\Registry\Catalog;
+use Kit\Reactive\Registry\LastRecompute;
 use Kit\Reactive\Registry\Subscription;
 use Spatie\LaravelData\Data;
 
@@ -38,8 +39,9 @@ final class Recomputer
      * caller should try again later; everything else is settled.
      *
      * @param  int|null  $lockWaitMs  how long to wait for the lock; the registry's default when null
+     * @param  bool  $inline  true in the writer's request, false on the queue; stored for `reactive:inspect`
      */
-    public function run(string $computationKey, int $triggerMutationId, ?int $lockWaitMs = null): RecomputeOutcome
+    public function run(string $computationKey, int $triggerMutationId, ?int $lockWaitMs = null, bool $inline = false): RecomputeOutcome
     {
         // Release the debounce before reading, so a commit that lands while
         // this recompute runs queues another one instead of being swallowed.
@@ -80,9 +82,12 @@ final class Recomputer
         $argsClass = $class::args();
         $args = $argsClass::from($computation->args);
 
+        $computeStarted = hrtime(true);
         $result = $this->runner->compute($query, $args);
+        $queryMs = round((hrtime(true) - $computeStarted) / 1_000_000, 2);
+        $trace = fn (bool $changed) => new LastRecompute(time(), $queryMs, $inline ? LastRecompute::INLINE : LastRecompute::QUEUE, $changed);
 
-        $ran = $this->registry->withLock($computationKey, function () use ($computationKey, $query, $args, $result, $mutationId): bool {
+        $ran = $this->registry->withLock($computationKey, function () use ($computationKey, $query, $args, $result, $mutationId, $trace): bool {
             $current = $this->registry->computation($computationKey);
 
             if ($current === null) {
@@ -100,7 +105,7 @@ final class Recomputer
 
             if ($result->hash === $current->resultHash) {
                 $this->metrics->increment('unchanged');
-                $this->registry->touchComputation($computationKey, $mutationId);
+                $this->registry->touchComputation($computationKey, $mutationId, $trace(false));
 
                 return true;
             }
@@ -117,6 +122,7 @@ final class Recomputer
                 $result->hash,
                 Canonical::encode($result->result),
                 $mutationId,
+                $trace(true),
             );
 
             // Only now, with something new to send, is it worth paying for a

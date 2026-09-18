@@ -60,7 +60,7 @@ final class Invalidator
             }
 
             try {
-                $outcome = $this->recomputer->run($key, $mutationId, (int) config('reactive.inline_lock_wait_ms', 200));
+                $outcome = $this->recomputer->run($key, $mutationId, (int) config('reactive.inline_lock_wait_ms', 200), inline: true);
             } catch (Throwable $e) {
                 report($e);
                 $outcome = RecomputeOutcome::Busy;
