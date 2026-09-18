@@ -13,7 +13,14 @@
     "typescript/no-unsafe-declaration-merging": "warn",
     "unicorn/prefer-string-starts-ends-with": "warn",
     "unicorn/no-useless-spread": "warn",
-    "import/no-cycle": "warn"
+    "import/no-cycle": "warn",
+    "no-restricted-globals": [
+      "error",
+      {
+        "name": "fetch",
+        "message": "REST goes through an api resource in resources/js/api/resources, reactive data through useReactiveQuery/useReactiveMutation from ~/lib/reactive, AI through useAiStream. CLAUDE.md section 4."
+      }
+    ]
   },
   "env": {
     "builtin": true,
@@ -28,5 +35,19 @@
     "resources/js/types/*.d.ts",
     "vendor",
     "storage"
+  ],
+  "overrides": [
+    {
+      "files": [
+        "resources/js/api/client.ts",
+        "resources/js/composables/useAiStream.ts",
+        "resources/js/plugins/echo.ts",
+        "packages/reactive-vue/src/**",
+        "tests/**"
+      ],
+      "rules": {
+        "no-restricted-globals": "off"
+      }
+    }
   ]
 }
