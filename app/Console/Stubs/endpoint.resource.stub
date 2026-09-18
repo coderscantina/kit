@@ -1,0 +1,11 @@
+import { BaseResource } from '~/api/resources/base-resource'
+
+/**
+ * The {{ resource }} REST endpoints. Live lists and details go through
+ * useReactiveQuery instead; this is for posts, uploads and downloads.
+ */
+export class {{ domain }}Resource extends BaseResource {
+  protected basePath = '/api/{{ page }}'
+
+  // kit:methods
+}

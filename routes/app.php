@@ -105,6 +105,8 @@ Route::prefix('api')->name('api.')->middleware('web')->group(function (): void {
         Route::get('roles', [UserController::class, 'roles'])->name('roles.index');
         Route::patch('users/{user}/role', [UserController::class, 'updateRole'])->middleware('totp')->name('users.role');
         Route::delete('users/{user}', [UserController::class, 'destroy'])->middleware('totp')->name('users.destroy');
+        // make:endpoint adds routes here, inside the authenticated group.
+        // kit:api
     });
 
     // Token-gated, session-free: the confirmation link is opened wherever the

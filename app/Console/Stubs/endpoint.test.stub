@@ -1,0 +1,38 @@
+<?php
+
+declare(strict_types=1);
+
+namespace Tests\Feature\{{ feature }};
+
+use App\Http\Controllers\{{ domain }}\{{ class }}Controller;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\Test;
+use Tests\TestCase;
+
+#[CoversClass({{ class }}Controller::class)]
+final class {{ class }}EndpointTest extends TestCase
+{
+    use RefreshDatabase;
+
+    #[Test]
+    public function it_creates_the_row_and_returns_it(): void
+    {
+        $this->createAndActAs(role: 'admin');
+
+        $this->postJson('/api/{{ page }}/{{ path }}', [{{ payload }}])
+            ->assertCreated(){{ assert_json }};
+
+        $this->assertDatabaseCount('{{ table }}', 1);
+    }
+{{ invalid_test }}
+    #[Test]
+    public function a_user_without_the_ability_is_forbidden_and_writes_nothing(): void
+    {
+        $this->createAndActAs(role: 'member');
+
+        $this->postJson('/api/{{ page }}/{{ path }}', [{{ payload }}])->assertForbidden();
+
+        $this->assertDatabaseCount('{{ table }}', 0);
+    }
+}

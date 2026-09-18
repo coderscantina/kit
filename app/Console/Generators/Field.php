@@ -219,6 +219,28 @@ final readonly class Field
         return $this->type->isDate() || in_array($this->type, [FieldType::String, FieldType::Text], true);
     }
 
+    /** The FormRequest rule list, keyed by the data property the client sends. */
+    public function requestRule(): string
+    {
+        $max = $this->type === FieldType::Text ? 65535 : 255;
+        $presence = $this->nullable ? "'nullable'" : "'required'";
+
+        $rules = match ($this->type) {
+            FieldType::String, FieldType::Text => $this->nullable ? "'nullable', 'string', 'max:{$max}'" : "new BoundedString(1, {$max})",
+            FieldType::Integer => "{$presence}, 'integer'",
+            FieldType::Boolean => "{$presence}, 'boolean'",
+            FieldType::Date, FieldType::DateTime => "{$presence}, 'date'",
+        };
+
+        return "'{$this->property()}' => [{$rules}],";
+    }
+
+    /** The column write from a validated request, where a nullable key may be absent. */
+    public function requestWrite(): string
+    {
+        return "'{$this->column}' => \$input['{$this->property()}']".($this->nullable ? ' ?? null' : '').',';
+    }
+
     public function assignment(string $variable = 'args'): string
     {
         return "'{$this->column}' => \${$variable}->{$this->property()},";

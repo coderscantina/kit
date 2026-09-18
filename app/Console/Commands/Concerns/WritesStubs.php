@@ -113,6 +113,33 @@ trait WritesStubs
     }
 
     /**
+     * Add an import after the file's last top-level import, unless it is
+     * there already. `use X;` for PHP, `import ... from '...'` for TS; the
+     * formatters sort them afterwards.
+     */
+    protected function addImport(string $file, string $line): void
+    {
+        $files = new Filesystem;
+        $contents = $files->get($file);
+
+        if (str_contains($contents, $line)) {
+            return;
+        }
+
+        $pattern = str_starts_with($line, 'use ') ? '/^use [^;]+;$/m' : '/^import .+$/m';
+
+        if (preg_match_all($pattern, $contents, $matches, PREG_OFFSET_CAPTURE) === 0) {
+            throw new RuntimeException('No import to add after in '.$this->relative($file));
+        }
+
+        [$last, $offset] = $matches[0][count($matches[0]) - 1];
+        $at = $offset + strlen($last);
+
+        $files->put($file, substr($contents, 0, $at)."\n".$line.substr($contents, $at));
+        $this->updated($file);
+    }
+
+    /**
      * The lines above the marker that belong to the same array literal: walk
      * back until a line is indented less than the marker is.
      */

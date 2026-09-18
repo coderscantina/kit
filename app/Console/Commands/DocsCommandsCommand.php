@@ -28,6 +28,8 @@ class DocsCommandsCommand extends Command
         'make:query',
         'make:mutation',
         'make:ai-action',
+        'make:filter',
+        'make:endpoint',
         'make:data',
         'make:job',
         'types:generate',

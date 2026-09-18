@@ -1,0 +1,36 @@
+<?php
+
+declare(strict_types=1);
+
+namespace Tests\Feature\{{ feature }};
+
+use App\Http\Filters\{{ feature }}Filter;
+use App\Models\{{ feature }};
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\Test;
+use Tests\TestCase;
+
+#[CoversClass({{ feature }}Filter::class)]
+final class {{ feature }}FilterTest extends TestCase
+{
+    use RefreshDatabase;
+{{ search_test }}
+    #[Test]
+    public function a_sort_column_outside_the_allow_list_is_ignored(): void
+    {
+        $filter = new {{ feature }}Filter(['sort' => '-password']);
+
+        {{ feature }}::query()->filter($filter)->get();
+
+        $this->assertSame([], $filter->getSortColumns());
+    }
+
+    #[Test]
+    public function the_inherited_pagination_helpers_are_not_reachable(): void
+    {
+        {{ feature }}::factory()->count(2)->create();
+
+        $this->assertCount(2, {{ feature }}::query()->filter(new {{ feature }}Filter(['limit' => '1', 'offset' => '1']))->get());
+    }
+}

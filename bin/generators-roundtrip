@@ -28,6 +28,8 @@ patched_files=(
   resources/js/i18n/de.json
   resources/js/lib/access-control.ts
   resources/js/router/index.ts
+  resources/js/api/index.ts
+  routes/app.php
   resources/js/types/generated.d.ts
 )
 
@@ -48,6 +50,11 @@ created_paths=(
   database/factories/FixtureFactory.php
   resources/js/pages/fixtures
   resources/js/components/fixtures
+  resources/js/api/resources/fixtures.ts
+  app/Http/Filters/FixtureFilter.php
+  app/Http/Controllers/Fixtures
+  app/Http/Requests/Fixtures
+  app/Actions/Fixtures
   tests/js/pages/fixtures
 )
 
@@ -100,6 +107,8 @@ php artisan make:feature Fixture --versioned \
 php artisan make:query fixture.list
 php artisan make:mutation fixture.create
 php artisan make:mutation fixture.update --versioned
+php artisan make:filter Fixture
+php artisan make:endpoint fixture.import
 php artisan make:ai-action fixture.summarize
 php artisan types:generate
 

@@ -1,0 +1,35 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Http\Filters;
+
+use CodersCantina\Filter\AdvancedFilter;
+
+/**
+ * The {{ resource }} list's filters. Every public method is a query parameter
+ * the client may send, as `operator:value`; `sort` (`+column` / `-column`)
+ * comes from the package's Sortable trait and is bounded by
+ * $sortableColumns, because its value reaches orderBy().
+ *
+ * Apply it with `{{ feature }}::query()->filter(new {{ feature }}Filter($params))`.
+ */
+class {{ feature }}Filter extends AdvancedFilter
+{
+    /** @var list<string> */
+    protected array $sortableColumns = [{{ sortable }}];
+
+    /**
+     * @param  array<string, mixed>  $filters
+     */
+    public function __construct(array $filters)
+    {
+        parent::__construct($filters);
+
+        // The whole query bag arrives here, so the accepted names are stated
+        // rather than inferred: `limit` and `offset` are inherited helpers
+        // that would otherwise let a client rewrite the pagination.
+        $this->setWhitelistedFilters([{{ whitelist }}]);
+    }
+{{ methods }}
+}

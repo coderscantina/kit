@@ -1,0 +1,27 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Http\Controllers\{{ domain }};
+
+use App\Actions\{{ domain }}\{{ class }};
+use App\Data\{{ data }};
+use App\Http\Controllers\Controller;
+use App\Http\Requests\{{ domain }}\{{ class }}Request;
+use App\Models\{{ feature }};
+
+/**
+ * POST /api/{{ page }}/{{ path }}. The request validates, the policy decides,
+ * the action does the work; this class only connects the three. A form
+ * post, an upload or a redirect target belongs here; a live list or detail
+ * view belongs on a reactive query.
+ */
+final class {{ class }}Controller extends Controller
+{
+    public function __invoke({{ class }}Request $request, {{ class }} $action): {{ data }}
+    {
+        $this->authorize('create', {{ feature }}::class);
+
+        return {{ data }}::from($action->execute($request->validated()));
+    }
+}

@@ -20,4 +20,5 @@ export const api = {
   people: new PeopleResource(client),
   users: new UsersResource(client),
   views: new ViewsResource(client),
+  // kit:resources
 }

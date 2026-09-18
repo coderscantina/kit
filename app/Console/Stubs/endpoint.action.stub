@@ -1,0 +1,24 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Actions\{{ domain }};
+
+use App\Models\{{ feature }};
+
+/**
+ * Does the work behind POST /api/{{ page }}/{{ path }}. Plain and callable
+ * from anywhere: a controller, a job, a command, a test.
+ */
+final class {{ class }}
+{
+    /**
+     * @param  array<string, mixed>  $input  validated by {{ class }}Request
+     */
+    public function execute(array $input): {{ feature }}
+    {
+        return {{ feature }}::query()->create([
+{{ request_writes }}
+        ]);
+    }
+}
