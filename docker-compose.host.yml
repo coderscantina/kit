@@ -1,0 +1,10 @@
+# For `bin/dev services`: MariaDB and Redis on 127.0.0.1 so PHP on the host
+# can reach them. The base file publishes neither, and `bin/dev up` never
+# reads this one. Ports follow DB_PORT and REDIS_PORT in .env.
+services:
+  db:
+    ports:
+      - '127.0.0.1:${DB_PORT:-3306}:3306'
+  redis:
+    ports:
+      - '127.0.0.1:${REDIS_PORT:-6379}:6379'

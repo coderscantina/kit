@@ -23,14 +23,26 @@ app on <http://localhost:8000>. Register the first account: it becomes the owner
 and closes self-registration. Under ten minutes on a fresh machine, most of it
 the image build.
 
-For a host PHP setup instead of the container:
+For a host PHP setup instead of the container, with PHP, bun and a Redis on
+the host (`bin/dev services` runs MariaDB and Redis in containers on 127.0.0.1
+if you have neither):
 
 ```sh
 composer install && bun install
-cp .env.example .env && php artisan key:generate
-php artisan kit:setup
-php artisan serve & bun run dev
+bin/dev start    # serve, vite, reverb and horizon, detached
+bin/dev status   # each process running or dead
+bin/dev stop     # stops exactly what start started
 ```
+
+`start` fills in `.env`, runs `kit:setup` and `db:seed`, and returns once
+`/up` and Vite answer. Logs go to `storage/logs/dev-<name>.log`. With the
+containerised MariaDB, set `DB_USERNAME=root` and `DB_PASSWORD` to
+`DB_ROOT_PASSWORD`; `DB_CONNECTION=sqlite` needs no database server at all.
+
+Locally, `db:seed` creates one verified account per role: `owner@kit.test`,
+`admin@kit.test` and `member@kit.test`, all with the password `password`.
+`GET /dev/login/{role}` signs in as one of them and redirects to `/`. It
+exists only with `APP_ENV=local` and `APP_DEBUG=true`.
 
 ## Commands
 

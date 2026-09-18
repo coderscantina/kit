@@ -12,5 +12,9 @@ class DatabaseSeeder extends Seeder
     public function run(SyncRoles $syncRoles): void
     {
         $syncRoles->execute();
+
+        if (app()->environment('local')) {
+            $this->call(DevSeeder::class);
+        }
     }
 }

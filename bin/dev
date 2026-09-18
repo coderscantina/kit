@@ -1,38 +1,265 @@
 #!/usr/bin/env bash
-# Compose wrapper for the local stack. `bin/dev up` on a fresh clone is the
-# whole setup: it builds the image, boots MariaDB and Redis, and runs
-# kit:setup on first boot.
+# The local stack, two ways. `bin/dev up` on a fresh clone is the whole
+# container setup: it builds the image, boots MariaDB and Redis, and runs
+# kit:setup on first boot. `bin/dev start` runs the same app on the host
+# instead, detached, for code that changes by the minute.
 set -euo pipefail
 
 cd "$(dirname "$0")/.."
 
 compose() { docker compose "$@"; }
 
-# The stack refuses to boot without DB_ROOT_PASSWORD, so put a local one in
-# place rather than making the first run fail on a variable nobody has read
-# about yet.
+# The container stack plus the database and Redis published on 127.0.0.1, so
+# host PHP can reach them. The base file publishes neither on purpose.
+compose_host() { docker compose -f docker-compose.yml -f docker-compose.host.yml "$@"; }
+
 if [ ! -f .env ]; then
   cp .env.example .env
   echo 'bin/dev: wrote .env from .env.example'
 fi
 
-# Compose refuses to boot without it, so fill it in rather than making the
-# first run fail on a variable nobody has read about yet.
-if ! grep -qE '^DB_ROOT_PASSWORD=.+' .env; then
-  password="$(head -c 24 /dev/urandom | base64 | tr -d '/+=')"
-  if grep -q '^DB_ROOT_PASSWORD=' .env; then
+# Compose refuses to boot without a database password and Reverb without its
+# key pair, so fill them with random local values rather than making the first
+# run fail on a variable nobody has read about yet.
+fill_env() {
+  local key="$1" value
+  grep -qE "^${key}=.+" .env && return
+  value="$(head -c 24 /dev/urandom | base64 | tr -d '/+=')"
+  if grep -q "^${key}=" .env; then
     # -i.bak, then remove: BSD and GNU sed disagree about bare -i.
-    sed -i.bak "s|^DB_ROOT_PASSWORD=.*|DB_ROOT_PASSWORD=${password}|" .env && rm -f .env.bak
+    sed -i.bak "s|^${key}=.*|${key}=${value}|" .env && rm -f .env.bak
   else
-    printf '\nDB_ROOT_PASSWORD=%s\n' "$password" >> .env
+    printf '\n%s=%s\n' "$key" "$value" >> .env
   fi
-  echo 'bin/dev: generated DB_ROOT_PASSWORD'
-fi
+  echo "bin/dev: generated ${key}"
+}
+fill_env DB_ROOT_PASSWORD
+fill_env REVERB_APP_KEY
+fill_env REVERB_APP_SECRET
+
+# The last value .env gives a key, unquoted.
+env_get() {
+  sed -n "s/^$1=//p" .env | tail -n 1 | tr -d '\r' | sed -e 's/^"\(.*\)"$/\1/' -e "s/^'\(.*\)'$/\1/"
+}
+
+port_open() { (exec 3<>"/dev/tcp/$1/$2") 2>/dev/null; }
+
+# ── Host stack ──────────────────────────────────────────────────────────────
+# Four processes, each started as its own process group so `stop` takes the
+# children with it (php -S under serve, vite under bun, Horizon's
+# supervisors). Only what the pid file lists is ever killed.
+
+PIDS=storage/logs/dev.pids
+LOGS=storage/logs
+NAMES='serve vite reverb horizon'
+
+app_url() { local url; url="$(env_get APP_URL)"; echo "${url:-http://localhost:8000}"; }
+
+# What the group leader's command line must contain, so a recycled pid is
+# never mistaken for ours.
+signature() {
+  case "$1" in
+    serve) echo 'artisan serve' ;;
+    vite) echo 'run dev' ;;
+    reverb) echo 'reverb:start' ;;
+    horizon) echo 'artisan horizon' ;;
+  esac
+}
+
+pid_of() { [ -f "$PIDS" ] && awk -v n="$1" '$1 == n { print $2 }' "$PIDS"; }
+
+alive() {
+  local pid cmd
+  pid="$(pid_of "$1")" || return 1
+  [ -n "$pid" ] || return 1
+  cmd="$(ps -o command= -p "$pid" 2> /dev/null)" || return 1
+  case "$cmd" in *"$(signature "$1")"*) return 0 ;; esac
+  return 1
+}
+
+# Our process groups: a live leader must still be ours, and a dead leader's
+# group (an orphaned php -S) cannot have had its id reused while it has members.
+our_groups() {
+  [ -f "$PIDS" ] || return 0
+  local name pid
+  while read -r name pid; do
+    if ps -p "$pid" > /dev/null 2>&1; then
+      alive "$name" && echo "$pid"
+    elif kill -0 -- "-$pid" 2> /dev/null; then
+      echo "$pid"
+    fi
+  done < "$PIDS"
+  return 0
+}
+
+launch() {
+  local name="$1"
+  shift
+  set -m
+  nohup "$@" > "$LOGS/dev-$name.log" 2>&1 < /dev/null &
+  echo "$name $!" >> "$PIDS"
+  set +m
+}
+
+stop_all() {
+  local groups pid _ left
+  groups="$(our_groups)"
+  for pid in $groups; do kill -TERM -- "-$pid" 2> /dev/null || true; done
+  for _ in 1 2 3 4 5 6 7 8 9 10; do
+    left=0
+    for pid in $groups; do kill -0 -- "-$pid" 2> /dev/null && left=1; done
+    [ "$left" = 0 ] && break
+    sleep 0.5
+  done
+  for pid in $groups; do kill -KILL -- "-$pid" 2> /dev/null || true; done
+  rm -f "$PIDS"
+}
+
+fail() {
+  echo "bin/dev: $1" >&2
+  if [ -n "${2:-}" ] && [ -f "$2" ]; then
+    echo "--- last lines of $2" >&2
+    tail -n 20 "$2" >&2
+  fi
+  exit 1
+}
+
+preflight() {
+  command -v php > /dev/null || fail 'php is not on PATH'
+  command -v bun > /dev/null || fail 'bun is not on PATH'
+  [ -d vendor ] || fail 'no vendor/: run composer install'
+  [ -d node_modules ] || fail 'no node_modules/: run bun install'
+  grep -qE '^APP_KEY=.+' .env || php artisan key:generate --no-interaction > /dev/null
+
+  local redis_host redis_port
+  redis_host="$(env_get REDIS_HOST)"
+  redis_port="$(env_get REDIS_PORT)"
+  port_open "${redis_host:-127.0.0.1}" "${redis_port:-6379}" \
+    || fail "Redis is not reachable on ${redis_host:-127.0.0.1}:${redis_port:-6379}; run bin/dev services"
+
+  local connection db_host db_port database
+  connection="$(env_get DB_CONNECTION)"
+  case "$connection" in
+    sqlite)
+      database="$(env_get DB_DATABASE)"
+      database="${database:-database/database.sqlite}"
+      [ -f "$database" ] || touch "$database"
+      ;;
+    mysql | mariadb | pgsql)
+      db_host="$(env_get DB_HOST)"
+      db_port="$(env_get DB_PORT)"
+      [ "$connection" = pgsql ] && db_port="${db_port:-5432}"
+      port_open "${db_host:-127.0.0.1}" "${db_port:-3306}" \
+        || fail "the database is not reachable on ${db_host:-127.0.0.1}:${db_port:-3306} ($connection); run bin/dev services, or set DB_CONNECTION=sqlite"
+      ;;
+  esac
+}
+
+start() {
+  if [ -f "$PIDS" ]; then
+    local name running=1
+    for name in $NAMES; do alive "$name" || running=0; done
+    if [ "$running" = 1 ]; then
+      echo "bin/dev: already running on $(app_url)"
+      exit 0
+    fi
+    echo 'bin/dev: a previous start is half dead; stopping what is left of it'
+    stop_all
+  fi
+
+  preflight
+
+  local url port reverb_port
+  url="$(app_url)"
+  port="$(echo "$url" | sed -nE 's|^https?://[^/:]+:([0-9]+).*|\1|p')"
+  port="${port:-80}"
+  reverb_port="$(env_get REVERB_SERVER_PORT)"
+  reverb_port="${reverb_port:-8080}"
+
+  # A port somebody else holds would make the readiness check below talk to
+  # their process. Refuse instead; stop never touches a process by port.
+  local p
+  for p in "$port" "$reverb_port" 5173; do
+    if port_open 127.0.0.1 "$p"; then fail "port $p is already in use by a process bin/dev did not start"; fi
+  done
+
+  mkdir -p "$LOGS"
+  # Migrate on a fresh database, sync the roles and seed the local accounts.
+  # All three are no-ops the second time.
+  { php artisan kit:setup --no-interaction && php artisan db:seed --no-interaction; } > "$LOGS/dev-setup.log" 2>&1 \
+    || fail 'kit:setup or db:seed failed' "$LOGS/dev-setup.log"
+
+  # Written by the Vite plugin once the dev server listens; a leftover from a
+  # killed run would point the check below at nothing.
+  rm -f public/hot
+
+  : > "$PIDS"
+  # Plain `serve`, not Octane: every request sees the code as it is on disk,
+  # which is what an agent editing files needs, and there is no file watcher
+  # to trip over. Four workers so an SSE stream does not block every other
+  # request; serve only honours them with --no-reload, so an .env change
+  # needs a stop and start.
+  launch serve env PHP_CLI_SERVER_WORKERS=4 php artisan serve --host=127.0.0.1 --port="$port" --no-reload
+  launch vite bun run dev
+  launch reverb php artisan reverb:start
+  # Horizon runs both supervisors from config/horizon.php: `default` and
+  # `reactive`. It holds the code it booted with; restart it after a change
+  # to anything a job runs.
+  launch horizon php artisan horizon
+
+  local timeout="${DEV_START_TIMEOUT:-90}" waited=0 name
+  local app_ok=0 vite_ok=0 reverb_ok=0
+  while :; do
+    for name in $NAMES; do
+      if ! alive "$name"; then
+        stop_all
+        fail "$name exited during start" "$LOGS/dev-$name.log"
+      fi
+    done
+    [ "$app_ok" = 1 ] || { curl -fsS -o /dev/null --max-time 2 "$url/up" 2> /dev/null && app_ok=1; }
+    [ "$vite_ok" = 1 ] || { [ -f public/hot ] && curl -fsS -o /dev/null --max-time 2 "$(cat public/hot)/@vite/client" 2> /dev/null && vite_ok=1; }
+    [ "$reverb_ok" = 1 ] || { port_open 127.0.0.1 "$reverb_port" && reverb_ok=1; }
+    [ "$app_ok$vite_ok$reverb_ok" = 111 ] && break
+
+    if [ "$waited" -ge "$timeout" ]; then
+      stop_all
+      [ "$app_ok" = 1 ] || fail "$url/up did not answer within ${timeout}s" "$LOGS/dev-serve.log"
+      [ "$vite_ok" = 1 ] || fail "the Vite dev server did not answer within ${timeout}s" "$LOGS/dev-vite.log"
+      fail "Reverb did not listen on port $reverb_port within ${timeout}s" "$LOGS/dev-reverb.log"
+    fi
+    sleep 1
+    waited=$((waited + 1))
+  done
+
+  echo "Kit is running on $url"
+  echo "  sign in: $url/dev/login/<role>  (owner, admin, member; or <role>@kit.test / password)"
+  for name in $NAMES; do echo "  $name: $LOGS/dev-$name.log"; done
+  echo '  stop: bin/dev stop'
+}
+
+status() {
+  if [ ! -f "$PIDS" ]; then
+    echo 'bin/dev: not started'
+    exit 1
+  fi
+  local name dead=0
+  for name in $NAMES; do
+    if alive "$name"; then
+      printf '  %-8s running  pid %s\n' "$name" "$(pid_of "$name")"
+    else
+      printf '  %-8s dead     see %s\n' "$name" "$LOGS/dev-$name.log"
+      dead=1
+    fi
+  done
+  echo "  url      $(app_url)"
+  return "$dead"
+}
 
 usage() {
-  cat <<'TXT'
+  cat << 'TXT'
 bin/dev <command>
 
+In containers:
   up             rebuild and start the stack, waiting for health
   down [--wipe]  stop it; --wipe also drops the volumes
   logs [service] follow logs (default: app)
@@ -41,6 +268,12 @@ bin/dev <command>
   mail           start Mailpit and open http://localhost:8025
   artisan ...    run an artisan command in the app container
   <anything>     passed straight to `docker compose`
+
+On the host:
+  start          serve, vite, reverb and horizon, detached; waits until ready
+  stop           stop exactly what start started
+  status         each process running or dead; non-zero if any is dead
+  services       only MariaDB and Redis in containers, on 127.0.0.1
 TXT
 }
 
@@ -70,6 +303,20 @@ case "$command" in
     echo 'Mailpit on http://localhost:8025'
     ;;
   artisan) compose exec app php artisan "$@" ;;
+  start) start ;;
+  stop)
+    if [ -f "$PIDS" ]; then
+      stop_all
+      echo 'bin/dev: stopped'
+    else
+      echo 'bin/dev: not started'
+    fi
+    ;;
+  status) status ;;
+  services)
+    compose_host up -d --wait db redis
+    echo 'MariaDB and Redis on 127.0.0.1. For MariaDB set DB_USERNAME=root and DB_PASSWORD to DB_ROOT_PASSWORD in .env.'
+    ;;
   -h | --help | help) usage ;;
   *) compose "$command" "$@" ;;
 esac
