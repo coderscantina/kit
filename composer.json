@@ -13,7 +13,7 @@
         "coderscantina/laravel-filter": "^2.0",
         "dompdf/dompdf": "^3.1",
         "kit/reactive": "@dev",
-        "laravel-notification-channels/webpush": "^10.0",
+        "laravel-notification-channels/webpush": "^13.0",
         "laravel/framework": "^13.17",
         "laravel/horizon": "^5.48",
         "laravel/mcp": "^1.0",
