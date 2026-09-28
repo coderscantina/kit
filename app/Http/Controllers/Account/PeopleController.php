@@ -25,25 +25,6 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 class PeopleController extends Controller
 {
     /**
-     * @return array<string, mixed>
-     */
-    public function index(Request $request, PeopleDirectory $directory): array
-    {
-        $viewer = $this->viewer($request);
-
-        // The whole query bag, filtered down by PeopleFilter's own allow list
-        // rather than transcribed parameter by parameter here: a new filter is
-        // then one method on the filter class, not an edit in three files.
-        $result = $directory->paginate($viewer, $request->query(), $this->perPage($request));
-
-        // Same envelope as the other list endpoints, plus the tab counts.
-        return [
-            ...PersonData::collect($result['paginator']->withQueryString())->toArray(),
-            'counts' => $result['counts'],
-        ];
-    }
-
-    /**
      * The current result set as a file: same filters, same sort, no paging.
      *
      * It runs through the same PeopleDirectory query the table does, so an

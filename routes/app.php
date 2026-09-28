@@ -98,8 +98,6 @@ Route::prefix('api')->name('api.')->middleware('web')->group(function (): void {
         Route::post('invites/{invite}/resend', [InviteController::class, 'resend'])->name('invites.resend');
         Route::delete('invites/{invite}', [InviteController::class, 'destroy'])->name('invites.destroy');
 
-        // Accounts and outstanding invitations as one list.
-        Route::get('people', [PeopleController::class, 'index'])->name('people.index');
         // Building a file costs more than a page of rows, so it counts against
         // the tighter limiter.
         Route::get('people/export', [PeopleController::class, 'export'])

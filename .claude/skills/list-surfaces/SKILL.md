@@ -5,7 +5,7 @@ description: The list contract. Use when building or changing a table, a list pa
 
 # List surfaces
 
-`docs/lists.md` is the full contract. The people page (`resources/js/pages/people`, `PeopleController`, `PeopleFilter`) is the shipped example.
+`docs/lists.md` is the full contract. The people page (`resources/js/pages/people`, the `people.list` query, `PeopleFilter`) is the shipped example.
 
 Every list surface speaks one query contract: `page`, `per_page`, `sort` (`+column` / `-column`), the free-text `q`, and one parameter per filter carrying `operator:value`. The URL is the state.
 

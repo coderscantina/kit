@@ -39,14 +39,14 @@ and `Database\Factories\PostFactory` by name, migrations are read from
 
 ## 2. Which data path a change belongs on
 
-**Most of what is shipped is REST.** Auth, account, people, invites, saved
+**Most of what is shipped is REST.** Auth, account, the people export, invites, saved
 views, notification settings and the AI assistant are controller +
 FormRequest + action class + laravel-data, called from
 `resources/js/api/resources/*`.
 
 **The reactive layer is what the generators produce, and what notifications
-run on.** The inbox is the shipped example; `docs/adding-a-feature.md` is the
-walkthrough.
+run on.** The inbox and the people list are the shipped examples;
+`docs/adding-a-feature.md` is the walkthrough.
 
 Pick by surface, not by taste: a new list or detail view that wants live
 updates goes reactive; something the browser posts a form to, uploads a file

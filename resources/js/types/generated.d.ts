@@ -57,6 +57,10 @@ declare namespace App {
       userId: string,
       status: App.Enums.NotificationStatus | null,
     };
+    export type ListPeopleArgs = {
+      viewerId: string,
+      params: Record<string, string | number> | null,
+    };
     export type MeData = {
       user: App.Data.UserData,
       abilities: string[],
@@ -100,6 +104,20 @@ declare namespace App {
       channels: string[],
       required: string[],
       enabled: string[],
+    };
+    export type PeoplePageData = {
+      data: App.Data.PersonData[],
+      current_page: number,
+      last_page: number,
+      per_page: number,
+      total: number,
+      from: number | null,
+      to: number | null,
+      counts: {
+        active: number,
+        pending: number,
+        total: number,
+      },
     };
     export type PersonData = {
       kind: string,
@@ -364,6 +382,10 @@ declare namespace Kit {
     'notifications.summary': {
       args: App.Data.NotificationSummaryArgs
       result: App.Data.NotificationSummaryData
+    }
+    'people.list': {
+      args: App.Data.ListPeopleArgs
+      result: App.Data.PeoplePageData
     }
     'webhooks.create': {
       args: App.Data.SaveWebhookArgs

@@ -4,21 +4,48 @@ declare(strict_types=1);
 
 namespace Tests\Feature\Account;
 
-use App\Http\Controllers\Account\PeopleController;
 use App\Models\Invite;
 use App\Models\Role;
 use App\Models\User;
+use App\Queries\People\ListPeople;
 use App\Services\Account\PeopleDirectory;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Testing\TestResponse;
+use Kit\Reactive\Facades\Reactive;
+use Kit\Reactive\Testing\InteractsWithReactive;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
-#[CoversClass(PeopleController::class)]
+#[CoversClass(ListPeople::class)]
 #[CoversClass(PeopleDirectory::class)]
 final class PeopleTest extends TestCase
 {
+    use InteractsWithReactive;
     use RefreshDatabase;
+
+    /**
+     * Asks `people.list` as the acting user.
+     *
+     * @param  array<string, string|int>  $params
+     * @return TestResponse<JsonResponse>
+     */
+    private function people(array $params = []): TestResponse
+    {
+        return $this->postJson('/rq/query', [
+            'query' => 'people.list',
+            'args' => ['viewerId' => $this->viewerId(), 'params' => $params],
+        ]);
+    }
+
+    private function viewerId(): string
+    {
+        $viewer = auth()->user();
+        $this->assertInstanceOf(User::class, $viewer);
+
+        return $viewer->id;
+    }
 
     private function invite(string $email, string $role = 'member', ?int $expiredDaysAgo = null): Invite
     {
@@ -60,7 +87,7 @@ final class PeopleTest extends TestCase
         $this->assignRole(User::factory()->create(['name' => 'Zoe']), 'member');
         $this->invite('bob@example.test');
 
-        $rows = $this->getJson('/api/people?sort=%2Bname')->assertOk()->json();
+        $rows = $this->people(['sort' => '+name'])->assertOk()->json('result');
 
         // Invitations have no name, so they sort by the address instead.
         $this->assertSame(
@@ -80,12 +107,12 @@ final class PeopleTest extends TestCase
         $this->invite('bob@example.test');
         $this->invite('cleo@example.test');
 
-        $all = $this->getJson('/api/people')->assertOk()->json('counts');
-        $pending = $this->getJson('/api/people?status=pending')->assertOk();
+        $all = $this->people()->assertOk()->json('result.counts');
+        $pending = $this->people(['status' => 'pending'])->assertOk();
 
         $this->assertSame(['active' => 1, 'pending' => 2, 'total' => 3], $all);
-        $this->assertSame($all, $pending->json('counts'));
-        $this->assertCount(2, $pending->json('data'));
+        $this->assertSame($all, $pending->json('result.counts'));
+        $this->assertCount(2, $pending->json('result.data'));
     }
 
     #[Test]
@@ -96,10 +123,10 @@ final class PeopleTest extends TestCase
         $this->invite('marina.b@example.test', 'member');
         $this->invite('other@example.test', 'admin');
 
-        $found = $this->getJson('/api/people?q=marina')->assertOk()->json('data');
+        $found = $this->people(['q' => 'marina'])->assertOk()->json('result.data');
         $this->assertSame(['marina@example.test', 'marina.b@example.test'], array_column($found, 'email'));
 
-        $admins = $this->getJson('/api/people?role=admin')->assertOk()->json('data');
+        $admins = $this->people(['role' => 'admin'])->assertOk()->json('result.data');
         $this->assertSame(['marina@example.test', 'other@example.test'], array_column($admins, 'email'));
     }
 
@@ -109,7 +136,7 @@ final class PeopleTest extends TestCase
         $this->createAndActAs(role: 'owner');
         $this->invite('stale@example.test', expiredDaysAgo: 3);
 
-        $row = $this->indexBy($this->getJson('/api/people')->assertOk()->json('data'), 'email')['stale@example.test'];
+        $row = $this->indexBy($this->people()->assertOk()->json('result.data'), 'email')['stale@example.test'];
 
         $this->assertSame('invite', $row['kind']);
         $this->assertSame('expired', $row['state']);
@@ -123,7 +150,7 @@ final class PeopleTest extends TestCase
         $member = User::factory()->create();
         $this->assignRole($member, 'member');
 
-        $rows = $this->indexBy($this->getJson('/api/people')->assertOk()->json('data'), 'id');
+        $rows = $this->indexBy($this->people()->assertOk()->json('result.data'), 'id');
 
         $this->assertFalse($rows[$owner->id]['canRemove'], 'Nobody removes themselves from the people list.');
         $this->assertFalse($rows[$owner->id]['canAssignRole']);
@@ -138,12 +165,12 @@ final class PeopleTest extends TestCase
 
         // A member sees neither half.
         $this->createAndActAs(role: 'member');
-        $this->getJson('/api/people')->assertForbidden();
+        $this->people()->assertForbidden();
 
         // An admin sees both.
         $this->createAndActAs(role: 'admin');
         $this->invite('bob@example.test');
-        $this->getJson('/api/people')->assertOk()->assertJsonPath('counts.pending', 1);
+        $this->people()->assertOk()->assertJsonPath('result.counts.pending', 1);
     }
 
     #[Test]
@@ -157,9 +184,38 @@ final class PeopleTest extends TestCase
         $this->createAndActAs(role: 'member');
         $this->invite('bob@example.test');
 
-        $response = $this->getJson('/api/people')->assertOk();
+        $response = $this->people()->assertOk();
 
-        $this->assertSame(['invite'], array_column($response->json('data'), 'kind'));
-        $this->assertSame(0, $response->json('counts.active'));
+        $this->assertSame(['invite'], array_column($response->json('result.data'), 'kind'));
+        $this->assertSame(0, $response->json('result.counts.active'));
+    }
+
+    #[Test]
+    public function a_new_invitation_pushes_into_the_open_list(): void
+    {
+        $owner = $this->createAndActAs(role: 'owner');
+        Reactive::fake();
+
+        $this->actingAsSubscriber($owner, 'people.list', ['viewerId' => $owner->id, 'params' => []]);
+
+        $this->invite('bob@example.test');
+
+        Reactive::assertPushed(
+            'people.list',
+            fn (mixed $result): bool => $result['counts']['pending'] === 1
+                && in_array('bob@example.test', array_column($result['data'], 'email'), true),
+        );
+    }
+
+    #[Test]
+    public function the_list_cannot_be_asked_for_as_somebody_else(): void
+    {
+        $this->createAndActAs(role: 'owner');
+        $stranger = User::factory()->create();
+
+        $this->postJson('/rq/query', [
+            'query' => 'people.list',
+            'args' => ['viewerId' => $stranger->id, 'params' => []],
+        ])->assertForbidden();
     }
 }

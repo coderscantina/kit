@@ -1,4 +1,3 @@
-import type { PeopleListQuery } from '~/api/resources/people'
 import type { UserListQuery } from '~/api/resources/users'
 
 /** Query keys for the REST remainder. Reactive queries key themselves as `['rq', name, args]`. */
@@ -7,7 +6,6 @@ export const queryKeys = {
   users: (query: UserListQuery) => ['users', 'list', query] as const,
   roles: () => ['roles'] as const,
   invites: (page: number) => ['invites', 'list', page] as const,
-  people: (query: PeopleListQuery) => ['people', 'list', query] as const,
   sessions: () => ['account', 'sessions'] as const,
   tokens: () => ['account', 'tokens'] as const,
   securityActivity: (page: number) => ['account', 'security-activity', page] as const,

@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import type { PeopleSegment } from '~/api/resources/people'
 import Icon from '~/components/Icon.vue'
-import { Avatar } from '~/components/ui/avatar'
+import { UserAvatar, type PresenceStatus } from '~/components/ui/avatar'
 import { Badge } from '~/components/ui/badge'
 import { Button } from '~/components/ui/button'
 import {
@@ -35,6 +35,8 @@ import { useI18n } from '~/plugins/i18n'
  */
 const props = defineProps<{
   rows: App.Data.PersonData[]
+  /** Who is on the page right now; null renders no indicator. Invitations have no session and never get one. */
+  statusOf?: (id: string) => PresenceStatus | null
   roles: App.Data.RoleData[]
   loading: boolean
   refetching: boolean
@@ -120,9 +122,10 @@ const emptyLabel = computed(() => {
       >
         <TableCell>
           <div class="flex items-center gap-3">
-            <Avatar
+            <UserAvatar
               :name="person.name ?? person.email"
               :avatar="person.avatarUrl"
+              :status="person.kind === 'user' ? (statusOf?.(person.id) ?? null) : null"
               :class="person.kind === 'invite' ? 'opacity-60 grayscale' : ''"
             />
             <div class="min-w-0">

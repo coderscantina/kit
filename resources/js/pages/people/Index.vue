@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { keepPreviousData, useQuery, useQueryClient } from '@tanstack/vue-query'
+import { useQuery } from '@tanstack/vue-query'
 import { computed, ref } from 'vue'
 import { toast } from 'vue-sonner'
 
@@ -10,6 +10,7 @@ import PasswordConfirmDialog from '~/components/PasswordConfirmDialog.vue'
 import InviteDialog from '~/components/people/InviteDialog.vue'
 import PeopleTable from '~/components/people/PeopleTable.vue'
 import RecordHistory from '~/components/records/RecordHistory.vue'
+import { AvatarList } from '~/components/ui/avatar'
 import { Button } from '~/components/ui/button'
 import {
   SavedViews,
@@ -25,11 +26,13 @@ import { Sheet, SheetContent, SheetHeaderCombined } from '~/components/ui/sheet'
 import TablePaginationFooter from '~/components/ui/TablePaginationFooter.vue'
 import { useAuth } from '~/composables/useAuth'
 import { useConfirm } from '~/composables/useConfirm'
+import { usePresenceStatus } from '~/composables/usePresenceStatus'
 import { useSavedViews } from '~/composables/useSavedViews'
 import { useStepUp } from '~/composables/useStepUp'
 import { useTableQueryState } from '~/composables/useTableQueryState'
 import { hasAbilityRequirement } from '~/lib/access-control'
 import { queryKeys } from '~/lib/query-keys'
+import { useReactiveQuery } from '~/lib/reactive'
 import { toastError } from '~/lib/toast-error'
 import { useI18n } from '~/plugins/i18n'
 
@@ -44,7 +47,6 @@ import { useI18n } from '~/plugins/i18n'
  */
 const { t } = useI18n()
 const auth = useAuth()
-const queryClient = useQueryClient()
 const stepUp = useStepUp()
 const { confirm } = useConfirm()
 
@@ -53,13 +55,23 @@ const table = useTableQueryState({
   filterKeys: ['status', 'role', 'email', 'created_at'],
 })
 
+/** Everyone else with this page open, and who is online in the rows below. */
+const { others, statusOf } = usePresenceStatus('users')
+
+const viewers = computed(() =>
+  others.value.map(({ id, name, avatarUrl, color }) => ({ id, name, avatar: avatarUrl, color }))
+)
+
 const views = useSavedViews({ scope: 'people', table })
 
-const people = useQuery({
-  queryKey: computed(() => queryKeys.people(table.params.value)),
-  queryFn: () => api.people.index(table.params.value),
-  placeholderData: keepPreviousData,
-})
+const viewerId = computed(() => auth.user.value?.id ?? '')
+
+/** Live: an account or invitation that changes anywhere lands here without a reload. */
+const people = useReactiveQuery(
+  'people.list',
+  () => ({ viewerId: viewerId.value, params: table.params.value }),
+  { enabled: computed(() => viewerId.value !== ''), list: true }
+)
 
 const roles = useQuery({ queryKey: queryKeys.roles(), queryFn: () => api.users.roles() })
 
@@ -114,7 +126,8 @@ const historyOpen = computed({
   },
 })
 
-const refresh = () => queryClient.invalidateQueries({ queryKey: ['people'] })
+/** The push does this too; the refetch is for installs running without realtime. */
+const refresh = () => people.refetch()
 
 const assignRole = async (person: App.Data.PersonData, role: string) => {
   try {
@@ -172,6 +185,12 @@ const onInvited = async (email: string) => {
   <div class="grid gap-5">
     <div class="flex flex-wrap items-center justify-between gap-3">
       <h1 class="text-2xl font-semibold text-primary">{{ t('users.title') }}</h1>
+      <AvatarList
+        v-if="viewers.length > 0"
+        class="ml-auto"
+        :users="viewers"
+        :max="5"
+      />
       <Button
         v-if="canInvite"
         variant="accent"
@@ -210,6 +229,7 @@ const onInvited = async (email: string) => {
       <PeopleTable
         v-model:sort="table.sort.value"
         :rows="rows"
+        :status-of="statusOf"
         :roles="roles.data.value ?? []"
         :loading="people.isPending.value"
         :refetching="people.isFetching.value && Boolean(people.data.value)"

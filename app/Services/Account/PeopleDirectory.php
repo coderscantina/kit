@@ -40,7 +40,7 @@ class PeopleDirectory
      * @param  array<string, mixed>  $filters  The request's query bag: `q`, `role`, `email`, `created_at`, `sort`, `status`.
      * @return array{paginator: LengthAwarePaginator<int, PersonData>, counts: array{active: int, pending: int, total: int}}
      */
-    public function paginate(User $viewer, array $filters, int $perPage): array
+    public function paginate(User $viewer, array $filters, int $perPage, ?int $page = null): array
     {
         $counts = $this->counts($viewer, $filters);
         $query = $this->matching($viewer, $filters);
@@ -49,9 +49,9 @@ class PeopleDirectory
             return ['paginator' => new LengthAwarePaginator([], 0, $perPage), 'counts' => $counts];
         }
 
-        $page = $query->paginate($perPage);
+        $rows = $query->paginate($perPage, page: $page);
 
-        return ['paginator' => $this->hydrate($page, $viewer), 'counts' => $counts];
+        return ['paginator' => $this->hydrate($rows, $viewer), 'counts' => $counts];
     }
 
     /**

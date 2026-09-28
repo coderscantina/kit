@@ -13,6 +13,12 @@ together in the browser, because a page of a merged list has to be a page of the
 merged list. Paginating two sources separately and concatenating them gives a
 page 2 that skips rows.
 
+The list is the reactive query `people.list` (`App\Queries\People\ListPeople`), so
+an account or invitation that changes anywhere reaches every open page over
+Reverb, and the page joins `presence.users` to show who else is looking. The
+export stays REST. Args carry the viewer's id, and `authorize()` refuses any
+id but the caller's.
+
 Only the columns both tables really have are projected into the union
 (`kind`, `id`, `sort_name`, `email`, `role_id`, `created_at`), so neither branch
 has to invent a typed `NULL` for the other's columns, which is the part that
@@ -34,10 +40,10 @@ Each half is gated on its own ability. Someone with `invites.view` but not
 counts are computed before the segment filter, so switching tabs does not move
 the numbers.
 
-| Method | Path                           | Notes                                                               |
-| ------ | ------------------------------ | ------------------------------------------------------------------- |
-| GET    | `/api/people`                  | `search`, `role`, `status`, `sort`, `direction`, `page`, `per_page` |
-| POST   | `/api/invites/{invite}/resend` | New token, fresh expiry; the mailed token stops working             |
+| Method | Path                           | Notes                                                         |
+| ------ | ------------------------------ | ------------------------------------------------------------- |
+| GET    | `/api/people/export`           | The filtered list as a file; same parameters as `people.list` |
+| POST   | `/api/invites/{invite}/resend` | New token, fresh expiry; the mailed token stops working       |
 
 ## The account pages
 
