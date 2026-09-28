@@ -159,10 +159,99 @@ return new class extends Migration
             $table->timestamp('expires_at');
             $table->timestamps();
         });
+
+        // Sanctum's table, written out for the same reason as push
+        // subscriptions: its stub uses integer morphs. A token opens the MCP
+        // endpoint and nothing else; only the SHA-256 of the token is stored.
+        Schema::create('personal_access_tokens', function (Blueprint $table) {
+            $table->id();
+            $table->ulidMorphs('tokenable');
+            $table->text('name');
+            $table->string('token', 64)->unique();
+            $table->text('abilities')->nullable();
+            $table->timestamp('last_used_at')->nullable();
+            $table->timestamp('expires_at')->nullable()->index();
+            $table->timestamps();
+        });
+
+        // What changed on an Auditable row, by whom, written in the same
+        // transaction as the change so a rolled-back write leaves no entry.
+        // `changes` maps a field to its before and after; a hidden or
+        // encrypted field is listed as redacted, never with its values.
+        Schema::create('audit_entries', function (Blueprint $table) {
+            $table->ulid('id')->primary();
+            $table->ulidMorphs('subject');
+            $table->string('event', 16);
+            // Not foreign keys: the trail outlives the people in it, and the
+            // entry for someone deleting their own account names an actor
+            // whose row is already gone. A missing actor reads as the system.
+            $table->ulid('actor_id')->nullable()->index();
+            $table->ulid('impersonator_id')->nullable();
+            $table->json('changes');
+            $table->timestamp('created_at')->index();
+
+            // The history query: one record's entries, newest first.
+            $table->index(['subject_type', 'subject_id', 'id']);
+        });
+
+        // A file on a record. The path is ours (a ULID and an extension read
+        // from the bytes), never the client's filename, which is kept in
+        // `name` for display and the download header only.
+        Schema::create('attachments', function (Blueprint $table) {
+            $table->ulid('id')->primary();
+            $table->ulidMorphs('attachable');
+            $table->foreignUlid('uploaded_by')->nullable()->constrained('users')->nullOnDelete();
+            $table->string('disk', 32);
+            $table->string('path');
+            $table->string('name');
+            $table->string('mime_type', 127);
+            $table->unsignedBigInteger('size');
+            $table->unsignedInteger('width')->nullable();
+            $table->unsignedInteger('height')->nullable();
+            $table->string('thumbnail_path')->nullable();
+            $table->timestamps();
+        });
+
+        // Where record changes are posted. `events` holds patterns such as
+        // `posts.updated`, `posts.*` or `*`. The secret signs every delivery
+        // and is stored encrypted, because it has to be read back to sign.
+        Schema::create('webhook_endpoints', function (Blueprint $table) {
+            $table->ulid('id')->primary();
+            $table->string('url', 2048);
+            $table->string('description')->nullable();
+            $table->text('secret');
+            $table->json('events');
+            $table->boolean('active')->default(true);
+            $table->timestamps();
+        });
+
+        // One event on its way to one endpoint. The row id is the
+        // `webhook-id` header, stable across retries, so a receiver can drop
+        // a duplicate.
+        Schema::create('webhook_deliveries', function (Blueprint $table) {
+            $table->ulid('id')->primary();
+            $table->foreignUlid('webhook_endpoint_id')->constrained('webhook_endpoints')->cascadeOnDelete();
+            $table->string('event', 96);
+            $table->json('payload');
+            $table->string('status', 16);
+            $table->unsignedTinyInteger('attempts')->default(0);
+            $table->unsignedSmallInteger('response_status')->nullable();
+            $table->text('response_body')->nullable();
+            $table->timestamp('delivered_at')->nullable();
+            $table->timestamps();
+
+            $table->index(['webhook_endpoint_id', 'id']);
+            $table->index('created_at');
+        });
     }
 
     public function down(): void
     {
+        Schema::dropIfExists('webhook_deliveries');
+        Schema::dropIfExists('webhook_endpoints');
+        Schema::dropIfExists('attachments');
+        Schema::dropIfExists('audit_entries');
+        Schema::dropIfExists('personal_access_tokens');
         Schema::dropIfExists('phone_verifications');
         Schema::dropIfExists('notification_preferences');
         Schema::dropIfExists('notifications');

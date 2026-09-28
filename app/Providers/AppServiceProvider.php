@@ -9,6 +9,8 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
+use Laravel\Sanctum\PersonalAccessToken;
+use Laravel\Sanctum\Sanctum;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -16,6 +18,7 @@ class AppServiceProvider extends ServiceProvider
     {
         $this->configureModels();
         $this->configureRateLimiting();
+        $this->configureAccessTokens();
     }
 
     /**
@@ -29,6 +32,19 @@ class AppServiceProvider extends ServiceProvider
         Model::preventSilentlyDiscardingAttributes();
         Model::preventAccessingMissingAttributes();
         Model::preventLazyLoading(! $this->app->isProduction());
+    }
+
+    /**
+     * `auth:sanctum` accepts a bearer token on every route it guards, the SPA's
+     * own API included. A personal access token is meant for the MCP endpoint
+     * only, so everywhere else it does not authenticate: a leaked token cannot
+     * export the account's data or read its sessions.
+     */
+    private function configureAccessTokens(): void
+    {
+        Sanctum::authenticateAccessTokensUsing(
+            fn (PersonalAccessToken $token, bool $isValid): bool => $isValid && request()->routeIs('mcp'),
+        );
     }
 
     private function configureRateLimiting(): void

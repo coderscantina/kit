@@ -96,3 +96,76 @@ describe('request', () => {
     expect(seen).toEqual(['9'])
   })
 })
+
+describe('upload', () => {
+  /** Answers each send with the next queued status, after one progress tick. */
+  class FakeXhr {
+    static answers: Array<{ status: number; body: string }> = []
+    static sent: Array<{ headers: Record<string, string> }> = []
+
+    status = 0
+    responseText = ''
+    withCredentials = false
+    upload: { onprogress: ((event: ProgressEvent) => void) | null } = { onprogress: null }
+    onload: (() => void) | null = null
+    onerror: (() => void) | null = null
+    onabort: (() => void) | null = null
+    private headers: Record<string, string> = {}
+
+    open(): void {}
+    abort(): void {}
+    setRequestHeader(name: string, value: string): void {
+      this.headers[name] = value
+    }
+    getResponseHeader(): string {
+      return 'application/json'
+    }
+    send(): void {
+      FakeXhr.sent.push({ headers: this.headers })
+      const answer = FakeXhr.answers.shift() ?? { status: 500, body: '{}' }
+      this.upload.onprogress?.({ lengthComputable: true, loaded: 5, total: 10 } as ProgressEvent)
+      this.status = answer.status
+      this.responseText = answer.body
+      this.onload?.()
+    }
+  }
+
+  beforeEach(() => {
+    FakeXhr.answers = []
+    FakeXhr.sent = []
+    vi.stubGlobal('XMLHttpRequest', FakeXhr)
+    fetchMock.mockImplementation(async () => new Response(null, { status: 204 }))
+  })
+
+  it('reports progress, sends the XSRF header and retries once on 419', async () => {
+    FakeXhr.answers = [
+      { status: 419, body: '{"message":"CSRF token mismatch."}' },
+      { status: 201, body: '{"id":"a1"}' },
+    ]
+    const progress: number[] = []
+
+    const result = await new ApiClient().upload<{ id: string }>(
+      '/api/attachments',
+      new FormData(),
+      {
+        onProgress: (fraction) => progress.push(fraction),
+      }
+    )
+
+    expect(result).toEqual({ id: 'a1' })
+    expect(progress).toEqual([0.5, 0.5])
+    expect(FakeXhr.sent).toHaveLength(2)
+    expect(FakeXhr.sent[0]?.headers['X-XSRF-TOKEN']).toBe('tok=')
+  })
+
+  it('turns a 422 into the ApiError every other call throws', async () => {
+    FakeXhr.answers = [
+      { status: 422, body: '{"message":"Too big.","errors":{"file":["Too big."]}}' },
+    ]
+
+    await expect(new ApiClient().upload('/api/attachments', new FormData())).rejects.toMatchObject({
+      status: 422,
+      message: 'Too big.',
+    })
+  })
+})

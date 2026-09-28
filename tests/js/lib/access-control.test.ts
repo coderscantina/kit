@@ -54,7 +54,13 @@ describe('navigation', () => {
     ])
     expect(
       filterNavigationItems(accountNavigationItems, context).map((item) => item.routeName)
-    ).toEqual(['account-profile', 'account-security', 'account-notifications', 'account-data'])
+    ).toEqual([
+      'account-profile',
+      'account-security',
+      'account-notifications',
+      'account-data',
+      'account-api',
+    ])
     expect(canAccessRouteByName('users', context)).toBe(false)
     expect(firstAllowedRoute(context)).toEqual({ name: 'dashboard' })
     expect(firstAllowedRoute({ me: me([]) })).toBeNull()

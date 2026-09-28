@@ -8,6 +8,8 @@ ARG APP_GID=1000
 RUN apk add --no-cache supervisor mysql-client \
     && install-php-extensions \
     bcmath \
+    exif \
+    gd \
     intl \
     pcntl \
     pdo_mysql \

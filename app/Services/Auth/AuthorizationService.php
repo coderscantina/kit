@@ -9,6 +9,7 @@ use App\Models\User;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Kit\Reactive\Contracts\Registry;
+use Laravel\Sanctum\PersonalAccessToken;
 
 /**
  * Answers "can this user do X" from a per-user ability list cached for an
@@ -21,7 +22,8 @@ class AuthorizationService
 {
     public function can(User $user, string $ability): bool
     {
-        return $user->is_root || in_array($ability, $this->abilitiesFor($user), true);
+        return $this->tokenAllows($user, $ability)
+            && ($user->is_root || in_array($ability, $this->abilitiesFor($user), true));
     }
 
     /**
@@ -66,6 +68,19 @@ class AuthorizationService
             ->where('role_id', $role->id)
             ->pluck('id')
             ->each(fn (string $id) => $this->invalidateUser($id));
+    }
+
+    /**
+     * A request authenticated by a personal access token may do what the
+     * token was granted and what its owner may do today, whichever is less.
+     * Root is no exception: a root user's token carries the abilities it was
+     * minted with, not all of them. A session carries no token and passes.
+     */
+    private function tokenAllows(User $user, string $ability): bool
+    {
+        $token = $user->currentAccessToken();
+
+        return ! $token instanceof PersonalAccessToken || $token->can($ability);
     }
 
     /**

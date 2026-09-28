@@ -51,6 +51,10 @@ class SecurityEvent extends Model
 
     public const string PHONE_REMOVED = 'phone_removed';
 
+    public const string TOKEN_CREATED = 'token_created';
+
+    public const string TOKEN_REVOKED = 'token_revoked';
+
     public $timestamps = false;
 
     /**

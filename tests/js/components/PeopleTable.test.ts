@@ -75,13 +75,17 @@ describe('PeopleTable', () => {
     const buttons = wrapper.findAll('button[aria-label]')
     const labels = buttons.map((button) => button.attributes('aria-label'))
 
-    // Two on the invitation, none on the account.
-    expect(labels).toHaveLength(2)
+    // History on the account, which anyone on this page may read; resend and
+    // revoke on the invitation; no remove on the account.
+    expect(labels).toEqual(['History', 'Send again', 'Revoke'])
 
     await buttons[0]?.trigger('click')
-    expect(wrapper.emitted('resend')?.[0]?.[0]).toMatchObject({ id: 'i1' })
+    expect(wrapper.emitted('history')?.[0]?.[0]).toMatchObject({ kind: 'user' })
 
     await buttons[1]?.trigger('click')
+    expect(wrapper.emitted('resend')?.[0]?.[0]).toMatchObject({ id: 'i1' })
+
+    await buttons[2]?.trigger('click')
     expect(wrapper.emitted('remove')?.[0]?.[0]).toMatchObject({ id: 'i1' })
   })
 

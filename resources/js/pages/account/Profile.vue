@@ -20,6 +20,7 @@ import {
 import { useAuth } from '~/composables/useAuth'
 import { useFormErrors } from '~/composables/useFormErrors'
 import { usePageMeta } from '~/composables/usePageMeta'
+import { useUnsavedChanges } from '~/composables/useUnsavedChanges'
 import { isSupportedLocale, setLocale, useI18n, type LocaleCode } from '~/plugins/i18n'
 
 const { t, locales } = useI18n()
@@ -46,6 +47,8 @@ const dirty = computed(
   () =>
     name.value.trim() !== (auth.user.value?.name ?? '') || locale.value !== auth.user.value?.locale
 )
+
+useUnsavedChanges(() => dirty.value && !saving.value)
 
 const save = async () => {
   saving.value = true

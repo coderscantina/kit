@@ -69,6 +69,66 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Audit trail
+    |--------------------------------------------------------------------------
+    |
+    | Entries older than the retention are pruned daily by model:prune; unset
+    | keeps them forever. The history query shows the newest entries only.
+    |
+    */
+
+    'audit' => [
+        'retention_days' => env('AUDIT_RETENTION_DAYS'),
+        'history_limit' => (int) env('AUDIT_HISTORY_LIMIT', 50),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Attachments
+    |--------------------------------------------------------------------------
+    |
+    | Files on records live on a private disk and are read back through the
+    | app, like avatars. `extensions` is an allow list checked against the
+    | bytes, not the filename. Keep max_kilobytes under upload_max_filesize
+    | in docker/php.ini. Images get a thumbnail on the queue.
+    |
+    */
+
+    'attachments' => [
+        'disk' => env('ATTACHMENT_DISK', 'local'),
+        'max_kilobytes' => (int) env('ATTACHMENT_MAX_KILOBYTES', 20480),
+        'extensions' => [
+            'jpg', 'jpeg', 'png', 'gif', 'webp',
+            'pdf', 'txt', 'csv', 'json', 'md',
+            'doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx', 'odt', 'ods',
+            'zip',
+        ],
+        'thumbnail_size' => 480,
+        // A decoded image costs width x height x 4 bytes of memory; past this
+        // many pixels the upload keeps no thumbnail rather than risk the worker.
+        'thumbnail_max_pixels' => 40_000_000,
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Webhooks
+    |--------------------------------------------------------------------------
+    |
+    | allow_private_targets lets an endpoint point at localhost or a private
+    | network, for a receiver on the developer's machine. Leave it off
+    | anywhere else: it is what stops a webhook from reaching internal
+    | services and the cloud metadata endpoint.
+    |
+    */
+
+    'webhooks' => [
+        'allow_private_targets' => (bool) env('WEBHOOKS_ALLOW_PRIVATE_TARGETS', false),
+        'timeout_seconds' => (int) env('WEBHOOKS_TIMEOUT_SECONDS', 10),
+        'retention_days' => (int) env('WEBHOOKS_RETENTION_DAYS', 30),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | Required environment
     |--------------------------------------------------------------------------
     |

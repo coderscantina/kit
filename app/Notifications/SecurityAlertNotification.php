@@ -43,6 +43,7 @@ class SecurityAlertNotification extends AppNotification
         SecurityEvent::BACKUP_CODES_REGENERATED,
         SecurityEvent::SOCIAL_LINKED,
         SecurityEvent::SOCIAL_UNLINKED,
+        SecurityEvent::TOKEN_CREATED,
     ];
 
     private readonly string $device;

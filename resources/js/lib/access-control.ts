@@ -40,6 +40,8 @@ export const navigationIcons: Record<string, string> = {
   database: 'lucide:database',
   bell: 'lucide:bell',
   box: 'lucide:box',
+  key: 'lucide:key-round',
+  webhook: 'lucide:webhook',
 }
 
 /**
@@ -50,6 +52,7 @@ export const navigationItems: NavigationItem[] = [
   { labelKey: 'nav.dashboard', icon: 'home', routeName: 'dashboard' },
   { labelKey: 'nav.users', icon: 'users', routeName: 'users' },
   { labelKey: 'nav.assistant', icon: 'sparkles', routeName: 'assistant' },
+  { labelKey: 'nav.webhooks', icon: 'webhook', routeName: 'webhooks' },
   // kit:nav
 ]
 
@@ -63,6 +66,7 @@ export const accountNavigationItems: NavigationItem[] = [
   { labelKey: 'nav.security', icon: 'shield', routeName: 'account-security' },
   { labelKey: 'nav.notifications', icon: 'bell', routeName: 'account-notifications' },
   { labelKey: 'nav.data', icon: 'database', routeName: 'account-data' },
+  { labelKey: 'nav.api', icon: 'key', routeName: 'account-api' },
 ]
 
 /** Route name → what it takes to open it. Drives the guard and the sidebar. */
@@ -73,6 +77,8 @@ export const routeAccessRequirements: Record<AppRouteName, RouteAccessRequiremen
   'account-security': { abilities: 'app.access' },
   'account-notifications': { abilities: 'app.access' },
   'account-data': { abilities: 'app.access' },
+  'account-api': { abilities: 'app.access' },
+  webhooks: { abilities: 'webhooks.manage' },
   notifications: { abilities: 'app.access' },
   assistant: {
     // Two gates: the ability, and whether the installation has a provider

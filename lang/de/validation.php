@@ -168,6 +168,7 @@ return [
     'uploaded' => 'The :attribute failed to upload.',
     'uppercase' => 'The :attribute field must be uppercase.',
     'url' => 'The :attribute field must be a valid URL.',
+    'public_url' => 'Das Feld :attribute muss eine öffentliche http- oder https-Adresse sein. Lokale und private Netze sind von hier aus nicht erreichbar.',
     'ulid' => 'The :attribute field must be a valid ULID.',
     'uuid' => 'The :attribute field must be a valid UUID.',
 

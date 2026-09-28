@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Http\Controllers\Account\AccessTokenController;
 use App\Http\Controllers\Account\AvatarController;
 use App\Http\Controllers\Account\DataExportController;
 use App\Http\Controllers\Account\EmailChangeController;
@@ -17,6 +18,7 @@ use App\Http\Controllers\Account\SessionController;
 use App\Http\Controllers\Account\SocialLinkController;
 use App\Http\Controllers\Account\UserController;
 use App\Http\Controllers\Ai\AiStreamController;
+use App\Http\Controllers\Records\AttachmentController;
 use Illuminate\Support\Facades\Route;
 
 // The REST remainder. Every authenticated group carries `app.access`, so a
@@ -78,6 +80,14 @@ Route::prefix('api')->name('api.')->middleware('web')->group(function (): void {
             Route::patch('views/{savedView}', [SavedViewController::class, 'update'])->name('views.update');
             Route::delete('views/{savedView}', [SavedViewController::class, 'destroy'])->name('views.destroy');
 
+            // A token is a standing credential for the MCP endpoint, so
+            // minting one asks for the password, like any credential change.
+            Route::get('tokens', [AccessTokenController::class, 'index'])->name('tokens.index');
+            Route::post('tokens', [AccessTokenController::class, 'store'])
+                ->middleware(['password.confirmed', 'not-impersonating', 'throttle:sensitive'])
+                ->name('tokens.store');
+            Route::delete('tokens/{token}', [AccessTokenController::class, 'destroy'])->name('tokens.destroy');
+
             Route::get('export', DataExportController::class)
                 ->middleware(['password.confirmed', 'not-impersonating'])
                 ->name('export');
@@ -105,6 +115,12 @@ Route::prefix('api')->name('api.')->middleware('web')->group(function (): void {
         Route::get('roles', [UserController::class, 'roles'])->name('roles.index');
         Route::patch('users/{user}/role', [UserController::class, 'updateRole'])->middleware('totp')->name('users.role');
         Route::delete('users/{user}', [UserController::class, 'destroy'])->middleware('totp')->name('users.destroy');
+        // Files on records. Who may do what is the record's own policy.
+        Route::post('attachments', [AttachmentController::class, 'store'])->name('attachments.store');
+        Route::get('attachments/{attachment}', [AttachmentController::class, 'show'])->name('attachments.show');
+        Route::get('attachments/{attachment}/thumbnail', [AttachmentController::class, 'thumbnail'])->name('attachments.thumbnail');
+        Route::delete('attachments/{attachment}', [AttachmentController::class, 'destroy'])->name('attachments.destroy');
+
         // make:endpoint adds routes here, inside the authenticated group.
         // kit:api
     });

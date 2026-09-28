@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Models;
 
+use App\Models\Concerns\Auditable;
 use App\Notifications\ResetPasswordNotification;
 use App\Notifications\VerifyEmailNotification;
 use CodersCantina\Filter\Filterable;
@@ -21,6 +22,9 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Carbon;
 use Kit\Reactive\Invalidation\HasReactiveInvalidation;
+use Laravel\Sanctum\HasApiTokens;
+use Laravel\Sanctum\PersonalAccessToken;
+use Laravel\Sanctum\TransientToken;
 use NotificationChannels\WebPush\HasPushSubscriptions;
 
 /**
@@ -45,7 +49,16 @@ use NotificationChannels\WebPush\HasPushSubscriptions;
 #[Hidden(['password', 'remember_token', 'two_factor_secret', 'two_factor_backup_codes'])]
 class User extends Authenticatable implements MustVerifyEmail
 {
+    use Auditable;
     use Filterable;
+
+    /**
+     * A session request carries a TransientToken, a bearer request the
+     * PersonalAccessToken it presented, a queue job neither.
+     *
+     * @use HasApiTokens<PersonalAccessToken|TransientToken>
+     */
+    use HasApiTokens;
 
     /** @use HasFactory<UserFactory> */
     use HasFactory;
@@ -78,6 +91,17 @@ class User extends Authenticatable implements MustVerifyEmail
             'two_factor_secret' => 'encrypted',
             'two_factor_backup_codes' => 'encrypted:array',
         ];
+    }
+
+    /**
+     * Stamped on every sign-in; in the history it would bury the changes an
+     * admin made.
+     *
+     * @return array<int, string>
+     */
+    public function auditExclude(): array
+    {
+        return ['last_login_at'];
     }
 
     /**

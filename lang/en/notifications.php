@@ -18,6 +18,7 @@ return [
         'backup_codes_regenerated' => 'Your two-factor backup codes were replaced.',
         'social_linked' => 'A sign-in provider was linked to your account.',
         'social_unlinked' => 'A sign-in provider was unlinked from your account.',
+        'token_created' => 'An API access token was created for your account.',
     ],
 
     'security' => [

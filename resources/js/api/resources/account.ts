@@ -53,6 +53,23 @@ export class AccountResource extends BaseResource {
     return this.client.get(`${this.basePath}/security-activity`, { page })
   }
 
+  tokens(): Promise<App.Data.AccessTokenData[]> {
+    return this.client.get(`${this.basePath}/tokens`)
+  }
+
+  /** The only answer that ever carries the token itself. */
+  createToken(payload: {
+    name: string
+    abilities: string[]
+    expires_in_days: number | null
+  }): Promise<{ token: App.Data.AccessTokenData; plainTextToken: string }> {
+    return this.client.post(`${this.basePath}/tokens`, payload)
+  }
+
+  revokeToken(id: string): Promise<void> {
+    return this.client.delete(`${this.basePath}/tokens/${encodeURIComponent(id)}`)
+  }
+
   socialLinks(): Promise<App.Data.SocialLinkData[]> {
     return this.client.get(`${this.basePath}/social-links`)
   }

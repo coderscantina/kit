@@ -30,7 +30,9 @@
       "account": "Account"
     },
     "data": "Your data",
-    "notifications": "Notifications"
+    "notifications": "Notifications",
+    "webhooks": "Webhooks",
+    "api": "API access"
   },
   "shell": {
     "skipToContent": "Skip to content",
@@ -362,6 +364,10 @@
         "title": "Remove your phone number?",
         "message": "SMS notifications stop straight away. Your channel choices are kept, in case you add a number back."
       }
+    },
+    "api": {
+      "title": "API access",
+      "description": "Tokens that let a script or a model act as you, and where they connect."
     }
   },
   "users": {
@@ -426,6 +432,26 @@
       },
       "restore": {
         "error": "Could not put those back."
+      }
+    },
+    "webhooks": {
+      "create": {
+        "error": "Could not add the endpoint: {error}"
+      },
+      "update": {
+        "success": "Endpoint saved.",
+        "error": "Could not save the endpoint: {error}"
+      },
+      "delete": {
+        "success": "Endpoint removed.",
+        "error": "Could not remove the endpoint: {error}"
+      },
+      "rotateSecret": {
+        "error": "Could not replace the secret: {error}"
+      },
+      "test": {
+        "success": "Test event queued.",
+        "error": "Could not send the test event: {error}"
       }
     }
   },
@@ -626,7 +652,9 @@
       "twoFactorDisabled": "Two-factor authentication turned off",
       "backupCodesRegenerated": "Backup codes replaced",
       "sessionRevoked": "Device signed out",
-      "dataExported": "Data exported"
+      "dataExported": "Data exported",
+      "tokenCreated": "Access token created",
+      "tokenRevoked": "Access token revoked"
     }
   },
   "sessions": {
@@ -744,5 +772,107 @@
       "changing": "{name} has unsaved changes here",
       "typing": "{name} is typing here"
     }
+  },
+  "records": {
+    "history": {
+      "title": "History",
+      "empty": "Nothing has changed here yet.",
+      "system": "The system",
+      "impersonated": "{name} (by {impersonator})",
+      "redacted": "changed, value hidden",
+      "events": {
+        "created": "created this",
+        "updated": "changed",
+        "deleted": "deleted this",
+        "restored": "restored this"
+      }
+    },
+    "attachments": {
+      "title": "Files",
+      "hint": "Images, PDFs, office documents, text and zip files.",
+      "empty": "No files yet.",
+      "uploading": "Uploading {name}",
+      "open": "Open {name}",
+      "remove": "Remove {name}",
+      "removeTitle": "Remove file",
+      "removeConfirm": "Remove {name}? Everyone loses access to it.",
+      "removed": "File removed.",
+      "error": "Could not remove the file: {error}"
+    }
+  },
+  "tokens": {
+    "title": "Access tokens",
+    "description": "A token opens the MCP endpoint as you, limited to the abilities you give it. It works nowhere else.",
+    "empty": "No tokens yet.",
+    "create": "New token",
+    "createTitle": "New access token",
+    "createDescription": "Give it a name you will recognise and only the abilities it needs.",
+    "createdTitle": "Copy your token now",
+    "createdDescription": "This is the only time it is shown. Store it where your client reads it.",
+    "name": "Name",
+    "nameHint": "What uses it, e.g. \"Claude on my laptop\".",
+    "abilities": "What it may do",
+    "expires": "Expires",
+    "lifetimes": {
+      "30": "In 30 days",
+      "90": "In 90 days",
+      "365": "In a year",
+      "never": "Never"
+    },
+    "lastUsed": "Last used {when}",
+    "neverUsed": "Never used",
+    "expiresOn": "expires {date}",
+    "noExpiry": "does not expire",
+    "revokeTitle": "Revoke token",
+    "revokeConfirm": "Revoke {name}? Anything using it stops working at once.",
+    "revokeNamed": "Revoke {name}",
+    "revoked": "Token revoked.",
+    "error": "Could not revoke the token: {error}"
+  },
+  "mcp": {
+    "title": "Connect a model",
+    "description": "The app speaks MCP over HTTP. A model gets the same queries and changes the screens use, as you, within the token's abilities.",
+    "endpoint": "Endpoint",
+    "config": "Client configuration",
+    "configHint": "Replace <token> with a token from above."
+  },
+  "webhooks": {
+    "title": "Webhooks",
+    "description": "Post record changes to another system. Every delivery is signed the Standard Webhooks way and retried for about three hours.",
+    "create": "New endpoint",
+    "createTitle": "New endpoint",
+    "editTitle": "Edit endpoint",
+    "formDescription": "Where to post, and which changes to post.",
+    "url": "URL",
+    "urlHint": "A public http or https address.",
+    "descriptionLabel": "Description",
+    "events": "Events",
+    "everything": "Everything",
+    "active": "Active",
+    "activeHint": "A paused endpoint receives nothing.",
+    "rotateSecret": "New secret",
+    "secretTitle": "Copy the signing secret",
+    "secretDescription": "The receiver checks every delivery with it. It is shown now and after a rotation, never in between.",
+    "empty": "No endpoints yet.",
+    "paused": "Paused",
+    "deliveries": "Deliveries",
+    "sendTest": "Send a test event",
+    "deleteTitle": "Remove endpoint",
+    "deleteConfirm": "Remove {url} and its delivery log?",
+    "noDeliveries": "Nothing sent yet.",
+    "statuses": {
+      "pending": "Pending",
+      "succeeded": "Delivered",
+      "failed": "Failed"
+    },
+    "attempts": "{count} attempt | {count} attempts",
+    "payload": "Payload",
+    "response": "Response"
+  },
+  "unsaved": {
+    "title": "Discard changes?",
+    "message": "What you changed here has not been saved.",
+    "discard": "Discard",
+    "keepEditing": "Keep editing"
   }
 }

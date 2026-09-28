@@ -18,6 +18,7 @@ return [
         'backup_codes_regenerated' => 'Deine Backup-Codes wurden ersetzt.',
         'social_linked' => 'Ein Anmeldedienst wurde mit deinem Konto verbunden.',
         'social_unlinked' => 'Ein Anmeldedienst wurde von deinem Konto getrennt.',
+        'token_created' => 'Für dein Konto wurde ein API-Zugangstoken erstellt.',
     ],
 
     'security' => [

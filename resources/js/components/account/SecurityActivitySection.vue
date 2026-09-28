@@ -33,6 +33,8 @@ const EVENTS: Record<string, { icon: string; label: string }> = {
   },
   session_revoked: { icon: 'lucide:monitor-x', label: 'security.events.sessionRevoked' },
   data_exported: { icon: 'lucide:download', label: 'security.events.dataExported' },
+  token_created: { icon: 'lucide:key-round', label: 'security.events.tokenCreated' },
+  token_revoked: { icon: 'lucide:key-round', label: 'security.events.tokenRevoked' },
 }
 
 const page = ref(1)

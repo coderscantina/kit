@@ -9,6 +9,7 @@ export const queryKeys = {
   invites: (page: number) => ['invites', 'list', page] as const,
   people: (query: PeopleListQuery) => ['people', 'list', query] as const,
   sessions: () => ['account', 'sessions'] as const,
+  tokens: () => ['account', 'tokens'] as const,
   securityActivity: (page: number) => ['account', 'security-activity', page] as const,
   publicInvite: (id: string, token: string) => ['invites', 'public', id, token] as const,
   savedViews: (scope: string) => ['account', 'views', scope] as const,

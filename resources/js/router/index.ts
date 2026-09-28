@@ -101,6 +101,12 @@ const routes: RouteRecordRaw[] = [
         component: () => import('~/pages/account/Data.vue'),
         meta: { layout: 'app' },
       },
+      {
+        path: 'api',
+        name: 'account-api',
+        component: () => import('~/pages/account/Api.vue'),
+        meta: { layout: 'app' },
+      },
     ],
   },
   {
@@ -109,6 +115,12 @@ const routes: RouteRecordRaw[] = [
     path: '/notifications',
     name: 'notifications',
     component: () => import('~/pages/notifications/Index.vue'),
+    meta: { layout: 'app' },
+  },
+  {
+    path: '/webhooks',
+    name: 'webhooks',
+    component: () => import('~/pages/webhooks/Index.vue'),
     meta: { layout: 'app' },
   },
   {

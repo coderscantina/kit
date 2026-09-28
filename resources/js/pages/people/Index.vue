@@ -9,6 +9,7 @@ import Icon from '~/components/Icon.vue'
 import PasswordConfirmDialog from '~/components/PasswordConfirmDialog.vue'
 import InviteDialog from '~/components/people/InviteDialog.vue'
 import PeopleTable from '~/components/people/PeopleTable.vue'
+import RecordHistory from '~/components/records/RecordHistory.vue'
 import { Button } from '~/components/ui/button'
 import {
   SavedViews,
@@ -20,6 +21,7 @@ import {
   type FilterField,
   type TableSegment,
 } from '~/components/ui/data-table'
+import { Sheet, SheetContent, SheetHeaderCombined } from '~/components/ui/sheet'
 import TablePaginationFooter from '~/components/ui/TablePaginationFooter.vue'
 import { useAuth } from '~/composables/useAuth'
 import { useConfirm } from '~/composables/useConfirm'
@@ -102,6 +104,15 @@ const segments = computed<TableSegment<PeopleSegment>[]>(() => [
 ])
 
 const inviteOpen = ref(false)
+
+/** The account whose history the sheet shows; the sheet is open while it is set. */
+const historyOf = ref<App.Data.PersonData | null>(null)
+const historyOpen = computed({
+  get: () => historyOf.value !== null,
+  set: (open: boolean) => {
+    if (!open) historyOf.value = null
+  },
+})
 
 const refresh = () => queryClient.invalidateQueries({ queryKey: ['people'] })
 
@@ -207,6 +218,7 @@ const onInvited = async (email: string) => {
         @assign-role="assignRole"
         @remove="remove"
         @resend="resend"
+        @history="(person) => (historyOf = person)"
       />
       <TablePaginationFooter
         v-if="people.data.value"
@@ -222,6 +234,20 @@ const onInvited = async (email: string) => {
       :roles="roles.data.value ?? []"
       @invited="onInvited"
     />
+
+    <Sheet v-model:open="historyOpen">
+      <SheetContent class="grid w-full content-start overflow-y-auto p-5 sm:max-w-lg">
+        <SheetHeaderCombined
+          :title="t('records.history.title')"
+          :description="historyOf?.name ?? historyOf?.email"
+        />
+        <RecordHistory
+          v-if="historyOf"
+          type="users"
+          :id="historyOf.id"
+        />
+      </SheetContent>
+    </Sheet>
 
     <PasswordConfirmDialog
       v-model:open="stepUp.confirmOpen.value"

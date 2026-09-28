@@ -23,6 +23,12 @@ class UserPolicy
         return $this->authorization->can($user, 'users.view');
     }
 
+    /** Someone's history is visible to whoever may see the people list, and to them. */
+    public function view(User $user, User $target): bool
+    {
+        return $user->id === $target->id || $this->viewAny($user);
+    }
+
     public function changeRole(User $user, User $target): bool
     {
         return $user->id !== $target->id

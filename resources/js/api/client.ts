@@ -292,6 +292,61 @@ export class ApiClient {
     }
   }
 
+  /**
+   * A multipart POST that reports how much of the body has gone out, which
+   * fetch cannot. XMLHttpRequest carries the same CSRF header and the same
+   * 419 retry, and its answer goes through parseResponse, so a 422 or a 403
+   * arrives as the ApiError every other call throws.
+   */
+  public async upload<T>(
+    endpoint: string,
+    body: FormData,
+    options: { onProgress?: (fraction: number) => void; signal?: AbortSignal } = {}
+  ): Promise<T> {
+    await this.ensureCsrfCookie()
+
+    const send = (): Promise<Response> =>
+      new Promise((resolve, reject) => {
+        const xhr = new XMLHttpRequest()
+        xhr.open('POST', this.resolveUrl(endpoint))
+        xhr.withCredentials = true
+
+        const socketId = getSocketId()
+        const headers: Record<string, string> = {
+          Accept: 'application/json',
+          'X-Requested-With': 'XMLHttpRequest',
+          ...(socketId ? { 'X-Socket-ID': socketId } : {}),
+          ...getXsrfHeaders(),
+        }
+        for (const [name, value] of Object.entries(headers)) xhr.setRequestHeader(name, value)
+
+        xhr.upload.onprogress = (event) => {
+          if (event.lengthComputable) options.onProgress?.(event.loaded / event.total)
+        }
+        xhr.onload = () =>
+          resolve(
+            new Response(xhr.status === 204 ? null : xhr.responseText, {
+              status: xhr.status,
+              headers: { 'content-type': xhr.getResponseHeader('content-type') ?? '' },
+            })
+          )
+        xhr.onerror = () => reject(new TypeError('Network request failed'))
+        xhr.onabort = () => reject(new DOMException('Aborted', 'AbortError'))
+        options.signal?.addEventListener('abort', () => xhr.abort(), { once: true })
+
+        xhr.send(body)
+      })
+
+    let response = await send()
+
+    if (response.status === CSRF_EXPIRED_STATUS) {
+      await this.ensureCsrfCookie(true)
+      response = await send()
+    }
+
+    return this.parseResponse<T>(response)
+  }
+
   public get<T>(
     endpoint: string,
     query: Record<string, unknown> = {},

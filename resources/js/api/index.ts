@@ -1,5 +1,6 @@
 import { ApiClient } from '~/api/client'
 import { AccountResource } from '~/api/resources/account'
+import { AttachmentsResource } from '~/api/resources/attachments'
 import { AuthResource } from '~/api/resources/auth'
 import { InvitesResource } from '~/api/resources/invites'
 import { NotificationsResource } from '~/api/resources/notifications'
@@ -15,6 +16,7 @@ export const api = {
   client,
   auth: new AuthResource(client),
   account: new AccountResource(client),
+  attachments: new AttachmentsResource(client),
   invites: new InvitesResource(client),
   notifications: new NotificationsResource(client),
   people: new PeopleResource(client),

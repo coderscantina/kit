@@ -47,6 +47,7 @@ const emit = defineEmits<{
   assignRole: [person: App.Data.PersonData, role: string]
   remove: [person: App.Data.PersonData]
   resend: [person: App.Data.PersonData]
+  history: [person: App.Data.PersonData]
 }>()
 
 const sort = defineModel<TableSort>('sort', { required: true })
@@ -213,6 +214,20 @@ const emptyLabel = computed(() => {
 
         <TableCell>
           <div class="flex grow justify-end gap-1">
+            <SimpleTooltip
+              v-if="person.kind === 'user'"
+              :tooltip="t('records.history.title')"
+            >
+              <Button
+                variant="ghost"
+                size="icon"
+                class="max-sm:size-10"
+                :aria-label="t('records.history.title')"
+                @click="emit('history', person)"
+              >
+                <Icon name="lucide:history" />
+              </Button>
+            </SimpleTooltip>
             <SimpleTooltip
               v-if="person.canResend"
               :tooltip="t('users.invites.resend')"

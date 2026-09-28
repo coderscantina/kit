@@ -9,6 +9,41 @@ declare namespace App {
     }
   }
   namespace Data {
+    export type AccessTokenData = {
+      id: string,
+      name: string,
+      abilities: string[],
+      lastUsedAt: string | null,
+      expiresAt: string | null,
+      createdAt: string,
+    };
+    export type AttachmentData = {
+      id: string,
+      name: string,
+      mimeType: string,
+      size: number,
+      width: number | null,
+      height: number | null,
+      url: string,
+      thumbnailUrl: string | null,
+      uploadedBy: string | null,
+      createdAt: string,
+    };
+    export type AuditChangeData = {
+      field: string,
+      before: string | null,
+      after: string | null,
+      redacted: boolean,
+    };
+    export type AuditEntryData = {
+      id: string,
+      event: string,
+      actorName: string | null,
+      actorAvatarUrl: string | null,
+      impersonatorName: string | null,
+      changes: App.Data.AuditChangeData[],
+      createdAt: string,
+    };
     export type InviteData = {
       id: string,
       email: string,
@@ -105,11 +140,22 @@ declare namespace App {
       expiresAt: string,
       accountExists: boolean,
     };
+    export type RecordArgs = {
+      type: string,
+      id: string,
+    };
     export type RoleData = {
       key: string,
       name: string,
       level: number,
       abilities: string[],
+    };
+    export type SaveWebhookArgs = {
+      url: string,
+      events: string[],
+      description: string | null,
+      active: boolean,
+      id: string | null,
     };
     export type SavedViewData = {
       id: string,
@@ -157,6 +203,37 @@ declare namespace App {
       lastLoginAt: string | null,
       createdAt: string,
       pendingEmail: string | null,
+    };
+    export type WebhookArgs = {
+      id: string,
+    };
+    export type WebhookDeliveryData = {
+      id: string,
+      event: string,
+      status: string,
+      attempts: number,
+      responseStatus: number | null,
+      responseBody: string | null,
+      payload: string,
+      deliveredAt: string | null,
+      createdAt: string,
+    };
+    export type WebhookEndpointData = {
+      id: string,
+      url: string,
+      description: string | null,
+      events: string[],
+      active: boolean,
+      lastStatus: string | null,
+      lastEventAt: string | null,
+      createdAt: string,
+    };
+    export type WebhookEventsData = {
+      events: string[],
+    };
+    export type WebhookSecretData = {
+      endpoint: App.Data.WebhookEndpointData,
+      secret: string,
     };
   }
   namespace Enums {
@@ -260,6 +337,14 @@ declare namespace Spatie {
 
 declare namespace Kit {
   export type ReactiveMap = {
+    'attachments.list': {
+      args: App.Data.RecordArgs
+      result: Array<App.Data.AttachmentData>
+    }
+    'audit.history': {
+      args: App.Data.RecordArgs
+      result: Array<App.Data.AuditEntryData>
+    }
     'notifications.archive': {
       args: App.Data.NotificationScopeArgs
       result: App.Data.NotificationSummaryData
@@ -279,6 +364,38 @@ declare namespace Kit {
     'notifications.summary': {
       args: App.Data.NotificationSummaryArgs
       result: App.Data.NotificationSummaryData
+    }
+    'webhooks.create': {
+      args: App.Data.SaveWebhookArgs
+      result: App.Data.WebhookSecretData
+    }
+    'webhooks.delete': {
+      args: App.Data.WebhookArgs
+      result: unknown
+    }
+    'webhooks.deliveries': {
+      args: App.Data.WebhookArgs
+      result: Array<App.Data.WebhookDeliveryData>
+    }
+    'webhooks.events': {
+      args: Record<string, never>
+      result: App.Data.WebhookEventsData
+    }
+    'webhooks.list': {
+      args: Record<string, never>
+      result: Array<App.Data.WebhookEndpointData>
+    }
+    'webhooks.rotateSecret': {
+      args: App.Data.WebhookArgs
+      result: App.Data.WebhookSecretData
+    }
+    'webhooks.test': {
+      args: App.Data.WebhookArgs
+      result: App.Data.WebhookDeliveryData
+    }
+    'webhooks.update': {
+      args: App.Data.SaveWebhookArgs
+      result: App.Data.WebhookEndpointData
     }
   }
 }

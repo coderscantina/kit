@@ -28,6 +28,7 @@ return [
         'invites.manage',
         'roles.manage',
         'ai.use',
+        'webhooks.manage',
         // kit:abilities
     ],
 
@@ -43,6 +44,7 @@ return [
                 'invites.manage',
                 'roles.manage',
                 'ai.use',
+                'webhooks.manage',
                 // kit:role:owner
             ],
         ],
@@ -56,6 +58,7 @@ return [
                 'invites.view',
                 'invites.manage',
                 'ai.use',
+                'webhooks.manage',
                 // kit:role:admin
             ],
         ],

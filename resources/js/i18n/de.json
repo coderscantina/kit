@@ -30,7 +30,9 @@
       "account": "Konto"
     },
     "data": "Deine Daten",
-    "notifications": "Benachrichtigungen"
+    "notifications": "Benachrichtigungen",
+    "webhooks": "Webhooks",
+    "api": "API-Zugang"
   },
   "shell": {
     "skipToContent": "Zum Inhalt springen",
@@ -362,6 +364,10 @@
         "title": "Telefonnummer entfernen?",
         "message": "SMS-Benachrichtigungen hören sofort auf. Deine Kanalauswahl bleibt erhalten, falls du wieder eine Nummer hinterlegst."
       }
+    },
+    "api": {
+      "title": "API-Zugang",
+      "description": "Tokens, mit denen ein Skript oder ein Modell als du handelt, und wo sie sich verbinden."
     }
   },
   "users": {
@@ -426,6 +432,26 @@
       },
       "restore": {
         "error": "Konnte nicht zurückgelegt werden."
+      }
+    },
+    "webhooks": {
+      "create": {
+        "error": "Der Endpunkt konnte nicht angelegt werden: {error}"
+      },
+      "update": {
+        "success": "Endpunkt gespeichert.",
+        "error": "Der Endpunkt konnte nicht gespeichert werden: {error}"
+      },
+      "delete": {
+        "success": "Endpunkt entfernt.",
+        "error": "Der Endpunkt konnte nicht entfernt werden: {error}"
+      },
+      "rotateSecret": {
+        "error": "Das Geheimnis konnte nicht ersetzt werden: {error}"
+      },
+      "test": {
+        "success": "Testereignis eingereiht.",
+        "error": "Das Testereignis konnte nicht gesendet werden: {error}"
       }
     }
   },
@@ -626,7 +652,9 @@
       "twoFactorDisabled": "Zwei-Faktor-Authentifizierung abgeschaltet",
       "backupCodesRegenerated": "Backup-Codes ersetzt",
       "sessionRevoked": "Gerät abgemeldet",
-      "dataExported": "Daten exportiert"
+      "dataExported": "Daten exportiert",
+      "tokenCreated": "Zugangstoken erstellt",
+      "tokenRevoked": "Zugangstoken widerrufen"
     }
   },
   "sessions": {
@@ -744,5 +772,107 @@
       "changing": "{name} hat hier ungespeicherte Änderungen",
       "typing": "{name} tippt hier gerade"
     }
+  },
+  "records": {
+    "history": {
+      "title": "Verlauf",
+      "empty": "Hier hat sich noch nichts geändert.",
+      "system": "Das System",
+      "impersonated": "{name} (durch {impersonator})",
+      "redacted": "geändert, Wert verborgen",
+      "events": {
+        "created": "hat das angelegt",
+        "updated": "hat geändert",
+        "deleted": "hat das gelöscht",
+        "restored": "hat das wiederhergestellt"
+      }
+    },
+    "attachments": {
+      "title": "Dateien",
+      "hint": "Bilder, PDFs, Office-Dokumente, Text- und Zip-Dateien.",
+      "empty": "Noch keine Dateien.",
+      "uploading": "{name} wird hochgeladen",
+      "open": "{name} öffnen",
+      "remove": "{name} entfernen",
+      "removeTitle": "Datei entfernen",
+      "removeConfirm": "{name} entfernen? Niemand kann sie danach noch öffnen.",
+      "removed": "Datei entfernt.",
+      "error": "Die Datei konnte nicht entfernt werden: {error}"
+    }
+  },
+  "tokens": {
+    "title": "Zugangstokens",
+    "description": "Ein Token öffnet den MCP-Endpunkt als du, beschränkt auf die Rechte, die du ihm gibst. Anderswo funktioniert es nicht.",
+    "empty": "Noch keine Tokens.",
+    "create": "Neues Token",
+    "createTitle": "Neues Zugangstoken",
+    "createDescription": "Gib ihm einen Namen, den du wiedererkennst, und nur die Rechte, die es braucht.",
+    "createdTitle": "Kopiere dein Token jetzt",
+    "createdDescription": "Es wird nur dieses eine Mal angezeigt. Leg es dort ab, wo dein Client es liest.",
+    "name": "Name",
+    "nameHint": "Was es benutzt, z. B. „Claude auf meinem Laptop“.",
+    "abilities": "Was es darf",
+    "expires": "Läuft ab",
+    "lifetimes": {
+      "30": "In 30 Tagen",
+      "90": "In 90 Tagen",
+      "365": "In einem Jahr",
+      "never": "Nie"
+    },
+    "lastUsed": "Zuletzt benutzt {when}",
+    "neverUsed": "Nie benutzt",
+    "expiresOn": "läuft ab am {date}",
+    "noExpiry": "läuft nicht ab",
+    "revokeTitle": "Token widerrufen",
+    "revokeConfirm": "{name} widerrufen? Alles, was es benutzt, hört sofort auf zu funktionieren.",
+    "revokeNamed": "{name} widerrufen",
+    "revoked": "Token widerrufen.",
+    "error": "Das Token konnte nicht widerrufen werden: {error}"
+  },
+  "mcp": {
+    "title": "Ein Modell verbinden",
+    "description": "Die App spricht MCP über HTTP. Ein Modell bekommt dieselben Abfragen und Änderungen wie die Oberfläche, als du, im Rahmen der Rechte des Tokens.",
+    "endpoint": "Endpunkt",
+    "config": "Client-Konfiguration",
+    "configHint": "Ersetze <token> durch ein Token von oben."
+  },
+  "webhooks": {
+    "title": "Webhooks",
+    "description": "Sende Änderungen an Datensätzen an ein anderes System. Jede Zustellung ist nach Standard Webhooks signiert und wird etwa drei Stunden lang wiederholt.",
+    "create": "Neuer Endpunkt",
+    "createTitle": "Neuer Endpunkt",
+    "editTitle": "Endpunkt bearbeiten",
+    "formDescription": "Wohin gesendet wird und welche Änderungen.",
+    "url": "URL",
+    "urlHint": "Eine öffentliche http- oder https-Adresse.",
+    "descriptionLabel": "Beschreibung",
+    "events": "Ereignisse",
+    "everything": "Alles",
+    "active": "Aktiv",
+    "activeHint": "Ein pausierter Endpunkt bekommt nichts.",
+    "rotateSecret": "Neues Geheimnis",
+    "secretTitle": "Kopiere das Signaturgeheimnis",
+    "secretDescription": "Der Empfänger prüft damit jede Zustellung. Es wird jetzt und nach einem Austausch angezeigt, sonst nie.",
+    "empty": "Noch keine Endpunkte.",
+    "paused": "Pausiert",
+    "deliveries": "Zustellungen",
+    "sendTest": "Testereignis senden",
+    "deleteTitle": "Endpunkt entfernen",
+    "deleteConfirm": "{url} und sein Zustellprotokoll entfernen?",
+    "noDeliveries": "Noch nichts gesendet.",
+    "statuses": {
+      "pending": "Ausstehend",
+      "succeeded": "Zugestellt",
+      "failed": "Fehlgeschlagen"
+    },
+    "attempts": "{count} Versuch | {count} Versuche",
+    "payload": "Inhalt",
+    "response": "Antwort"
+  },
+  "unsaved": {
+    "title": "Änderungen verwerfen?",
+    "message": "Was du hier geändert hast, ist noch nicht gespeichert.",
+    "discard": "Verwerfen",
+    "keepEditing": "Weiter bearbeiten"
   }
 }

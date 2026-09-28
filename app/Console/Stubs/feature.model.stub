@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Models;
 
+use App\Models\Concerns\Auditable;
 use Database\Factories\{{ feature }}Factory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -19,6 +20,10 @@ use Illuminate\Support\Carbon;
 #[Fillable([{{ fillable }}])]
 class {{ feature }} extends Model
 {
+    // Every change lands in audit_entries: the history a <RecordHistory>
+    // shows, and what webhooks are sent from.
+    use Auditable;
+
     /** @use HasFactory<{{ feature }}Factory> */
     use HasFactory;
 {{ traits }}

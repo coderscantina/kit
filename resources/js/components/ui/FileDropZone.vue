@@ -7,10 +7,13 @@ const { t } = useI18n()
 const props = defineProps<{
   accept?: string
   hint?: string
+  /** Take several files at once. They arrive through `select`, and the model stays empty. */
+  multiple?: boolean
 }>()
 
 const emit = defineEmits<{
   error: [message: string]
+  select: [files: File[]]
 }>()
 
 const modelValue = defineModel<File | null>({ default: null })
@@ -25,21 +28,28 @@ const acceptedExtensions = computed(() =>
     .filter(Boolean)
 )
 
-const setFile = (file: File | null | undefined) => {
-  if (!file) return
-  if (
-    acceptedExtensions.value.length > 0 &&
-    !acceptedExtensions.value.some((ext) => file.name.toLowerCase().endsWith(ext))
-  ) {
+const isAccepted = (file: File): boolean =>
+  acceptedExtensions.value.length === 0 ||
+  acceptedExtensions.value.some((ext) => file.name.toLowerCase().endsWith(ext))
+
+const setFiles = (list: FileList | null | undefined) => {
+  const files = [...(list ?? [])]
+  const accepted = files.filter(isAccepted)
+
+  if (accepted.length < files.length) {
     emit('error', t('components.fileDropZone.unsupportedFileError') as string)
-    return
   }
-  modelValue.value = file
+  if (accepted.length === 0) return
+
+  if (props.multiple) emit('select', accepted)
+  else modelValue.value = accepted[0] ?? null
 }
 
 const handleFileChange = (event: Event) => {
   const target = event.target as HTMLInputElement
-  setFile(target.files?.[0])
+  setFiles(target.files)
+  // Cleared so picking the same file again still fires a change.
+  target.value = ''
 }
 
 const handleDragOver = (event: DragEvent) => {
@@ -57,7 +67,7 @@ const handleDragLeave = (event: DragEvent) => {
 const handleDrop = (event: DragEvent) => {
   event.preventDefault()
   isDragging.value = false
-  setFile(event.dataTransfer?.files?.[0])
+  setFiles(event.dataTransfer?.files)
 }
 </script>
 
@@ -81,6 +91,7 @@ const handleDrop = (event: DragEvent) => {
       ref="fileInputRef"
       type="file"
       :accept="accept"
+      :multiple="multiple"
       class="hidden"
       @change="handleFileChange"
     />
