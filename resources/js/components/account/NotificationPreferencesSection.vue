@@ -4,7 +4,7 @@ import { computed } from 'vue'
 import SettingsSection from '~/components/account/SettingsSection.vue'
 import Icon from '~/components/Icon.vue'
 import { Switch } from '~/components/ui/switch'
-import { Tooltip, TooltipContent, TooltipTrigger } from '~/components/ui/tooltip'
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '~/components/ui/tooltip'
 import { messageKeyFor, notificationChannelIcons } from '~/lib/notifications'
 import { useI18n } from '~/plugins/i18n'
 
@@ -147,28 +147,30 @@ const reason = (type: App.Data.NotificationTypeData, channel: string): string =>
             :key="channel.key"
             class="flex items-center justify-center"
           >
-            <Tooltip v-if="offers(type, channel.key)">
-              <TooltipTrigger as-child>
-                <span class="inline-flex items-center gap-1">
-                  <Switch
-                    :model-value="enabled(type, channel.key)"
-                    :disabled="saving || required(type, channel.key)"
-                    :aria-label="`${label(type)} — ${t(`notifications.channels.${channel.key}`)}`"
-                    @update:model-value="emit('toggle', type.key, channel.key, $event)"
-                  />
-                  <Icon
-                    v-if="reason(type, channel.key)"
-                    :name="required(type, channel.key) ? 'lucide:lock' : 'lucide:triangle-alert'"
-                    size="12"
-                    class="text-muted"
-                    aria-hidden="true"
-                  />
-                </span>
-              </TooltipTrigger>
-              <TooltipContent v-if="reason(type, channel.key)">
-                {{ reason(type, channel.key) }}
-              </TooltipContent>
-            </Tooltip>
+            <TooltipProvider v-if="offers(type, channel.key)">
+              <Tooltip>
+                <TooltipTrigger as-child>
+                  <span class="inline-flex items-center gap-1">
+                    <Switch
+                      :model-value="enabled(type, channel.key)"
+                      :disabled="saving || required(type, channel.key)"
+                      :aria-label="`${label(type)} — ${t(`notifications.channels.${channel.key}`)}`"
+                      @update:model-value="emit('toggle', type.key, channel.key, $event)"
+                    />
+                    <Icon
+                      v-if="reason(type, channel.key)"
+                      :name="required(type, channel.key) ? 'lucide:lock' : 'lucide:triangle-alert'"
+                      size="12"
+                      class="text-muted"
+                      aria-hidden="true"
+                    />
+                  </span>
+                </TooltipTrigger>
+                <TooltipContent v-if="reason(type, channel.key)">
+                  {{ reason(type, channel.key) }}
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
 
             <span
               v-else
