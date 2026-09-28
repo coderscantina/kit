@@ -3,7 +3,8 @@
 Laravel 13 + Vue 3 starter kit. Two data paths, one layered layout. Full docs
 in `docs/`. Each contract lives in a project skill that loads when the work
 touches it: `reactive-layer`, `list-surfaces`, `ai-actions`, `notifications`,
-`presence`, `runtime-debugging` (in `.claude/skills/`).
+`presence`, `records`, `machine-access`, `runtime-debugging` (in
+`.claude/skills/`).
 
 ## 1. Where things go
 
@@ -16,7 +17,9 @@ app/Ai/Actions/          streamed AI actions
 app/Data/                every laravel-data class, args classes included
 app/Http/                controllers, form requests, filters, middleware
 app/Listeners/           event listeners, wired in a service provider
+app/Mcp/                 the MCP server and its three tools
 app/Models/              every model, on the App\Models\Model base
+app/Models/Concerns/     Auditable and HasAttachments, the opt-in model traits
 app/Mutations/<Domain>/  reactive mutations
 app/Notifications/       notifications; #[NotificationType] makes one configurable
 app/Policies/            ResourcePolicy and the concrete policies

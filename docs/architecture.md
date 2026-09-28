@@ -12,7 +12,9 @@ app/
   Data/                  every laravel-data class, args classes included
   Http/                  controllers, form requests, filters, middleware
   Jobs/                  QueuedJob and its subclasses
+  Mcp/                   the MCP server over the reactive catalogue
   Models/                Eloquent models, all of them, on the App\Models\Model base
+  Models/Concerns/       Auditable and HasAttachments
   Mutations/<Domain>/    reactive mutations
   Policies/              ResourcePolicy and the concrete policies
   Queries/<Domain>/      reactive queries

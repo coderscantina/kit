@@ -12,7 +12,10 @@ tokens](/design-tokens) the ladder of surfaces that file defines. [Lists and
 filters](/lists) covers the query contract every list surface speaks, and the
 saved views built on it. [Presence](/presence) covers the roster
 and the whisper channel behind it. [Notifications](/notifications) covers the
-inbox, the escalation ladder and the phone flow; [social
+inbox, the escalation ladder and the phone flow. [History and
+files](/records) covers the audit trail and attachments every record can
+have, and [tokens, MCP and webhooks](/machine-access) the two doors for other
+programs: a model calling in, record changes posted out. [Social
 login](/social-login), [push notifications](/push-notifications) and SMS are
 all off until configured. [AI](/ai) covers the streamed model calls. When
 something is broken in production, [runtime contract](/runtime-contract) says

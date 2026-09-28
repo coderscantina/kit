@@ -30,6 +30,8 @@ export default defineConfig({
           { text: 'Lists and filters', link: '/lists' },
           { text: 'Presence', link: '/presence' },
           { text: 'Notifications', link: '/notifications' },
+          { text: 'History and files', link: '/records' },
+          { text: 'Tokens, MCP and webhooks', link: '/machine-access' },
           { text: 'Social login', link: '/social-login' },
           { text: 'Push notifications', link: '/push-notifications' },
           { text: 'Runtime contract', link: '/runtime-contract' },
